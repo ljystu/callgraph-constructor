@@ -31,12 +31,25 @@
         <dependency>
             <groupId>org.neo4j.driver</groupId>
             <artifactId>neo4j-java-driver</artifactId>
+            <version>5.2.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-neo4j</artifactId>
 
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j</artifactId>
+            <version>5.2.0</version>
         </dependency>
+
+
+        <!--        <dependency>-->
+        <!--            <groupId>org.neo4j.driver</groupId>-->
+        <!--            <artifactId>neo4j-java-driver</artifactId>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-starter-data-neo4j</artifactId>-->
+
+        <!--        </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-test</artifactId>
@@ -46,16 +59,37 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>RELEASE</version>
+            <version>4.13</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
         </dependency>
+
+
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
+            <groupId>com.ibm.wala</groupId>
+            <artifactId>com.ibm.wala.util</artifactId>
+            <version>1.5.8</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.ibm.wala/com.ibm.wala.shrike -->
+        <dependency>
+            <groupId>com.ibm.wala</groupId>
+            <artifactId>com.ibm.wala.shrike</artifactId>
+            <version>1.5.8</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.ibm.wala/com.ibm.wala.core -->
+        <dependency>
+            <groupId>com.ibm.wala</groupId>
+            <artifactId>com.ibm.wala.core</artifactId>
+            <version>1.5.8</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.ibm.wala/com.ibm.wala.cast -->
+        <dependency>
+            <groupId>com.ibm.wala</groupId>
+            <artifactId>com.ibm.wala.cast</artifactId>
+            <version>1.5.4</version>
         </dependency>
 
     </dependencies>
