@@ -1,12 +1,12 @@
-package com.example.neo4jtest;
+package com.example.neo4jtest.neo4jExamples;
 
+import com.example.neo4jtest.Node;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.GraphDatabase;
 import org.neo4j.driver.SessionConfig;
 
 
 import org.neo4j.driver.*;
-import org.neo4j.driver.Record;
 
 import static org.neo4j.driver.Values.parameters;
 

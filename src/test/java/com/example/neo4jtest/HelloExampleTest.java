@@ -1,5 +1,6 @@
 package com.example.neo4jtest;
 
+
 import org.junit.Test;
 import org.neo4j.driver.*;
 
@@ -9,7 +10,7 @@ public class HelloExampleTest {
 
 
     @Test
-    public void testAll() {
+    public void testAll() throws Exception {
         Driver driver = GraphDatabase.driver("bolt://localhost:7687",
                 AuthTokens.basic("neo4j", "ljystu"));
         Session session = driver.session();
@@ -31,5 +32,8 @@ public class HelloExampleTest {
 
         System.out.println("OK");
         driver.close();
+
+
     }
 }
+

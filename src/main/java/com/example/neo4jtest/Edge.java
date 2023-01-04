@@ -3,6 +3,9 @@ package com.example.neo4jtest;
 public class Edge {
     Node from;
     Node to;
+    public Edge(){
+
+    }
 
     public Edge(Node from, Node to) {
         this.from = from;

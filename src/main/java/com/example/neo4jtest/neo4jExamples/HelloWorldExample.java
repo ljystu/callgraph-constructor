@@ -1,20 +1,7 @@
-package com.example.neo4jtest;
+package com.example.neo4jtest.neo4jExamples;
 
 
-import lombok.var;
 import org.neo4j.driver.*;
-import org.neo4j.driver.Record;
-import org.neo4j.driver.exceptions.Neo4jException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.stereotype.Component;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 
 import org.neo4j.driver.AuthTokens;
@@ -28,7 +15,7 @@ public class HelloWorldExample implements AutoCloseable {
 
     public HelloWorldExample(String uri, String user, String password) {
         driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password));
-        
+
     }
 
     @Override
