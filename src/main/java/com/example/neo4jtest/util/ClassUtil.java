@@ -27,8 +27,12 @@ public class ClassUtil {
         } else if (dir.getName().endsWith(".class")) {
             // 如果是class文件，则加入列表
             String s = dir.toString().replace("/", ".");
-
-            classFiles.add(s.substring(15, s.lastIndexOf(".")));
+            if(s.contains("$")){
+                classFiles.add(s.substring(s.lastIndexOf("target.class") + 15, s.lastIndexOf("$")));
+            }
+            else {
+                classFiles.add(s.substring(s.lastIndexOf("target.class") + 15, s.lastIndexOf(".")));
+            }
 
         }
     }

@@ -1,4 +1,4 @@
-package com.example.neo4jtest;
+package com.example.neo4jtest.entity;
 
 public class Edge {
     Node from;

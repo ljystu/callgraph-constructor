@@ -4,6 +4,9 @@ package com.example.neo4jtest;
 import org.junit.Test;
 import org.neo4j.driver.*;
 
+import java.io.File;
+import java.net.URL;
+
 import static org.neo4j.driver.Values.parameters;
 
 public class HelloExampleTest {
@@ -32,8 +35,18 @@ public class HelloExampleTest {
 
         System.out.println("OK");
         driver.close();
+//        File directory= new File("zookeeper-master").getAbsoluteFile();
+//        deleteFile(directory);
 
+//        File dir = new File("/path/to/dir");
+//        URL url = dir.toURI().toURL();
+//        URL[] urls = new URL[]{url};
+//
+//        for (URL url1: urls){
+//            System.out.println(url1.toString());
+//        }
 
     }
+
 }
 

@@ -1,6 +1,7 @@
 package com.example.neo4jtest;
 
 import com.alibaba.fastjson.JSON;
+import com.example.neo4jtest.entity.Edge;
 import com.example.neo4jtest.util.Neo4jUtil;
 
 import redis.clients.jedis.Jedis;

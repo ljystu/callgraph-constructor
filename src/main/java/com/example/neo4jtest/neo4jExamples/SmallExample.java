@@ -1,6 +1,6 @@
 package com.example.neo4jtest.neo4jExamples;
 
-import com.example.neo4jtest.Node;
+import com.example.neo4jtest.entity.Node;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.GraphDatabase;
 import org.neo4j.driver.SessionConfig;

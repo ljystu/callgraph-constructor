@@ -1,8 +1,8 @@
 package com.example.neo4jtest.util;
 
 
-import com.example.neo4jtest.Edge;
-import com.example.neo4jtest.Node;
+import com.example.neo4jtest.entity.Edge;
+import com.example.neo4jtest.entity.Node;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.*;
 
