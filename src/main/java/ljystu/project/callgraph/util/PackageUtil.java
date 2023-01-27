@@ -2,9 +2,11 @@ package ljystu.project.callgraph.util;
 
 import ljystu.project.callgraph.config.Arg;
 import lombok.extern.slf4j.Slf4j;
+import org.neo4j.cypher.internal.expressions.In;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -21,7 +23,7 @@ public class PackageUtil {
 //        for (String path : paths) {
 ////            ClassUtil finder = new ClassUtil(new File(path + "/classes/"));
 //
-//            List<String> classFiles = JavaReadUtil.getClasses(path.substring(0,path.lastIndexOf('/')) );
+//            List<String> classFiles = JavaReadUtil.getClasses(path.subpackageScaning(0,path.lastIndexOf('/')) );
 ////                    finder.getClassFiles();
 ////            File dir = new File(path + "/classes/" );
 ////            URL url = dir.toURI().toURL();
@@ -39,7 +41,7 @@ public class PackageUtil {
 //    }
 
 
-    public void getPackages(Set<String> set, StringBuilder str, String jar, String rootPath) throws Exception {
+    public void getPackages(HashMap<String, Integer> projectCount, Set<String> set, StringBuilder packageScan, String jar, String rootPath) throws Exception {
         String argLine = argLineLeft + jar + argLineRight;
 
         String path = new File(rootPath).getAbsolutePath();
@@ -49,21 +51,24 @@ public class PackageUtil {
             String[] split = p.split("\\.");
             if (split.length != 0) {
                 if (split[0].equals("java")) continue;
-                str.append(split[0]);
-                if (split.length > 1) str.append(".").append(split[1]);
+                packageScan.append(split[0]);
+                if (split.length > 1) packageScan.append(".").append(split[1]);
             } else {
-                str.append(p);
+                packageScan.append(p);
             }
-            str.append(".*");
-            set.add(str.toString());
-            str.setLength(0);
+            packageScan.append(".*");
+            set.add(packageScan.toString());
+
+            packageScan.setLength(0);
         }
-        str.append(argLine);
+        packageScan.append(argLine);
         for (String s : set) {
-            str.append(s).append(",");
+            projectCount.putIfAbsent(s, 0);
+            projectCount.put(s, projectCount.get(s) + 1);
+            packageScan.append(s).append(",");
         }
-        str.setLength(str.length() - 1);
-        str.append(";");
+        packageScan.setLength(packageScan.length() - 1);
+        packageScan.append(";");
     }
 
     private void findTargetDirs(File dir) {

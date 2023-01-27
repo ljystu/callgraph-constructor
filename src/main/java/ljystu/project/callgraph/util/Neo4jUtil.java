@@ -12,10 +12,15 @@ import static org.neo4j.driver.Values.parameters;
 
 
 public class Neo4jUtil {
+    //TODO how to upload nodes and edges efficiently
     // Driver objects are thread-safe and are typically made available application-wide.
     Driver driver;
 
     String database = "callgraph";
+
+    public Neo4jUtil() {
+
+    }
 
     public void init(String uri, String user, String password) {
         driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password));

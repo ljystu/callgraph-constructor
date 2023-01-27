@@ -3,9 +3,11 @@ package ljystu.project.callgraph.util;
 import ljystu.project.callgraph.RedisOp;
 import ljystu.project.callgraph.config.Paths;
 import org.apache.maven.shared.invoker.*;
+import org.apache.shiro.crypto.hash.Hash;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Properties;
 
@@ -15,7 +17,7 @@ public class Invoker {
     static String mavenPath = Paths.getMavenPath();
     static String jarPath = Paths.getJarPath();
 
-    public void uploadPackages(String rootPath) throws Exception {
+    public HashSet<String> uploadPackages(String rootPath, HashMap<String, Integer> projectCount) throws Exception {
 
         HashSet<String> set = new HashSet<>();
 
@@ -23,12 +25,15 @@ public class Invoker {
         StringBuilder str = new StringBuilder();
 
         PackageUtil packageUtil = new PackageUtil();
-        packageUtil.getPackages(set, str, jarPath, rootPath);
+        packageUtil.getPackages(projectCount, set, str, jarPath, rootPath);
 
         invoke(str, rootPath, "test");
 
         RedisOp redisOp = new RedisOp();
         redisOp.upload();
+
+        return set;
+
     }
 
     public void invoke(StringBuilder str, String rootPath, String task) throws Exception {
@@ -43,6 +48,7 @@ public class Invoker {
         String projectMavenFilePath = rootPath + "/pom.xml";
         File projectMavenFile = new File(projectMavenFilePath);
         if (!projectMavenFile.exists()) {
+            deleteFile(new File(rootPath).getAbsoluteFile());
             return;
         }
         request.setPomFile(projectMavenFile);
