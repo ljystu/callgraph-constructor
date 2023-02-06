@@ -39,7 +39,7 @@ public class RedisOp {
             Node nodeTo = edge.getTo();
 
 //            edges.add(edge);
-            getFullCoordinates(nodeFrom,nodeTo,map);
+            getVersion(nodeFrom,nodeTo,map);
             nodes.add(nodeFrom);
             nodes.add(nodeTo);
 
@@ -55,15 +55,14 @@ public class RedisOp {
         jedis.close();
     }
 
-    public void getFullCoordinates(Node nodeFrom, Node nodeTo, HashMap<String, String> map) {
+    public void getVersion(Node nodeFrom, Node nodeTo, HashMap<String, String> map) {
         String nodeFromClassName = nodeFrom.getPackageName() + "." + nodeFrom.getClassName();
-        String fromCoordinate = CoordinateUtil.getCoordinate(nodeFromClassName, "");
-        String nodeFromCoordinate = map.getOrDefault(fromCoordinate, "not found");
-        nodeFrom.setCoordinate(nodeFromCoordinate);
 
+        String coordinate = CoordinateUtil.getCoordinate(nodeFromClassName, "");
+        String nodeFromCoordinate = map.getOrDefault(nodeFromClassName, "not found");
+        nodeFrom.setCoordinate(nodeFromCoordinate);
         String nodeToClassName = nodeTo.getPackageName() + "." + nodeTo.getClassName();
-        String toCoordinate = CoordinateUtil.getCoordinate(nodeToClassName, "");
-        String nodeToCoordinate = map.getOrDefault(toCoordinate, "not found");
+        String nodeToCoordinate = map.getOrDefault(nodeToClassName, "not found");
         nodeTo.setCoordinate(nodeToCoordinate);
     }
 
