@@ -63,7 +63,7 @@ public class CoordinateUtil {
 
     public static String urlencode(Map<String, Object> map) {
         StringBuilder s = new StringBuilder();
-        s.append("q=fc:").append(map.get("className"))
+        s.append("q=fc:").append(map.get("className"));
 //                .append("&v:").append(map.get("version"));
         return s.toString();
     }
