@@ -24,6 +24,7 @@ public class RunMavenInvoker {
 
         for (Project p : projects) {
             String folderName = projectDownloader.downloadAndUnzip(p);
+            if(folderName == "") continue;
             invoker.uploadPackages(folderName, projectCount, "dynamic", dependencies);
         }
 //        dependencies

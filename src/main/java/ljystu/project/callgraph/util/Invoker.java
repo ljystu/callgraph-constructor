@@ -22,6 +22,7 @@ public class Invoker {
 
     public HashSet<String> uploadPackages(String rootPath, HashMap<String, Integer> projectCount, String label, HashSet<String> dependencies) throws Exception {
 
+
         HashSet<String> set = new HashSet<>();
 
         // 获取Test类的所有import的类型
@@ -87,7 +88,7 @@ public class Invoker {
         String dependencyList = execCmd("mvn dependency:list", rootPath);
         String[] lines = dependencyList.split("\n");
 //        HashSet<String> dependencies = new HashSet<>();
-        Pattern pattern = Pattern.compile("    (.*):compile|runtime");
+        Pattern pattern = Pattern.compile("( *.*):compile|runtime");
 
         for (String line : lines) {
             if (line == null) continue;
