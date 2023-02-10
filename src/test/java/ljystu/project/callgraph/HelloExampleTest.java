@@ -2,17 +2,17 @@ package ljystu.project.callgraph;
 
 
 import ljystu.project.callgraph.config.Path;
-import org.apache.maven.shared.invoker.*;
-import org.apache.shiro.crypto.hash.Hash;
+import org.apache.maven.shared.invoker.DefaultInvocationRequest;
+import org.apache.maven.shared.invoker.DefaultInvoker;
+import org.apache.maven.shared.invoker.InvocationRequest;
+import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.junit.Test;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Arrays;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,8 +20,8 @@ import java.util.regex.Pattern;
 public class HelloExampleTest {
     static org.apache.maven.shared.invoker.Invoker mavenInvoker = new DefaultInvoker();
 
-    static String mavenPath = Path.getMavenPath();
-    static String jarPath = Path.getJarPath();
+    static String mavenPath = Path.getMavenHome();
+    static String jarPath = Path.getJavaagentHome();
 
     @Test
     public void testAll() throws Exception {

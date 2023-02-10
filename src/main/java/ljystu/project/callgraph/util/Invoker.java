@@ -1,6 +1,7 @@
 package ljystu.project.callgraph.util;
 
 import ljystu.project.callgraph.config.Path;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
@@ -12,11 +13,12 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Slf4j
 public class Invoker {
     static org.apache.maven.shared.invoker.Invoker mavenInvoker = new DefaultInvoker();
 
-    static String mavenPath = Path.getMavenPath();
-    static String jarPath = Path.getJarPath();
+//    static String mavenPath = Path.getMavenHome();
+//    static String jarPath = Path.getJavaagentHome();
 
     public HashSet<String> analyseProject(String rootPath, HashMap<String, Integer> projectCount, String label) {
 
@@ -28,14 +30,14 @@ public class Invoker {
 
         PackageUtil packageUtil = new PackageUtil();
 
-        packageUtil.getPackages(projectCount, set, str, jarPath, rootPath);
+        packageUtil.getPackages(projectCount, set, str, Path.getJavaagentHome(), rootPath);
 
         List<String> pomFiles = packageUtil.getPomFiles(rootPath);
 
         invokeTask(str, rootPath, pomFiles);
 
         HashSet<String> dependencies = new HashSet<>();
-        HashMap<String, String> coordinateMap = getDependencyInfo(rootPath, dependencies);
+        Map<String, String> coordinateMap = getDependencyInfo(rootPath, dependencies);
 
         File projectDirectory = new File(rootPath).getAbsoluteFile();
 
@@ -52,16 +54,16 @@ public class Invoker {
     public void invokeTask(StringBuilder str, String path, List<String> pomFilePaths) {
 
         // 设置Maven的安装目录
-        mavenInvoker.setMavenHome(new File(mavenPath));
+        mavenInvoker.setMavenHome(new File(Path.getMavenHome()));
         POMUtil pomUtil = new POMUtil();
         for (String pomFilePath : pomFilePaths) {
             pomUtil.editPOM(pomFilePath, str.toString());
         }
-        invoke(path, "test", str);
+        invoke(path, "test");
 
     }
 
-    public void invoke(String rootPath, String task, StringBuilder str) {
+    public void invoke(String rootPath, String task) {
 
         InvocationRequest request = new DefaultInvocationRequest();
 
@@ -76,7 +78,7 @@ public class Invoker {
 
         request.setGoals(Collections.singletonList(task));
 
-        request.setJavaHome(new File("/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home"));
+        request.setJavaHome(new File(Path.getJavaHome()));
 //        Properties properties = new Properties();
 //        if (str.length() != 0) {
 //            properties.setProperty("argLine", str.toString() + "excl=org.maven.wagon.*;" );
@@ -87,17 +89,16 @@ public class Invoker {
             mavenInvoker.execute(request);
         } catch (Exception e) {
             e.printStackTrace();
-            return;
         }
 
 
     }
 
-    public HashMap<String, String> getDependencyInfo(String rootPath, HashSet<String> dependencies) {
+    public Map<String, String> getDependencyInfo(String rootPath, Set<String> dependencies) {
 
         String dependencyList = execCmd("mvn dependency:list", rootPath);
         String[] lines = dependencyList.split("\n");
-        Pattern pattern = Pattern.compile("    (.*):compile|runtime");
+        Pattern pattern = Pattern.compile("    (.*):(compile|runtime|test)");
 
         for (String line : lines) {
             if (line == null) continue;
@@ -108,12 +109,12 @@ public class Invoker {
             }
         }
 
-        System.out.println(dependencies.size());
+        log.debug("dependency size:" + dependencies.size());
 
         return extractCoordinate(dependencies);
     }
 
-    public HashMap<String, String> extractCoordinate(HashSet<String> dependencies) {
+    public Map<String, String> extractCoordinate(Set<String> dependencies) {
         HashMap<String, String> coordinateMap = new HashMap<>();
         for (String dependency : dependencies) {
             String[] split = dependency.split(":");
@@ -132,7 +133,9 @@ public class Invoker {
 
     public String execCmd(String cmd, String dir) {
         String result = null;
-        try (InputStream inputStream = Runtime.getRuntime().exec(cmd, null, new File(dir)).getInputStream();
+
+        String[] env = new String[]{"JAVA_HOME=" + Path.getJavaHome()};
+        try (InputStream inputStream = Runtime.getRuntime().exec(cmd, env, new File(dir)).getInputStream();
              Scanner s = new Scanner(inputStream).useDelimiter("\\A")) {
             result = s.hasNext() ? s.next() : null;
         } catch (IOException e) {

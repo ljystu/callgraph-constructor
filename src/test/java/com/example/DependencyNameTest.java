@@ -1,31 +1,22 @@
 package com.example;
 
-import com.google.gson.*;
 import ljystu.project.callgraph.config.Path;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
-import ljystu.project.callgraph.util.JavaReadUtil;
-import ljystu.project.callgraph.util.PackageUtil;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
 import redis.clients.jedis.Jedis;
 
-import javax.swing.text.html.parser.Parser;
-import javax.xml.transform.Source;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.rmi.MarshalledObject;
-import java.security.CodeSource;
-import java.security.ProtectionDomain;
 import java.util.*;
 
 public class DependencyNameTest {
-    static String jarPath = Path.getJarPath();
+    static String jarPath = Path.getJavaagentHome();
 
     @Test
     public void getMavenDependencyName() throws Exception {

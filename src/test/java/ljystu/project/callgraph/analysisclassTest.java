@@ -1,6 +1,5 @@
 package ljystu.project.callgraph;
 
-import ljystu.project.callgraph.util.ExampleUtil;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.core.tests.callGraph.CallGraphTestUtil;
@@ -19,8 +18,8 @@ import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.WalaException;
+import ljystu.project.callgraph.test.ExampleUtil;
 import org.junit.Test;
-
 
 import java.io.File;
 import java.io.IOException;

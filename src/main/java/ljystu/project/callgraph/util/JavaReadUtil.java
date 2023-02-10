@@ -7,13 +7,16 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JavaReadUtil {
-    public static HashSet<String> getClasses(String dirPath) {
+    public static Set<String> getClasses(String dirPath, StringBuilder packages) {
+
         HashSet<String> classes = new HashSet<>();
 
+        HashSet<String> packageNames = new HashSet<>();
         File dir = new File(dirPath);
 
         if (!dir.isDirectory()) {
@@ -27,6 +30,7 @@ public class JavaReadUtil {
 
         // 正则表达式，用于匹配import语句
         Pattern importPattern = Pattern.compile("^import\\s(static\\s)?+(.+);$");
+        Pattern packagePattern = Pattern.compile("^package\\s?+(.+);$");
 
         for (File file : files) {
             Path path = file.toPath();
@@ -40,14 +44,27 @@ public class JavaReadUtil {
 
             String[] lines = content.split("\n");
             for (String line : lines) {
-                Matcher matcher = importPattern.matcher(line);
-                if (matcher.matches()) {
-                    classes.add(matcher.group(2));
+
+                Matcher importMatcher = importPattern.matcher(line);
+                if (importMatcher.matches()) {
+                    classes.add(importMatcher.group(2));
+                }
+                Matcher packageMatcher = packagePattern.matcher(line);
+                if (packageMatcher.matches()) {
+                    packageNames.add(packageMatcher.group(1) + ".*|");
                 }
             }
         }
+        for (String pkg : packageNames) {
+            packages.append(pkg);
+        }
+        if (packages.length() > 0) {
+            packages.setLength(packages.length() - 1);
+        }
+
         return classes;
     }
+
 
     static void findClassFiles(File dir, List<File> list, String type) {
 

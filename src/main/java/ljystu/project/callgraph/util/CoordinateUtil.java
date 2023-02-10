@@ -27,15 +27,13 @@ public class CoordinateUtil {
         if ((int) response.get("numFound") == 0) return "not found";
         JSONArray jsonArray = (JSONArray) response.get("docs");
         JSONObject dependency = jsonArray.getJSONObject(0);
-        String coordinate = (String) dependency.get("id");
-
-        return coordinate;
+        return (String) dependency.get("id");
     }
 
     private static String httpRequest(String requestUrl, Map<String, Object> params) {
         StringBuilder sb = new StringBuilder();
         try {
-            URL url = new URL(requestUrl + urlencode(params));
+            URL url = new URL(requestUrl + urlEncode(params));
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
             httpURLConnection.setDoInput(true);
             httpURLConnection.setRequestMethod("GET");
@@ -61,7 +59,7 @@ public class CoordinateUtil {
         return sb.toString();
     }
 
-    public static String urlencode(Map<String, Object> map) {
+    private static String urlEncode(Map<String, Object> map) {
         StringBuilder s = new StringBuilder();
         s.append("q=fc:").append(map.get("className"));
 //                .append("&v:").append(map.get("version"));

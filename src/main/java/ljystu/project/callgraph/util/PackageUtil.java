@@ -6,7 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,10 +58,16 @@ public class PackageUtil {
 
         String path = new File(rootPath).getAbsolutePath();
 
-        HashSet<String> definedPackages = JavaReadUtil.getClasses(path);
+        StringBuilder packagePatternsNames = new StringBuilder();
+        Set<String> definedPackages = JavaReadUtil.getClasses(path, packagePatternsNames);
+
         String excludedPackages = readExcludedPackages();
 
+        Pattern packagePattern = Pattern.compile(packagePatternsNames.toString());
+
         for (String p : definedPackages) {
+            Matcher packageMatcher = packagePattern.matcher(p);
+            if (packageMatcher.matches()) continue;
             if (getInclPackages(p, excludedPackages)) continue;
             String[] split = p.split("\\.");
             if (split.length != 0) {
@@ -100,9 +109,9 @@ public class PackageUtil {
         return str.toString();
     }
 
-    private boolean getInclPackages(String definedPackage, String exclustionList) {
-//        for (String exclusion : exclustionList) {
-        Pattern importPattern = Pattern.compile(exclustionList);
+    private boolean getInclPackages(String definedPackage, String exclusionList) {
+//        for (String exclusion : exclusionList) {
+        Pattern importPattern = Pattern.compile(exclusionList);
         Matcher matcher = importPattern.matcher(definedPackage);
         if (matcher.matches()) {
             return true;

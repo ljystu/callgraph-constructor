@@ -1,4 +1,4 @@
-package ljystu.project.callgraph.util;
+package ljystu.project.callgraph.test;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -7,7 +7,7 @@ import java.util.List;
 public class ClassUtil {
 
     // 存储所有class文件的列表
-    private List<String> classFiles = new ArrayList<>();
+    private final List<String> classFiles = new ArrayList<>();
 
     // 构造函数，传入要遍历的目录
     public ClassUtil(File dir) {
