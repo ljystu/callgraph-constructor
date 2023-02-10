@@ -1,0 +1,22 @@
+<build>
+    <plugins>
+        <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+                <execution>
+                    <id>modify-pom</id>
+                    <phase>generate-resources</phase>
+                    <configuration>
+                        <tasks>
+                            <property name="java.agent.path" value="path/to/your/agent.jar" />
+                            <echo message="-javaagent:${java.agent.path}" />
+                        </tasks>
+                    </configuration>
+                    <goals>
+                        <goal>run</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>

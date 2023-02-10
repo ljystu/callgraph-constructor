@@ -2,14 +2,10 @@ package ljystu.project.callgraph.util;
 
 import ljystu.project.callgraph.config.Path;
 import org.apache.maven.shared.invoker.*;
-import org.apache.shiro.crypto.hash.Hash;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,7 +16,7 @@ public class Invoker {
     static String mavenPath = Path.getMavenPath();
     static String jarPath = Path.getJarPath();
 
-    public HashSet<String> uploadPackages(String rootPath, HashMap<String, Integer> projectCount, String label, HashSet<String> dependencies) throws Exception {
+    public HashSet<String> analyseProject(String rootPath, HashMap<String, Integer> projectCount, String label) throws Exception {
 
 
         HashSet<String> set = new HashSet<>();
@@ -32,7 +28,16 @@ public class Invoker {
 
         packageUtil.getPackages(projectCount, set, str, jarPath, rootPath);
 
-        HashMap<String, String> coordinateMap = invokeTask(str, rootPath, dependencies);
+        List<String> pomFiles = packageUtil.getPomFiles(rootPath);
+
+        invokeTask(str, rootPath, pomFiles);
+
+        HashSet<String> dependencies = new HashSet<>();
+        HashMap<String, String> coordinateMap = getDependencyInfo(rootPath, dependencies);
+
+        File projectDirectory = new File(rootPath).getAbsoluteFile();
+
+//        deleteFile(projectDirectory);
 
         RedisOp redisOp = new RedisOp();
         redisOp.upload(label, coordinateMap);
@@ -41,20 +46,17 @@ public class Invoker {
 
     }
 
-    public HashMap<String, String> invokeTask(StringBuilder str, String rootPath, HashSet<String> dependencies) throws Exception {
+
+    public void invokeTask(StringBuilder str, String path, List<String> pomFilePaths) throws Exception {
 
         // 设置Maven的安装目录
         mavenInvoker.setMavenHome(new File(mavenPath));
+        POMUtil pomUtil = new POMUtil();
+//        for (String pomFilePath : pomFilePaths) {
+            pomUtil.editPOM(path + "/pom.xml", str.toString());
+//        }
+        invoke(path, "test", str);
 
-        invoke(rootPath, "test", str);
-
-        getDependencyInfo(rootPath, dependencies);
-
-        HashMap<String, String> coordinateMap = extractCoordinate(dependencies);
-
-        File projectDirectory = new File(rootPath).getAbsoluteFile();
-        deleteFile(projectDirectory);
-        return coordinateMap;
     }
 
     public void invoke(String rootPath, String task, StringBuilder str) throws MavenInvocationException {
@@ -72,23 +74,22 @@ public class Invoker {
 
         request.setGoals(Collections.singletonList(task));
 
-        if (str.length() != 0) {
-            Properties properties = new Properties();
-
-            properties.setProperty("argLine", str.toString());
-            request.setProperties(properties);
-
-        }
+        request.setJavaHome(new File("/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home"));
+//        Properties properties = new Properties();
+//        if (str.length() != 0) {
+//            properties.setProperty("argLine", str.toString() + "excl=org.maven.wagon.*;" );
+//        }
+//        request.setMavenOpts(str.toString());
+//        request.setProperties(properties);
         mavenInvoker.execute(request);
 
     }
 
-    public void getDependencyInfo(String rootPath, HashSet<String> dependencies) {
+    public HashMap<String, String> getDependencyInfo(String rootPath, HashSet<String> dependencies) {
 
         String dependencyList = execCmd("mvn dependency:list", rootPath);
         String[] lines = dependencyList.split("\n");
-//        HashSet<String> dependencies = new HashSet<>();
-        Pattern pattern = Pattern.compile("( *.*):compile|runtime");
+        Pattern pattern = Pattern.compile("    (.*):compile|runtime");
 
         for (String line : lines) {
             if (line == null) continue;
@@ -100,6 +101,8 @@ public class Invoker {
         }
 
         System.out.println(dependencies.size());
+
+        return extractCoordinate(dependencies);
     }
 
     public HashMap<String, String> extractCoordinate(HashSet<String> dependencies) {

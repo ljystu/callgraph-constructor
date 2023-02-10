@@ -1,7 +1,6 @@
 package ljystu.project.callgraph;
 
 
-<<<<<<< HEAD
 import ljystu.project.callgraph.config.Path;
 import org.apache.maven.shared.invoker.*;
 import org.apache.shiro.crypto.hash.Hash;
@@ -54,42 +53,6 @@ public class HelloExampleTest {
 //        System.out.println;
 
 
-=======
-import org.junit.Test;
-import org.neo4j.driver.*;
-
-import java.io.File;
-import java.net.URL;
-
-import static org.neo4j.driver.Values.parameters;
-
-public class HelloExampleTest {
-
-
-    @Test
-    public void testAll() throws Exception {
-        Driver driver = GraphDatabase.driver("bolt://localhost:7687",
-                AuthTokens.basic("neo4j", "ljystu"));
-        Session session = driver.session();
-
-        final String message = "Greeting";
-        String greeting = session.writeTransaction(
-                new TransactionWork<String>() {
-                    public String execute(Transaction tx) {
-                        Result result = tx.run("CREATE (a:Greeting) " +
-                                        "SET a.message = $message " +
-                                        "RETURN a.message + ', from node ' + id(a)",
-                                parameters("message", message));
-                        return result.single().get(0).asString();
-                    }
-                }
-        );
-
-//        System.out.println(greeting);
-
-        System.out.println("OK");
-        driver.close();
->>>>>>> a69b81f4239d82b74765d9dcb532c3d9307e0e56
 //        File directory= new File("zookeeper-master").getAbsoluteFile();
 //        deleteFile(directory);
 
@@ -103,7 +66,6 @@ public class HelloExampleTest {
 
     }
 
-<<<<<<< HEAD
     @Test
     public void mavenInfoTest() throws IOException, XmlPullParserException, MavenInvocationException {
 
@@ -142,12 +104,12 @@ public class HelloExampleTest {
                 // group 1 contains the path to the file
 
                 String match = matcher.group(1);
-                if(match == null) continue;
+                if (match == null) continue;
                 String[] info = match.split(":");
                 // TODO summarize ignore packages
-                if(info[0].startsWith("java")) continue;
+                if (info[0].startsWith("java")) continue;
 
-                String mavenAddress  = info[0] + ":" + info[1] +":" + info[3];
+                String mavenAddress = info[0] + ":" + info[1] + ":" + info[3];
                 dependencies.add(mavenAddress);
 
             }
@@ -168,7 +130,6 @@ public class HelloExampleTest {
         return result;
     }
 
-=======
->>>>>>> a69b81f4239d82b74765d9dcb532c3d9307e0e56
+
 }
 

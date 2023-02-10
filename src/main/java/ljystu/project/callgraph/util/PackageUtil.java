@@ -4,11 +4,14 @@ import ljystu.project.callgraph.config.Arg;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.cypher.internal.expressions.In;
 
+
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 public class PackageUtil {
@@ -16,7 +19,7 @@ public class PackageUtil {
     static String argLineRight = Arg.getGetArgLineRight();
     List<String> paths = new ArrayList<>();
 
-//    public   HashSet<Package> getCLasses(String rootPath) throws Exception {
+    //    public   HashSet<Package> getCLasses(String rootPath) throws Exception {
 //        HashSet<Package> definedPackages = new HashSet<>();
 //        Invoker.invoke(new StringBuilder(), rootPath, "compile");
 //        findTargetDirs(new File(rootPath));
@@ -39,18 +42,29 @@ public class PackageUtil {
 //        }
 //        return definedPackages;
 //    }
+    public List<String> getPomFiles(String rootPath) {
+        List<File> files = new ArrayList<>();
+        JavaReadUtil.findClassFiles(new File(rootPath), files, "pom.xml");
+        List<String> paths = new ArrayList<>();
+        for (File file : files) {
+            paths.add(file.getPath());
+        }
 
+        return paths;
+    }
 
     public void getPackages(HashMap<String, Integer> projectCount, Set<String> set, StringBuilder packageScan, String jar, String rootPath) throws Exception {
         String argLine = argLineLeft + jar + argLineRight;
 
         String path = new File(rootPath).getAbsolutePath();
-//        HashSet<Package> definedPackages = getCLasses(rootPath);
-        List<String> definedPackages = JavaReadUtil.getClasses(path);
+
+        HashSet<String> definedPackages = JavaReadUtil.getClasses(path);
+        String excludedPackages = readExcludedPackages();
+
         for (String p : definedPackages) {
+            if (getInclPackages(p, excludedPackages)) continue;
             String[] split = p.split("\\.");
             if (split.length != 0) {
-                if (split[0].equals("java")) continue;
                 packageScan.append(split[0]);
                 if (split.length > 1) packageScan.append(".").append(split[1]);
             } else {
@@ -70,6 +84,36 @@ public class PackageUtil {
         packageScan.setLength(packageScan.length() - 1);
         packageScan.append(";");
     }
+
+    private String readExcludedPackages() {
+        StringBuilder str = new StringBuilder();
+        try {
+            Path path = new File("src/main/resources/exclusions.txt").toPath();
+            String content = Files.readString(path);
+            String[] lines = content.split("\r\n");
+            for (String line : lines) {
+                str.append(line);
+                str.append("|");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        str.setLength(str.length() - 1);
+
+        return str.toString();
+    }
+
+    private boolean getInclPackages(String definedPackage, String exclustionList) throws IOException {
+//        for (String exclusion : exclustionList) {
+        Pattern importPattern = Pattern.compile(exclustionList);
+        Matcher matcher = importPattern.matcher(definedPackage);
+        if (matcher.matches()) {
+            return true;
+        }
+//        }
+        return false;
+    }
+
 
     private void findTargetDirs(File dir) {
         if (dir.isDirectory()) {

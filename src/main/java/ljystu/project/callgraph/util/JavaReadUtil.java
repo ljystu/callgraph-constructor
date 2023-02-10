@@ -6,13 +6,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JavaReadUtil {
-    public static List<String> getClasses(String dirPath) throws IOException {
-        List<String> classes = new ArrayList<>();
+    public static HashSet<String> getClasses(String dirPath) throws IOException {
+        HashSet<String> classes = new HashSet<>();
 
         File dir = new File(dirPath);
 
@@ -23,7 +24,7 @@ public class JavaReadUtil {
 
         // 获取目录下的所有Java文件
         List<File> files = new ArrayList<>();
-        findClassFiles(dir, files);
+        findClassFiles(dir, files, ".java");
 
         // 正则表达式，用于匹配import语句
         Pattern importPattern = Pattern.compile("^import\\s(static\\s)?+(.+);$");
@@ -36,24 +37,24 @@ public class JavaReadUtil {
             for (String line : lines) {
                 Matcher matcher = importPattern.matcher(line);
                 if (matcher.matches()) {
-                   classes.add(matcher.group(2));
+                    classes.add(matcher.group(2));
                 }
             }
         }
         return classes;
     }
 
-    private static void findClassFiles(File dir, List<File> list) {
+    static void findClassFiles(File dir, List<File> list, String type) {
 
         if (dir.isDirectory()) {
             // 如果是目录，则遍历它的子目录
             File[] children = dir.listFiles();
             if (children != null) {
                 for (File child : children) {
-                    findClassFiles(child, list);
+                    findClassFiles(child, list, type);
                 }
             }
-        } else if (dir.getName().endsWith(".java")) {
+        } else if (dir.getName().endsWith(type)) {
             // 如果是java文件，则加入列表
             list.add(dir);
 
