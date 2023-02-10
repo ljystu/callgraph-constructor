@@ -1,7 +1,9 @@
 package ljystu.project.callgraph.util;
 
 import ljystu.project.callgraph.config.Path;
-import org.apache.maven.shared.invoker.*;
+import org.apache.maven.shared.invoker.DefaultInvocationRequest;
+import org.apache.maven.shared.invoker.DefaultInvoker;
+import org.apache.maven.shared.invoker.InvocationRequest;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +18,7 @@ public class Invoker {
     static String mavenPath = Path.getMavenPath();
     static String jarPath = Path.getJarPath();
 
-    public HashSet<String> analyseProject(String rootPath, HashMap<String, Integer> projectCount, String label) throws Exception {
+    public HashSet<String> analyseProject(String rootPath, HashMap<String, Integer> projectCount, String label) {
 
 
         HashSet<String> set = new HashSet<>();
@@ -47,19 +49,19 @@ public class Invoker {
     }
 
 
-    public void invokeTask(StringBuilder str, String path, List<String> pomFilePaths) throws Exception {
+    public void invokeTask(StringBuilder str, String path, List<String> pomFilePaths) {
 
         // 设置Maven的安装目录
         mavenInvoker.setMavenHome(new File(mavenPath));
         POMUtil pomUtil = new POMUtil();
-//        for (String pomFilePath : pomFilePaths) {
-            pomUtil.editPOM(path + "/pom.xml", str.toString());
-//        }
+        for (String pomFilePath : pomFilePaths) {
+            pomUtil.editPOM(pomFilePath, str.toString());
+        }
         invoke(path, "test", str);
 
     }
 
-    public void invoke(String rootPath, String task, StringBuilder str) throws MavenInvocationException {
+    public void invoke(String rootPath, String task, StringBuilder str) {
 
         InvocationRequest request = new DefaultInvocationRequest();
 
@@ -81,7 +83,13 @@ public class Invoker {
 //        }
 //        request.setMavenOpts(str.toString());
 //        request.setProperties(properties);
-        mavenInvoker.execute(request);
+        try {
+            mavenInvoker.execute(request);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
 
     }
 

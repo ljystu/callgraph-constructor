@@ -2,11 +2,8 @@ package ljystu.project.callgraph.util;
 
 import ljystu.project.callgraph.config.Arg;
 import lombok.extern.slf4j.Slf4j;
-import org.neo4j.cypher.internal.expressions.In;
-
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -53,7 +50,7 @@ public class PackageUtil {
         return paths;
     }
 
-    public void getPackages(HashMap<String, Integer> projectCount, Set<String> set, StringBuilder packageScan, String jar, String rootPath) throws Exception {
+    public void getPackages(HashMap<String, Integer> projectCount, Set<String> set, StringBuilder packageScan, String jar, String rootPath) {
         String argLine = argLineLeft + jar + argLineRight;
 
         String path = new File(rootPath).getAbsolutePath();
@@ -103,7 +100,7 @@ public class PackageUtil {
         return str.toString();
     }
 
-    private boolean getInclPackages(String definedPackage, String exclustionList) throws IOException {
+    private boolean getInclPackages(String definedPackage, String exclustionList) {
 //        for (String exclusion : exclustionList) {
         Pattern importPattern = Pattern.compile(exclustionList);
         Matcher matcher = importPattern.matcher(definedPackage);

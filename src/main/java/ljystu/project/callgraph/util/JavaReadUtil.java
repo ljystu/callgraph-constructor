@@ -2,7 +2,6 @@ package ljystu.project.callgraph.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -12,7 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JavaReadUtil {
-    public static HashSet<String> getClasses(String dirPath) throws IOException {
+    public static HashSet<String> getClasses(String dirPath) {
         HashSet<String> classes = new HashSet<>();
 
         File dir = new File(dirPath);
@@ -31,7 +30,13 @@ public class JavaReadUtil {
 
         for (File file : files) {
             Path path = file.toPath();
-            String content = Files.readString(path);
+            String content = "";
+            try {
+                content = Files.readString(path);
+            } catch (IOException e) {
+                e.printStackTrace();
+                continue;
+            }
 
             String[] lines = content.split("\n");
             for (String line : lines) {

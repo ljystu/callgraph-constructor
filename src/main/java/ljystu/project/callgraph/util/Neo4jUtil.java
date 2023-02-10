@@ -6,8 +6,10 @@ import ljystu.project.callgraph.entity.Node;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.neo4j.driver.Values.parameters;
 
@@ -46,23 +48,25 @@ public class Neo4jUtil {
         }
     }
 
-    public void addEdgeUnwind(List<HashMap<String, Object>> fromNodes, List<HashMap<String, Object>> toNodes, String label) {
+    public void addEdgeUnwind(List<HashMap<String, Object>> edgeNodePairs, String type) {
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("fromNodes", fromNodes);
-        parameters.put("label", label);
+        parameters.put("edgeNodePairs", edgeNodePairs);
+        parameters.put("type", type);
 
         try (Session session = driver.session(SessionConfig.forDatabase(DATABASE))) {
 
-            session.executeWrite(tx -> tx.run("UNWIND $fromNodes as row " +
+            session.executeWrite(tx -> tx.run("UNWIND $edgeNodePairs as row " +
                             "MATCH (method_from:Method {packageName: row.packageName, className: row.className, " +
                             "methodName: row.methodName, params: row.params, returnType: row.returnType }), " +
                             "(method_to:Method {packageName: row.packageName2, className: row.className2, " +
                             "methodName: row.methodName2, params: row.params2, returnType: row.returnType2}) " +
                             "MERGE (method_from)-[r:CALL]->(method_to)" +
-                            "ON CREATE SET r.label = $label \n" +
-                            "ON MATCH SET r.label = 'both'",
+                            "ON CREATE SET r.type = $type \n" +
+                            "ON MATCH SET r.type = 'both'",
                     parameters));
 //            System.out.println(result.next().toString());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -85,9 +89,9 @@ public class Neo4jUtil {
         }
     }
 
-    public void addMethodUnwind(List<HashMap<String, Object>> list) {
+    public void addMethodUnwind(List<HashMap<String, Object>> nodeList) {
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("batches", list);
+        parameters.put("batches", nodeList);
         // Sessions are lightweight and disposable connection wrappers.
         try (Session session = driver.session(SessionConfig.forDatabase(DATABASE))) {
             // Wrapping a Cypher Query in a Managed Transaction provides atomicity
@@ -98,6 +102,8 @@ public class Neo4jUtil {
                             "MERGE (a:Method {packageName: row.packageName, className: row.className," +
                             " methodName: row.methodName, params: row.params, returnType: row.returnType })",
                     parameters));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -123,44 +129,23 @@ public class Neo4jUtil {
         driver.close();
     }
 
-    public void upload(HashSet<Edge> edges, HashSet<Node> Nodes) {
-        init("bolt://localhost:7687", "neo4j", "ljystu");
-
-        for (Node node : Nodes) {
-            addMethod(node);
-        }
-        for (Edge edge : edges) {
-            addEdge(edge);
-        }
-//        printMethods("c");
-        close();
-    }
-
-    public void upload(Edge edge) {
-//        init("bolt://localhost:7687", "neo4j", "ljystu");
-        addMethod(edge.getFrom());
-        addMethod(edge.getTo());
-        addEdge(edge);
-//        close();
-    }
-
     public void uploadBatch(List<Node> nodesList, List<Edge> edges, String label) {
         List<HashMap<String, Object>> nodeMap = new ArrayList<>();
         for (Node node : nodesList) {
             nodeMap.add(getNodeInfo(node, ""));
         }
         addMethodUnwind(nodeMap);
-        List<HashMap<String, Object>> fromNodes = new ArrayList<>();
-        List<HashMap<String, Object>> toNodes = new ArrayList<>();
+        List<HashMap<String, Object>> edgeNodePairs = new ArrayList<>();
+
         for (Edge edge : edges) {
             Node from = edge.getFrom();
             Node to = edge.getTo();
 
             HashMap<String, Object> nodeInfo = getNodeInfo(from, "");
             nodeInfo.putAll(getNodeInfo(to, "2"));
-            fromNodes.add(nodeInfo);
+            edgeNodePairs.add(nodeInfo);
         }
-        addEdgeUnwind(fromNodes, toNodes, label);
+        addEdgeUnwind(edgeNodePairs, label);
     }
 
     public HashMap<String, Object> getNodeInfo(Node node, String info) {

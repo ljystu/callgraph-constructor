@@ -1,32 +1,31 @@
-package ljystu.project.callgraph.util;
+package com.example;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.junit.Test;
 
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.List;
 
-@Slf4j
 public class POMUtil {
-    public void editPOM(String pomFile, String packageInfo) {
+
+    @Test
+    public void POMTest() throws Exception {
+        String pomFile = "src/main/resources/pom.xml";
+        String packageInfo = "-noverify -javaagent:";
+        editPOM(pomFile, packageInfo);
+    }
+
+    public void editPOM(String pomFile, String packageInfo) throws Exception {
         // 读取 POM 文件
 
         MavenXpp3Reader reader = new MavenXpp3Reader();
-        Model model = null;
-        try {
-            model = reader.read(new FileReader(pomFile));
-        } catch (Exception e) {
-            log.error("pomFile not found");
-            return;
-        }
-
+        Model model = reader.read(new FileReader(pomFile));
 
         // 获取构建部分
         Build build = model.getBuild();
@@ -43,7 +42,7 @@ public class POMUtil {
 //            pluginManagement = new PluginManagement();
 //        }
 //        List<Plugin> plugins = pluginManagement.getPlugins();
-
+//
         Plugin compilerPlugin = new Plugin();
         // 判断插件是否已存在
         boolean exists = false;
@@ -72,25 +71,18 @@ public class POMUtil {
             configArgLine = new Xpp3Dom("argLine");
             configuration.addChild(configArgLine);
         }
+
         if (configArgLine.getValue() != null) {
             configArgLine.setValue(configArgLine.getValue() + " " + packageInfo);
         } else {
             configArgLine.setValue(packageInfo);
         }
-
-        if (!exists) {
+        if (!exists)
             plugins.add(compilerPlugin);
-        }
 
 //        build.setPluginManagement(pluginManagement);
         // 写入 POM 文件
         MavenXpp3Writer writer = new MavenXpp3Writer();
-        try {
-
-            writer.write(new FileWriter(pomFile), model);
-        } catch (IOException e) {
-            e.printStackTrace();
-            log.error(pomFile + "update failed");
-        }
+        writer.write(new FileWriter(pomFile), model);
     }
 }
