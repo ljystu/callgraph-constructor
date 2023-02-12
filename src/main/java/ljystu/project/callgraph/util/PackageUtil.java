@@ -74,20 +74,26 @@ public class PackageUtil {
      * @param projectCount the project count
      * @param set          the set
      * @param packageScan  the package scan
-     * @param jar          the jar
+     * @param javaagent    the javaagent
      * @param rootPath     the root path
      */
-    public void getPackages(HashMap<String, Integer> projectCount, Set<String> set, StringBuilder packageScan, String jar, String rootPath) {
-        String argLine = argLineLeft + jar + argLineRight;
+    public void getPackages(HashMap<String, Integer> projectCount, Set<String> set, StringBuilder packageScan, String javaagent, String rootPath) {
+        String argLine = argLineLeft + javaagent + argLineRight;
 
         String path = new File(rootPath).getAbsolutePath();
         StringBuilder packagePatternsNames = new StringBuilder();
         Set<String> definedPackages = new HashSet<>();
 
-        try {
-            definedPackages = ClassReadUtil.getImportInfo(path, "", packagePatternsNames);
-        } catch (Exception e) {
-            e.printStackTrace();
+        List<File> jarFiles = new ArrayList<>();
+        ClassReadUtil.findTypeFiles(new File(rootPath + "/lib"), jarFiles, ".jar");
+        for (File jar : jarFiles) {
+            try {
+                definedPackages.addAll(ClassReadUtil.getImportInfo(jar.getAbsolutePath(), rootPath + "/myjar", packagePatternsNames));
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                DeleteUtil.deleteFile(new File(rootPath + "/myjar"));
+            }
         }
 
         String excludedPackages = readExcludedPackages();

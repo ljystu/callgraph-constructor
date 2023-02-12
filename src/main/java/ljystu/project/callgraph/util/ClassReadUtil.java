@@ -87,7 +87,7 @@ public class ClassReadUtil {
      * @param list the list
      * @param type the type
      */
-    static void findTypeFiles(File dir, List<File> list, String type) {
+    public static void findTypeFiles(File dir, List<File> list, String type) {
 
         if (dir.isDirectory()) {
             File[] children = dir.listFiles();
@@ -114,13 +114,14 @@ public class ClassReadUtil {
 
         //TODO 这两个参数需要 dependency;copy之后直接传入生成的路径
 
-        jarFilePath = "/Users/ljystu/Desktop/java-callgraph/target/javacg-0.1-SNAPSHOT-dycg-agent.jar";
-        tempDir = "src/main/resources/" + "javacg-0.1-SNAPSHOT-dycg-agent";
+//        jarFilePath = "/Users/ljystu/Desktop/java-callgraph/target/javacg-0.1-SNAPSHOT-dycg-agent.jar";
+//        tempDir = "src/main/resources/" + "javacg-0.1-SNAPSHOT-dycg-agent";
 
         extractClasses(jarFilePath, tempDir);
 
         Set<String> classes = ClassReadUtil.getClasses(tempDir);
         log.info(String.valueOf(classes.size()));
+
 
         return getImportedPackages(jarFilePath, classes, packages);
     }

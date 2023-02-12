@@ -8,9 +8,9 @@ import java.io.File;
 
 public class DependencyDownloadTest {
     @Test
-    public void invokeTest() {
+    public void invokeJarDownloadTest() {
         Invoker invoker = new Invoker();
         invoker.mavenInvoker.setMavenHome(new File(Path.getMavenHome()));
-        invoker.invoke("/Users/ljystu/Desktop/neo4j/zookeeper-master", "dependency:copy-dependencies -DoutputDirecotry=/Users/ljystu/Desktop/neo4j/zookeeper-master/lib");
+        invoker.invokeTask("junit4-main", "dependency:copy-dependencies", "./lib");
     }
 }

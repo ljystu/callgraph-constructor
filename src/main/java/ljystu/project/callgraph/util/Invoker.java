@@ -41,13 +41,15 @@ public class Invoker {
 
         PackageUtil packageUtil = new PackageUtil();
 
-        // TODO 调用dependency:copy store jar into a path
-        packageUtil.getPackages(projectCount, set, inclPackages, Path.getJavaagentHome(), rootPath);
-
         //get path of all pom files
         List<String> pomFiles = packageUtil.getPomFiles(rootPath);
 
-        invokeMavenTest(inclPackages.toString(), rootPath, pomFiles);
+        // TODO 调用dependency:copy store jar into a path
+        invokeMavenTask(inclPackages.toString(), rootPath, pomFiles, "dependency:copy-dependencies");
+        packageUtil.getPackages(projectCount, set, inclPackages, Path.getJavaagentHome(), rootPath);
+
+
+        invokeMavenTask(inclPackages.toString(), rootPath, pomFiles, "test");
 
         // this might be useless now
         HashSet<String> dependencies = new HashSet<>();
@@ -71,16 +73,20 @@ public class Invoker {
      * @param path         root path of maven project
      * @param pomFilePaths all pom files in the project
      */
-    public void invokeMavenTest(String inclPackages, String path, List<String> pomFilePaths) {
+    public void invokeMavenTask(String inclPackages, String path, List<String> pomFilePaths, String task) {
 
         // 设置Maven的安装目录
         mavenInvoker.setMavenHome(new File(Path.getMavenHome()));
-        POMUtil pomUtil = new POMUtil();
-        //add javaagent into surefire configuration of all POM files
-        for (String pomFilePath : pomFilePaths) {
-            pomUtil.editPOM(pomFilePath, inclPackages);
+        if (task == "test") {
+            POMUtil pomUtil = new POMUtil();
+            //add javaagent into surefire configuration of all POM files
+            for (String pomFilePath : pomFilePaths) {
+                pomUtil.editPOM(pomFilePath, inclPackages);
+            }
+            invokeTask(path, "test", "");
+        } else {
+            invokeTask(path, "dependency:copy-dependencies", "./lib");
         }
-        invoke(path, "test");
 
     }
 
@@ -90,7 +96,7 @@ public class Invoker {
      * @param rootPath roo path
      * @param task     task name
      */
-    public void invoke(String rootPath, String task) {
+    public void invokeTask(String rootPath, String task, String outputDir) {
 
         InvocationRequest request = new DefaultInvocationRequest();
 
@@ -98,7 +104,7 @@ public class Invoker {
         String projectMavenFilePath = rootPath + "/pom.xml";
         File projectMavenFile = new File(projectMavenFilePath);
         if (!projectMavenFile.exists()) {
-            deleteFile(new File(rootPath).getAbsoluteFile());
+            DeleteUtil.deleteFile(new File(rootPath).getAbsoluteFile());
             return;
         }
         request.setPomFile(projectMavenFile);
@@ -106,12 +112,12 @@ public class Invoker {
         request.setGoals(Collections.singletonList(task));
 
         request.setJavaHome(new File(Path.getJavaHome()));
-//        Properties properties = new Properties();
-//        if (str.length() != 0) {
-//            properties.setProperty("argLine", str.toString() + "excl=org.maven.wagon.*;" );
-//        }
-//        request.setMavenOpts(str.toString());
-//        request.setProperties(properties);
+        Properties properties = new Properties();
+        if (outputDir.length() != 0) {
+            properties.setProperty("outputDirectory", outputDir);
+        }
+
+        request.setProperties(properties);
         try {
             mavenInvoker.execute(request);
         } catch (Exception e) {
@@ -194,28 +200,6 @@ public class Invoker {
         return result;
     }
 
-    /**
-     * delete project directory
-     *
-     * @param dirFile the dir file
-     */
-    public void deleteFile(File dirFile) {
 
-        if (!dirFile.exists()) {
-            return;
-        }
-
-        if (dirFile.isFile()) {
-            dirFile.delete();
-            return;
-        } else {
-
-            for (File file : dirFile.listFiles()) {
-                deleteFile(file);
-            }
-        }
-
-        dirFile.delete();
-    }
 
 }
