@@ -14,22 +14,46 @@ import java.util.Map;
 import static org.neo4j.driver.Values.parameters;
 
 
+/**
+ * The type Neo 4 j util.
+ */
 public class Neo4jUtil {
 
-    // Driver objects are thread-safe and are typically made available application-wide.
+    /**
+     * The Driver.
+     */
+// Driver objects are thread-safe and are typically made available application-wide.
     Driver driver;
 
+    /**
+     * The Database.
+     */
     String DATABASE = "neo4j";
 
+    /**
+     * Instantiates a new Neo 4 j util.
+     */
     public Neo4jUtil() {
 
     }
 
-    public void init(String uri, String user, String password) {
+    /**
+     * Instantiates a new Neo 4 j util.
+     *
+     * @param uri      the uri
+     * @param user     the user
+     * @param password the password
+     */
+    public Neo4jUtil(String uri, String user, String password) {
         driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password));
 
     }
 
+    /**
+     * Add edge.
+     *
+     * @param edge the edge
+     */
     public void addEdge(Edge edge) {
         try (Session session = driver.session(SessionConfig.forDatabase(DATABASE))) {
             Node from = edge.getFrom();
@@ -48,6 +72,12 @@ public class Neo4jUtil {
         }
     }
 
+    /**
+     * Add edge unwind.
+     *
+     * @param edgeNodePairs the edge node pairs
+     * @param type          the type
+     */
     public void addEdgeUnwind(List<HashMap<String, Object>> edgeNodePairs, String type) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("edgeNodePairs", edgeNodePairs);
@@ -70,6 +100,11 @@ public class Neo4jUtil {
         }
     }
 
+    /**
+     * Add method.
+     *
+     * @param node the node
+     */
     public void addMethod(Node node) {
         String packageName = node.getPackageName();
         String className = node.getClassName();
@@ -89,6 +124,11 @@ public class Neo4jUtil {
         }
     }
 
+    /**
+     * Add method unwind.
+     *
+     * @param nodeList the node list
+     */
     public void addMethodUnwind(List<HashMap<String, Object>> nodeList) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("batches", nodeList);
@@ -107,6 +147,11 @@ public class Neo4jUtil {
         }
     }
 
+    /**
+     * Print methods.
+     *
+     * @param initial the initial
+     */
     public void printMethods(String initial) {
         try (Session session = driver.session(SessionConfig.forDatabase(DATABASE))) {
             // A Managed transaction is a quick and easy way to wrap a Cypher Query.
@@ -124,11 +169,21 @@ public class Neo4jUtil {
         }
     }
 
+    /**
+     * Close.
+     */
     public void close() {
         // Closing a driver immediately shuts down all open connections.
         driver.close();
     }
 
+    /**
+     * Upload batch.
+     *
+     * @param nodesList the nodes list
+     * @param edges     the edges
+     * @param label     the label
+     */
     public void uploadBatch(List<Node> nodesList, List<Edge> edges, String label) {
         List<HashMap<String, Object>> nodeMap = new ArrayList<>();
         for (Node node : nodesList) {
@@ -148,6 +203,13 @@ public class Neo4jUtil {
         addEdgeUnwind(edgeNodePairs, label);
     }
 
+    /**
+     * Gets node info.
+     *
+     * @param node the node
+     * @param info the info
+     * @return the node info
+     */
     public HashMap<String, Object> getNodeInfo(Node node, String info) {
         HashMap<String, Object> map = new HashMap<>();
         map.put("packageName" + info, node.getPackageName());

@@ -11,6 +11,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+@Deprecated
 public class CoordinateUtil {
     public static String getCoordinate(String className, String version) {
         //TODO version 需要从jar包名称中获取

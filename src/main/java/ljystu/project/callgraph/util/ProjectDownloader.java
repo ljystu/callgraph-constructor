@@ -14,10 +14,19 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+/**
+ * The type Project downloader.
+ */
 @Slf4j
 public class ProjectDownloader {
 
-    // 读取文件并解析项目列表
+    /**
+     * Read projects list.
+     *
+     * @param filepath the filepath
+     * @return the list
+     */
+// 读取文件并解析项目列表
     public List<Project> readProjects(String filepath) {
         // 读取文件
         String json = readFile(filepath);
@@ -35,7 +44,13 @@ public class ProjectDownloader {
         return projects;
     }
 
-    // 下载项目并解压
+    /**
+     * Download and unzip string.
+     *
+     * @param project the project
+     * @return the string
+     */
+// 下载项目并解压
     public String downloadAndUnzip(Project project) {
         // 下载项目的zip文件
         URL url = null;

@@ -13,8 +13,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * The type Pom util.
+ */
 @Slf4j
 public class POMUtil {
+    /**
+     * Edit pom.
+     *
+     * @param pomFile     the pom file
+     * @param packageInfo the package info
+     */
     public void editPOM(String pomFile, String packageInfo) {
         // 读取 POM 文件
 

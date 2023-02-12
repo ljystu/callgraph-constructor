@@ -13,29 +13,43 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * The type Invoker.
+ */
 @Slf4j
 public class Invoker {
-    static org.apache.maven.shared.invoker.Invoker mavenInvoker = new DefaultInvoker();
+    public org.apache.maven.shared.invoker.Invoker mavenInvoker = new DefaultInvoker();
 
 //    static String mavenPath = Path.getMavenHome();
 //    static String jarPath = Path.getJavaagentHome();
 
+    /**
+     * Analyse project hash set.
+     *
+     * @param rootPath     the root path
+     * @param projectCount the project count
+     * @param label        the label
+     * @return hash set
+     */
     public HashSet<String> analyseProject(String rootPath, HashMap<String, Integer> projectCount, String label) {
 
 
         HashSet<String> set = new HashSet<>();
 
         // 获取Test类的所有import的类型
-        StringBuilder str = new StringBuilder();
+        StringBuilder inclPackages = new StringBuilder();
 
         PackageUtil packageUtil = new PackageUtil();
 
-        packageUtil.getPackages(projectCount, set, str, Path.getJavaagentHome(), rootPath);
+        // TODO 调用dependency:copy store jar into a path
+        packageUtil.getPackages(projectCount, set, inclPackages, Path.getJavaagentHome(), rootPath);
 
+        //get path of all pom files
         List<String> pomFiles = packageUtil.getPomFiles(rootPath);
 
-        invokeTask(str, rootPath, pomFiles);
+        invokeMavenTest(inclPackages.toString(), rootPath, pomFiles);
 
+        // this might be useless now
         HashSet<String> dependencies = new HashSet<>();
         Map<String, String> coordinateMap = getDependencyInfo(rootPath, dependencies);
 
@@ -50,19 +64,32 @@ public class Invoker {
 
     }
 
-
-    public void invokeTask(StringBuilder str, String path, List<String> pomFilePaths) {
+    /**
+     * invoke maven test with given arg
+     *
+     * @param inclPackages included packages
+     * @param path         root path of maven project
+     * @param pomFilePaths all pom files in the project
+     */
+    public void invokeMavenTest(String inclPackages, String path, List<String> pomFilePaths) {
 
         // 设置Maven的安装目录
         mavenInvoker.setMavenHome(new File(Path.getMavenHome()));
         POMUtil pomUtil = new POMUtil();
+        //add javaagent into surefire configuration of all POM files
         for (String pomFilePath : pomFilePaths) {
-            pomUtil.editPOM(pomFilePath, str.toString());
+            pomUtil.editPOM(pomFilePath, inclPackages);
         }
         invoke(path, "test");
 
     }
 
+    /**
+     * invoke given maven task
+     *
+     * @param rootPath roo path
+     * @param task     task name
+     */
     public void invoke(String rootPath, String task) {
 
         InvocationRequest request = new DefaultInvocationRequest();
@@ -94,6 +121,15 @@ public class Invoker {
 
     }
 
+
+    /**
+     * Gets dependency info.
+     *
+     * @param rootPath     the root path
+     * @param dependencies the dependencies
+     * @return the dependency info
+     */
+    @Deprecated
     public Map<String, String> getDependencyInfo(String rootPath, Set<String> dependencies) {
 
         String dependencyList = execCmd("mvn dependency:list", rootPath);
@@ -114,6 +150,13 @@ public class Invoker {
         return extractCoordinate(dependencies);
     }
 
+    /**
+     * Extract coordinate map.
+     *
+     * @param dependencies the dependencies
+     * @return the map
+     */
+    @Deprecated
     public Map<String, String> extractCoordinate(Set<String> dependencies) {
         HashMap<String, String> coordinateMap = new HashMap<>();
         for (String dependency : dependencies) {
@@ -131,6 +174,13 @@ public class Invoker {
         return coordinateMap;
     }
 
+    /**
+     * Exec cmd string.
+     *
+     * @param cmd the cmd
+     * @param dir the dir
+     * @return the string
+     */
     public String execCmd(String cmd, String dir) {
         String result = null;
 
@@ -144,8 +194,13 @@ public class Invoker {
         return result;
     }
 
+    /**
+     * delete project directory
+     *
+     * @param dirFile the dir file
+     */
     public void deleteFile(File dirFile) {
-        // 如果dir对应的文件不存在，则退出
+
         if (!dirFile.exists()) {
             return;
         }

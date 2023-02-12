@@ -6,27 +6,42 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * The type Package util.
+ */
 @Slf4j
 public class PackageUtil {
+    /**
+     * The Arg line left.
+     */
     static String argLineLeft = Arg.getArgLineLeft();
+    /**
+     * The Arg line right.
+     */
     static String argLineRight = Arg.getGetArgLineRight();
+    /**
+     * The Paths.
+     */
     List<String> paths = new ArrayList<>();
 
-    //    public   HashSet<Package> getCLasses(String rootPath) throws Exception {
+    /**
+     * Gets pom files.
+     *
+     * @param rootPath the root path
+     * @return the pom files
+     */
+//    public   HashSet<Package> getCLasses(String rootPath) throws Exception {
 //        HashSet<Package> definedPackages = new HashSet<>();
 //        Invoker.invoke(new StringBuilder(), rootPath, "compile");
 //        findTargetDirs(new File(rootPath));
 //        for (String path : paths) {
 ////            ClassUtil finder = new ClassUtil(new File(path + "/classes/"));
 //
-//            List<String> classFiles = JavaReadUtil.getClasses(path.subpackageScaning(0,path.lastIndexOf('/')) );
+//            List<String> classFiles = ClassReadUtil.getClasses(path.subpackageScaning(0,path.lastIndexOf('/')) );
 ////                    finder.getClassFiles();
 ////            File dir = new File(path + "/classes/" );
 ////            URL url = dir.toURI().toURL();
@@ -44,7 +59,7 @@ public class PackageUtil {
 //    }
     public List<String> getPomFiles(String rootPath) {
         List<File> files = new ArrayList<>();
-        JavaReadUtil.findClassFiles(new File(rootPath), files, "pom.xml");
+        ClassReadUtil.findTypeFiles(new File(rootPath), files, "pom.xml");
         List<String> paths = new ArrayList<>();
         for (File file : files) {
             paths.add(file.getPath());
@@ -53,22 +68,37 @@ public class PackageUtil {
         return paths;
     }
 
+    /**
+     * Gets packages.
+     *
+     * @param projectCount the project count
+     * @param set          the set
+     * @param packageScan  the package scan
+     * @param jar          the jar
+     * @param rootPath     the root path
+     */
     public void getPackages(HashMap<String, Integer> projectCount, Set<String> set, StringBuilder packageScan, String jar, String rootPath) {
         String argLine = argLineLeft + jar + argLineRight;
 
         String path = new File(rootPath).getAbsolutePath();
-
         StringBuilder packagePatternsNames = new StringBuilder();
-        Set<String> definedPackages = JavaReadUtil.getClasses(path, packagePatternsNames);
+        Set<String> definedPackages = new HashSet<>();
+
+        try {
+            definedPackages = ClassReadUtil.getImportInfo(path, "", packagePatternsNames);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         String excludedPackages = readExcludedPackages();
+        Pattern excludedPattern = Pattern.compile(excludedPackages);
 
         Pattern packagePattern = Pattern.compile(packagePatternsNames.toString());
 
         for (String p : definedPackages) {
             Matcher packageMatcher = packagePattern.matcher(p);
-            if (packageMatcher.matches()) continue;
-            if (getInclPackages(p, excludedPackages)) continue;
+            if (packageMatcher.matches() || getExclPackages(p, excludedPattern)) continue;
+
             String[] split = p.split("\\.");
             if (split.length != 0) {
                 packageScan.append(split[0]);
@@ -109,9 +139,9 @@ public class PackageUtil {
         return str.toString();
     }
 
-    private boolean getInclPackages(String definedPackage, String exclusionList) {
+    private boolean getExclPackages(String definedPackage, Pattern importPattern) {
 //        for (String exclusion : exclusionList) {
-        Pattern importPattern = Pattern.compile(exclusionList);
+
         Matcher matcher = importPattern.matcher(definedPackage);
         if (matcher.matches()) {
             return true;
