@@ -18,7 +18,7 @@ import java.util.zip.ZipInputStream;
  * The type Project downloader.
  */
 @Slf4j
-public class ProjectDownloader {
+public class ProjectUtil {
 
     /**
      * Read projects list.
@@ -110,6 +110,25 @@ public class ProjectDownloader {
             }
         }
         return name;
+    }
+
+    public static void deleteFile(File dirFile) {
+
+        if (!dirFile.exists()) {
+            return;
+        }
+
+        if (dirFile.isFile()) {
+            dirFile.delete();
+            return;
+        } else {
+
+            for (File file : dirFile.listFiles()) {
+                deleteFile(file);
+            }
+        }
+
+        dirFile.delete();
     }
 
 }

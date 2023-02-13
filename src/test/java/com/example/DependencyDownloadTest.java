@@ -1,7 +1,7 @@
 package com.example;
 
 import ljystu.project.callgraph.config.Path;
-import ljystu.project.callgraph.util.Invoker;
+import ljystu.project.callgraph.invoker.Invoker;
 import org.junit.Test;
 
 import java.io.File;

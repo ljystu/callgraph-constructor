@@ -4,6 +4,8 @@ import ljystu.project.callgraph.config.Arg;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -34,32 +36,9 @@ public class PackageUtil {
      * @param rootPath the root path
      * @return the pom files
      */
-//    public   HashSet<Package> getCLasses(String rootPath) throws Exception {
-//        HashSet<Package> definedPackages = new HashSet<>();
-//        Invoker.invoke(new StringBuilder(), rootPath, "compile");
-//        findTargetDirs(new File(rootPath));
-//        for (String path : paths) {
-////            ClassUtil finder = new ClassUtil(new File(path + "/classes/"));
-//
-//            List<String> classFiles = ClassReadUtil.getClasses(path.subpackageScaning(0,path.lastIndexOf('/')) );
-////                    finder.getClassFiles();
-////            File dir = new File(path + "/classes/" );
-////            URL url = dir.toURI().toURL();
-////            URL[] urls = new URL[]{url};
-//            for (String classFile : classFiles) {
-//                log.info(classFile);
-////                ClassLoader classLoader = new URLClassLoader(urls);
-////                Class<?> aClass = classLoader.loadClass(classFile);
-////                definedPackages.add(aClass.getClassLoader().getDefinedPackages());
-//                definedPackages.addAll(List.of(aClass.getClassLoader().getDefinedPackages()));
-//            }
-//
-//        }
-//        return definedPackages;
-//    }
     public List<String> getPomFiles(String rootPath) {
         List<File> files = new ArrayList<>();
-        ClassReadUtil.findTypeFiles(new File(rootPath), files, "pom.xml");
+        JarReadUtil.findTypeFiles(new File(rootPath), files, "pom.xml");
         List<String> paths = new ArrayList<>();
         for (File file : files) {
             paths.add(file.getPath());
@@ -76,55 +55,77 @@ public class PackageUtil {
      * @param packageScan  the package scan
      * @param javaagent    the javaagent
      * @param rootPath     the root path
+     * @return
      */
-    public void getPackages(HashMap<String, Integer> projectCount, Set<String> set, StringBuilder packageScan, String javaagent, String rootPath) {
+    public HashMap<String, String> getPackages(HashMap<String, Integer> projectCount, Set<String> set, StringBuilder packageScan, String javaagent, String rootPath) {
+        //TODO restructure the code
         String argLine = argLineLeft + javaagent + argLineRight;
+        packageScan.append(argLine);
 
-        String path = new File(rootPath).getAbsolutePath();
-        StringBuilder packagePatternsNames = new StringBuilder();
+        //possibly useless
+        HashSet<String> dependencies = new HashSet<>();
+
+
+        Map<String, String> jarToCoordMap = getDependencyInfo(rootPath, dependencies);
+
+        StringBuilder selfPackagePatternsNames = new StringBuilder();
         Set<String> definedPackages = new HashSet<>();
 
+        HashMap<String, String> packageToCoordMap = extractPackages(rootPath, jarToCoordMap, selfPackagePatternsNames, definedPackages);
+
+        if (selfPackagePatternsNames.length() > 0) {
+            selfPackagePatternsNames.setLength(selfPackagePatternsNames.length() - 1);
+        }
+        Pattern selfPackagePattern = Pattern.compile(selfPackagePatternsNames.toString());
+
+        constructPackageScan(packageScan, definedPackages, selfPackagePattern);
+
+        return packageToCoordMap;
+    }
+
+    private void constructPackageScan(StringBuilder packageScan, Set<String> definedPackages, Pattern selfPackagePattern) {
+        Pattern excludedPattern = Pattern.compile(readExcludedPackages());
+
+        for (String definedPackage : definedPackages) {
+            Matcher packageMatcher = selfPackagePattern.matcher(definedPackage);
+            if (!packageMatcher.matches() || isExcluded(definedPackage, excludedPattern)) {
+                continue;
+            }
+            packageScan.append(definedPackage).append(".*,");
+
+        }
+
+        packageScan.setLength(packageScan.length() - 1);
+        packageScan.append(";");
+    }
+
+    private static HashMap<String, String> extractPackages(String rootPath, Map<String, String> jarToCoordMap, StringBuilder selfPackagePatternsNames, Set<String> definedPackages) {
+        // find jar files
         List<File> jarFiles = new ArrayList<>();
-        ClassReadUtil.findTypeFiles(new File(rootPath + "/lib"), jarFiles, ".jar");
+        JarReadUtil.findTypeFiles(new File(rootPath + "/lib"), jarFiles, ".jar");
+
+        HashMap<String, String> packageToCoordMap = new HashMap<>();
         for (File jar : jarFiles) {
             try {
-                definedPackages.addAll(ClassReadUtil.getImportInfo(jar.getAbsolutePath(), rootPath + "/myjar", packagePatternsNames));
+                Set<String> packagesInJar = JarReadUtil.getAllPackages(jar.getAbsolutePath(), rootPath + "/myjar", selfPackagePatternsNames);
+
+                String selfPackages = selfPackagePatternsNames.toString();
+                selfPackages = selfPackages.substring(0, selfPackages.length() - 1);
+                Pattern selfPackagePatternOfJar = Pattern.compile(selfPackages);
+
+                String coord = jarToCoordMap.get(jar.getName());
+                for (String importPackage : packagesInJar) {
+                    if (selfPackagePatternOfJar.matcher(importPackage).matches())
+                        packageToCoordMap.put(importPackage, coord);
+                }
+                definedPackages.addAll(packagesInJar);
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
-                DeleteUtil.deleteFile(new File(rootPath + "/myjar"));
+                ProjectUtil.deleteFile(new File(rootPath + "/myjar"));
             }
         }
-
-        String excludedPackages = readExcludedPackages();
-        Pattern excludedPattern = Pattern.compile(excludedPackages);
-
-        Pattern packagePattern = Pattern.compile(packagePatternsNames.toString());
-
-        for (String p : definedPackages) {
-            Matcher packageMatcher = packagePattern.matcher(p);
-            if (packageMatcher.matches() || getExclPackages(p, excludedPattern)) continue;
-
-            String[] split = p.split("\\.");
-            if (split.length != 0) {
-                packageScan.append(split[0]);
-                if (split.length > 1) packageScan.append(".").append(split[1]);
-            } else {
-                packageScan.append(p);
-            }
-            packageScan.append(".*");
-            set.add(packageScan.toString());
-
-            packageScan.setLength(0);
-        }
-        packageScan.append(argLine);
-        for (String s : set) {
-            projectCount.putIfAbsent(s, 0);
-            projectCount.put(s, projectCount.get(s) + 1);
-            packageScan.append(s).append(",");
-        }
-        packageScan.setLength(packageScan.length() - 1);
-        packageScan.append(";");
+        return packageToCoordMap;
     }
 
     private String readExcludedPackages() {
@@ -145,7 +146,7 @@ public class PackageUtil {
         return str.toString();
     }
 
-    private boolean getExclPackages(String definedPackage, Pattern importPattern) {
+    private boolean isExcluded(String definedPackage, Pattern importPattern) {
 //        for (String exclusion : exclusionList) {
 
         Matcher matcher = importPattern.matcher(definedPackage);
@@ -157,16 +158,77 @@ public class PackageUtil {
     }
 
 
-    private void findTargetDirs(File dir) {
-        if (dir.isDirectory()) {
-            if (dir.getName().equals("target")) {
-                log.debug("Found target dir: " + dir.getAbsolutePath());
-                paths.add(dir.getAbsolutePath());
-            } else {
-                for (File child : dir.listFiles()) {
-                    findTargetDirs(child);
-                }
+    /**
+     * Gets dependency info.
+     *
+     * @param rootPath     the root path
+     * @param dependencies the dependencies
+     * @return the dependency info
+     */
+
+    public Map<String, String> getDependencyInfo(String rootPath, Set<String> dependencies) {
+
+        String dependencyList = execCmd("mvn dependency:list", rootPath);
+        String[] lines = dependencyList.split("\n");
+        Pattern pattern = Pattern.compile("    (.*):(compile|runtime|test)");
+
+        for (String line : lines) {
+            if (line == null) continue;
+            Matcher matcher = pattern.matcher(line);
+            if (matcher.find()) {
+                String info = matcher.group(1);
+                dependencies.add(info);
             }
         }
+
+        log.debug("dependency size:" + dependencies.size());
+
+        return extractCoordinate(dependencies);
     }
+
+    /**
+     * Extract coordinate map.
+     *
+     * @param dependencies the dependencies
+     * @return the map
+     */
+    @Deprecated
+    public Map<String, String> extractCoordinate(Set<String> dependencies) {
+        HashMap<String, String> coordinateMap = new HashMap<>();
+        for (String dependency : dependencies) {
+            String[] split = dependency.split(":");
+            if (split.length != 4) continue;
+            String artifactId = split[1];
+//            if (artifactId.contains("_")) {
+//                artifactId = artifactId.substring(0, artifactId.indexOf("_"));
+//            }
+            String key = artifactId + "-" + split[3] + ".jar";
+            String coordinate = split[0] + ":" + artifactId + ":" + split[3];
+            coordinateMap.put(key, coordinate);
+        }
+
+        return coordinateMap;
+    }
+
+
+    /**
+     * Exec cmd string.
+     *
+     * @param cmd the cmd
+     * @param dir the dir
+     * @return the string
+     */
+    public String execCmd(String cmd, String dir) {
+        String result = null;
+
+        String[] env = new String[]{"JAVA_HOME=" + ljystu.project.callgraph.config.Path.getJavaHome()};
+        try (InputStream inputStream = Runtime.getRuntime().exec(cmd, env, new File(dir)).getInputStream(); Scanner s = new Scanner(inputStream).useDelimiter("\\A")) {
+            result = s.hasNext() ? s.next() : null;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+
 }

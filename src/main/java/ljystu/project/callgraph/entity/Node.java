@@ -10,6 +10,18 @@ public class Node {
 
     String coordinate;
 
+    @Override
+    public String toString() {
+        return "Node{" +
+                "packageName='" + packageName + '\'' +
+                ", className='" + className + '\'' +
+                ", methodName='" + methodName + '\'' +
+                ", params='" + params + '\'' +
+                ", returnType='" + returnType + '\'' +
+                ", coordinate='" + coordinate + '\'' +
+                '}';
+    }
+
     public String getCoordinate() {
         return coordinate;
     }
@@ -68,15 +80,5 @@ public class Node {
 
     public Node(){
 
-    }
-    @Override
-    public String toString() {
-        return "Node{" +
-                "packageName='" + packageName + '\'' +
-                ", className='" + className + '\'' +
-                ", methodName='" + methodName + '\'' +
-                ", params='" + params + '\'' +
-                ", returnType='" + returnType + '\'' +
-                '}';
     }
 }

@@ -1,6 +1,6 @@
 package com.example;
 
-import ljystu.project.callgraph.util.ClassReadUtil;
+import ljystu.project.callgraph.util.JarReadUtil;
 import org.junit.Test;
 
 import java.io.*;
@@ -44,7 +44,7 @@ public class ReadClassFromJar {
             }
         }
         StringBuilder stringBuilder = new StringBuilder();
-        Set<String> classes = ClassReadUtil.getClasses(tempDir);
+        Set<String> classes = JarReadUtil.getClasses(tempDir);
         System.out.println(classes.size());
         Set<String> importedPackages = new HashSet<>();
         try {

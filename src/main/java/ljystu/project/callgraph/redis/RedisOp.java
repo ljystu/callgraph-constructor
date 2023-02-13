@@ -1,8 +1,9 @@
-package ljystu.project.callgraph.util;
+package ljystu.project.callgraph.redis;
 
 import com.alibaba.fastjson.JSON;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
+import ljystu.project.callgraph.util.Neo4jUtil;
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
 
@@ -70,18 +71,13 @@ public class RedisOp {
         jedis.close();
     }
 
-    @Deprecated
-    private void getFullCoordinates(Node nodeFrom, Node nodeTo, Map<String, String> map) {
-        // TODO 需要version 来建立mapping
-        String nodeFromClassName = nodeFrom.getPackageName() + "." + nodeFrom.getClassName();
-        String fromCoordinate = CoordinateUtil.getCoordinate(nodeFromClassName, "");
-        String nodeFromCoordinate = map.getOrDefault(fromCoordinate, "");
-        nodeFrom.setCoordinate(nodeFromCoordinate);
 
-        String nodeToClassName = nodeTo.getPackageName() + "." + nodeTo.getClassName();
-        String toCoordinate = CoordinateUtil.getCoordinate(nodeToClassName, "");
-        String nodeToCoordinate = map.getOrDefault(toCoordinate, "");
-        nodeTo.setCoordinate(nodeToCoordinate);
+    private void getFullCoordinates(Node nodeFrom, Node nodeTo, Map<String, String> map) {
+
+        String nodeFromMavenCoord = map.get(nodeFrom.getPackageName());
+        nodeFrom.setCoordinate(nodeFromMavenCoord);
+        String nodeToMavenCoord = map.get(nodeTo.getPackageName());
+        nodeTo.setCoordinate(nodeToMavenCoord);
     }
 
 }

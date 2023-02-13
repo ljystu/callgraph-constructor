@@ -28,7 +28,7 @@ public class Neo4jUtil {
     /**
      * The Database.
      */
-    String DATABASE = "neo4j";
+    final String DATABASE = "neo4j";
 
     /**
      * Instantiates a new Neo 4 j util.
@@ -78,7 +78,7 @@ public class Neo4jUtil {
      * @param edgeNodePairs the edge node pairs
      * @param type          the type
      */
-    public void addEdgeUnwind(List<HashMap<String, Object>> edgeNodePairs, String type) {
+    public void addEdgeUnwind(List<Map<String, Object>> edgeNodePairs, String type) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("edgeNodePairs", edgeNodePairs);
         parameters.put("type", type);
@@ -87,9 +87,9 @@ public class Neo4jUtil {
 
             session.executeWrite(tx -> tx.run("UNWIND $edgeNodePairs as row " +
                             "MATCH (method_from:Method {packageName: row.packageName, className: row.className, " +
-                            "methodName: row.methodName, params: row.params, returnType: row.returnType }), " +
+                            "methodName: row.methodName, params: row.params, returnType: row.returnType, dependency: row.dependency }), " +
                             "(method_to:Method {packageName: row.packageName2, className: row.className2, " +
-                            "methodName: row.methodName2, params: row.params2, returnType: row.returnType2}) " +
+                            "methodName: row.methodName2, params: row.params2, returnType: row.returnType2, dependency: row.dependency2 }) " +
                             "MERGE (method_from)-[r:CALL]->(method_to)" +
                             "ON CREATE SET r.type = $type \n" +
                             "ON MATCH SET r.type = 'both'",
@@ -129,7 +129,7 @@ public class Neo4jUtil {
      *
      * @param nodeList the node list
      */
-    public void addMethodUnwind(List<HashMap<String, Object>> nodeList) {
+    public void addMethodUnwind(List<Map<String, Object>> nodeList) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("batches", nodeList);
         // Sessions are lightweight and disposable connection wrappers.
@@ -140,7 +140,7 @@ public class Neo4jUtil {
             // These methods are also able to handle connection problems and transient errors using an automatic retry mechanism.
             session.executeWrite(tx -> tx.run("UNWIND $batches as row " +
                             "MERGE (a:Method {packageName: row.packageName, className: row.className," +
-                            " methodName: row.methodName, params: row.params, returnType: row.returnType })",
+                            " methodName: row.methodName, params: row.params, returnType: row.returnType, dependency: row.dependency })",
                     parameters));
         } catch (Exception e) {
             e.printStackTrace();
@@ -185,18 +185,18 @@ public class Neo4jUtil {
      * @param label     the label
      */
     public void uploadBatch(List<Node> nodesList, List<Edge> edges, String label) {
-        List<HashMap<String, Object>> nodeMap = new ArrayList<>();
+        List<Map<String, Object>> nodeMap = new ArrayList<>();
         for (Node node : nodesList) {
             nodeMap.add(getNodeInfo(node, ""));
         }
         addMethodUnwind(nodeMap);
-        List<HashMap<String, Object>> edgeNodePairs = new ArrayList<>();
+        List<Map<String, Object>> edgeNodePairs = new ArrayList<>();
 
         for (Edge edge : edges) {
             Node from = edge.getFrom();
             Node to = edge.getTo();
 
-            HashMap<String, Object> nodeInfo = getNodeInfo(from, "");
+            Map<String, Object> nodeInfo = getNodeInfo(from, "");
             nodeInfo.putAll(getNodeInfo(to, "2"));
             edgeNodePairs.add(nodeInfo);
         }
@@ -210,13 +210,14 @@ public class Neo4jUtil {
      * @param info the info
      * @return the node info
      */
-    public HashMap<String, Object> getNodeInfo(Node node, String info) {
+    public Map<String, Object> getNodeInfo(Node node, String info) {
         HashMap<String, Object> map = new HashMap<>();
         map.put("packageName" + info, node.getPackageName());
         map.put("className" + info, node.getClassName());
         map.put("methodName" + info, node.getMethodName());
         map.put("params" + info, node.getParams());
         map.put("returnType" + info, node.getReturnType());
+        map.put("dependency" + info, node.getCoordinate());
         return map;
     }
 }
