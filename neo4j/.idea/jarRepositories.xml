@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteRepositoriesConfiguration">
+    <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Central Repository" />
+      <option name="url" value="https://repo.maven.apache.org/maven2" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="tmatesoft-repo" />
+      <option name="name" value="TmateSoft Repository (for hg4j)" />
+      <option name="url" value="https://maven.tmatesoft.com/repository/releases/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="github-shrinkwrap-resolver-patched" />
+      <option name="name" value="github-shrinkwrap-resolver-patched" />
+      <option name="url" value="https://github.com/fasten-project/shrinkwrap-resolver-patched/raw/repository" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="github" />
+      <option name="name" value="github" />
+      <option name="url" value="https://maven.pkg.github.com/cops-lab/test-utils/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="lib" />
+      <option name="name" value="lib" />
+      <option name="url" value="file:$PROJECT_DIR$/fasten/analyzer/javacg-opal/lib" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Maven Central repository" />
+      <option name="url" value="https://repo1.maven.org/maven2" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="lib" />
+      <option name="name" value="lib" />
+      <option name="url" value="file:$PROJECT_DIR$/analyzer/javacg-opal/lib" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="jboss.community" />
+      <option name="name" value="JBoss Community repository" />
+      <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
+    </remote-repository>
+  </component>
+</project>

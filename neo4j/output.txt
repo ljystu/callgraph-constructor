@@ -1,0 +1,119 @@
+[[1;34mINFO[m] Scanning for projects...
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m-------< [0;36mcom.neo4j.examples:spring-boot-read-write-transactions[0;1m >-------[m
+[[1;34mINFO[m] [1mBuilding Neo4j Spring Boot Example 0.0.1-SNAPSHOT[m
+[[1;34mINFO[m] [1m--------------------------------[ jar ]---------------------------------[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-resources-plugin:3.2.0:resources[m [1m(default-resources)[m @ [36mspring-boot-read-write-transactions[0;1m ---[m
+[[1;34mINFO[m] Using 'UTF-8' encoding to copy filtered resources.
+[[1;34mINFO[m] Using 'UTF-8' encoding to copy filtered properties files.
+[[1;34mINFO[m] Copying 1 resource
+[[1;34mINFO[m] Copying 0 resource
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-compiler-plugin:3.8.1:compile[m [1m(default-compile)[m @ [36mspring-boot-read-write-transactions[0;1m ---[m
+[[1;34mINFO[m] Changes detected - recompiling the module!
+[[1;34mINFO[m] Compiling 22 source files to /Users/ljystu/Desktop/neo4j/target/classes
+[[1;34mINFO[m] /Users/ljystu/Desktop/neo4j/src/main/java/ljystu/project/callgraph/test/ExampleCommandLineRunner.java: /Users/ljystu/Desktop/neo4j/src/main/java/ljystu/project/callgraph/test/ExampleCommandLineRunner.java uses or overrides a deprecated API.
+[[1;34mINFO[m] /Users/ljystu/Desktop/neo4j/src/main/java/ljystu/project/callgraph/test/ExampleCommandLineRunner.java: Recompile with -Xlint:deprecation for details.
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-resources-plugin:3.2.0:testResources[m [1m(default-testResources)[m @ [36mspring-boot-read-write-transactions[0;1m ---[m
+[[1;34mINFO[m] Using 'UTF-8' encoding to copy filtered resources.
+[[1;34mINFO[m] Using 'UTF-8' encoding to copy filtered properties files.
+[[1;34mINFO[m] skip non existing resourceDirectory /Users/ljystu/Desktop/neo4j/src/test/resources
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-compiler-plugin:3.8.1:testCompile[m [1m(default-testCompile)[m @ [36mspring-boot-read-write-transactions[0;1m ---[m
+[[1;34mINFO[m] Changes detected - recompiling the module!
+[[1;34mINFO[m] Compiling 8 source files to /Users/ljystu/Desktop/neo4j/target/test-classes
+[[1;34mINFO[m] /Users/ljystu/Desktop/neo4j/src/test/java/ljystu/project/callgraph/analysisclassTest.java: Some input files use or override a deprecated API.
+[[1;34mINFO[m] /Users/ljystu/Desktop/neo4j/src/test/java/ljystu/project/callgraph/analysisclassTest.java: Recompile with -Xlint:deprecation for details.
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-surefire-plugin:2.22.2:test[m [1m(default-test)[m @ [36mspring-boot-read-write-transactions[0;1m ---[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] -------------------------------------------------------
+[[1;34mINFO[m]  T E S T S
+[[1;34mINFO[m] -------------------------------------------------------
+[[1;33mWARNING[m] Corrupted STDOUT by directly writing to native stream in forked JVM 1. See FAQ web page and the dump file /Users/ljystu/Desktop/neo4j/target/surefire-reports/2023-02-07T15-15-45_884-jvmRun1.dumpstream
+[[1;34mINFO[m] Running ljystu.project.callgraph.[1mSmallExampleTest[m
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runner:Request:method:java.lang.Class,java.lang.String&org.junit.runner.Request");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runner:Request:aClass:java.lang.Class&org.junit.runner.Request");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runner:Request:classWithoutSuiteMethod:java.lang.Class&org.junit.runner.Request");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runner:Request:classes:org.junit.runner.Computer,java.lang.Class[]&org.junit.runner.Request");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runner:Request:classes:java.lang.Class[]&org.junit.runner.Request");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runner:Request:errorReport:java.lang.Class,java.lang.Throwable&org.junit.runner.Request");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runner:Request:runner:org.junit.runner.Runner&org.junit.runner.Request");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runner:Request:filterWith:org.junit.runner.manipulation.Filter&org.junit.runner.Request");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runner:Request:filterWith:org.junit.runner.Description&org.junit.runner.Request");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runner:Request:sortWith:java.util.Comparator&org.junit.runner.Request");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runner:Request:orderWith:org.junit.runner.manipulation.Ordering&org.junit.runner.Request");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.internal.builders:IgnoredBuilder:runnerForClass:java.lang.Class&org.junit.runner.Runner");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.internal.builders:SuiteMethodBuilder:runnerForClass:java.lang.Class&org.junit.runner.Runner");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.internal.builders:SuiteMethodBuilder:hasSuiteMethod:java.lang.Class&boolean");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.internal.builders:JUnit3Builder:runnerForClass:java.lang.Class&org.junit.runner.Runner");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.internal.builders:JUnit3Builder:isPre4Test:java.lang.Class&boolean");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.internal.builders:JUnit4Builder:runnerForClass:java.lang.Class&org.junit.runner.Runner");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runner:Runner:testCount:&int");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.internal:MethodSorter$1:compare:java.lang.reflect.Method,java.lang.reflect.Method&int");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.internal:MethodSorter$1:compare:java.lang.Object,java.lang.Object&int");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.internal:MethodSorter$2:compare:java.lang.reflect.Method,java.lang.reflect.Method&int");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.internal:MethodSorter$2:compare:java.lang.Object,java.lang.Object&int");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runners.model:FrameworkMember:handlePossibleBridgeMethod:java.util.List&org.junit.runners.model.FrameworkMember");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runners.model:FrameworkMember:isStatic:&boolean");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runners.model:FrameworkMember:isPublic:&boolean");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.internal:Checks:notNull:java.lang.Object&java.lang.Object");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.internal:Checks:notNull:java.lang.Object,java.lang.String&java.lang.Object");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit:Assert:assertTrue:java.lang.String,boolean&void");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit:Assert:assertTrue:boolean&void");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit:Assert:assertFalse:java.lang.String,boolean&void");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit:Assert:assertFalse:boolean&void");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit:Assert:fail:java.lang.String&void");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runners:RuleContainer$1:compare:org.junit.runners.RuleContainer$RuleEntry,org.junit.runners.RuleContainer$RuleEntry&int");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runners:RuleContainer$1:compareInt:int,int&int");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.runners:RuleContainer$1:compare:java.lang.Object,java.lang.Object&int");
+gr.gousiosg.javacg.dyn.MethodStack.push("org.junit.internal.runners.model:ReflectiveCallable:run:&java.lang.Object");
+15:15:46.348 [main] DEBUG io.netty.util.internal.logging.InternalLoggerFactory - Using SLF4J as the default logging framework
+15:15:46.350 [main] DEBUG io.netty.channel.MultithreadEventLoopGroup - -Dio.netty.eventLoopThreads: 16
+15:15:46.356 [main] DEBUG io.netty.util.internal.InternalThreadLocalMap - -Dio.netty.threadLocalMap.stringBuilder.initialSize: 1024
+15:15:46.356 [main] DEBUG io.netty.util.internal.InternalThreadLocalMap - -Dio.netty.threadLocalMap.stringBuilder.maxSize: 4096
+15:15:46.359 [main] DEBUG io.netty.util.internal.PlatformDependent0 - -Dio.netty.noUnsafe: false
+15:15:46.359 [main] DEBUG io.netty.util.internal.PlatformDependent0 - Java version: 17
+15:15:46.360 [main] DEBUG io.netty.util.internal.PlatformDependent0 - sun.misc.Unsafe.theUnsafe: available
+15:15:46.360 [main] DEBUG io.netty.util.internal.PlatformDependent0 - sun.misc.Unsafe.copyMemory: available
+15:15:46.361 [main] DEBUG io.netty.util.internal.PlatformDependent0 - java.nio.Buffer.address: available
+15:15:46.361 [main] DEBUG io.netty.util.internal.PlatformDependent0 - direct buffer constructor: unavailable: Reflective setAccessible(true) disabled
+15:15:46.361 [main] DEBUG io.netty.util.internal.PlatformDependent0 - java.nio.Bits.unaligned: available, true
+15:15:46.361 [main] DEBUG io.netty.util.internal.PlatformDependent0 - jdk.internal.misc.Unsafe.allocateUninitializedArray(int): unavailable: class io.netty.util.internal.PlatformDependent0$6 cannot access class jdk.internal.misc.Unsafe (in module java.base) because module java.base does not export jdk.internal.misc to unnamed module @24273305
+15:15:46.362 [main] DEBUG io.netty.util.internal.PlatformDependent0 - java.nio.DirectByteBuffer.<init>(long, int): unavailable
+15:15:46.362 [main] DEBUG io.netty.util.internal.PlatformDependent - sun.misc.Unsafe: available
+15:15:46.363 [main] DEBUG io.netty.util.internal.PlatformDependent - maxDirectMemory: 4294967296 bytes (maybe)
+15:15:46.363 [main] DEBUG io.netty.util.internal.PlatformDependent - -Dio.netty.tmpdir: /var/folders/zm/y5fkbjsd2zl0fp0z27z5dk680000gn/T (java.io.tmpdir)
+15:15:46.363 [main] DEBUG io.netty.util.internal.PlatformDependent - -Dio.netty.bitMode: 64 (sun.arch.data.model)
+15:15:46.363 [main] DEBUG io.netty.util.internal.PlatformDependent - Platform: MacOS
+15:15:46.363 [main] DEBUG io.netty.util.internal.PlatformDependent - -Dio.netty.maxDirectMemory: -1 bytes
+15:15:46.363 [main] DEBUG io.netty.util.internal.PlatformDependent - -Dio.netty.uninitializedArrayAllocationThreshold: -1
+15:15:46.363 [main] DEBUG io.netty.util.internal.CleanerJava9 - java.nio.ByteBuffer.cleaner(): available
+15:15:46.363 [main] DEBUG io.netty.util.internal.PlatformDependent - -Dio.netty.noPreferDirect: false
+15:15:46.364 [main] DEBUG io.netty.channel.nio.NioEventLoop - -Dio.netty.noKeySetOptimization: false
+15:15:46.364 [main] DEBUG io.netty.channel.nio.NioEventLoop - -Dio.netty.selectorAutoRebuildThreshold: 512
+15:15:46.364 [main] DEBUG io.netty.util.internal.PlatformDependent - org.jctools-core.MpscChunkedArrayQueue: available
+[[1;34mINFO[m] [1;32mTests run: [0;1;32m1[m, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.564 s - in ljystu.project.callgraph.[1mSmallExampleTest[m
+[[1;34mINFO[m] Running ljystu.project.callgraph.[1manalysisclassTest[m
+took 38ms
+[[1;34mINFO[m] [1;32mTests run: [0;1;32m1[m, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.086 s - in ljystu.project.callgraph.[1manalysisclassTest[m
+[[1;34mINFO[m] Running ljystu.project.callgraph.[1mHelloExampleTest[m
+204
+[[1;34mINFO[m] [1;32mTests run: [0;1;32m2[m, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.49 s - in ljystu.project.callgraph.[1mHelloExampleTest[m
+[[1;34mINFO[m] Running com.example.[1mDependencyNameTest[m
+[[1;34mINFO[m] [1;32mTests run: [0;1;32m1[m, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.058 s - in com.example.[1mDependencyNameTest[m
+[[1;34mINFO[m] Running com.example.[1mRedisOpTest[m
+[[1;34mINFO[m] [1;32mTests run: [0;1;32m1[m, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.263 s - in com.example.[1mRedisOpTest[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] Results:
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1;32mTests run: 6, Failures: 0, Errors: 0, Skipped: 0[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] [1;32mBUILD SUCCESS[m
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] Total time:  5.514 s
+[[1;34mINFO[m] Finished at: 2023-02-07T15:15:49+01:00
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
