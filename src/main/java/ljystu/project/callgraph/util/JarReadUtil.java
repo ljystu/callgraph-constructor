@@ -31,7 +31,6 @@ public class JarReadUtil {
     public static Set<String> getClasses(String dirPath) {
 
         HashSet<String> classes = new HashSet<>();
-//        HashSet<String> packageNames = new HashSet<>();
         File dir = new File(dirPath);
 
         if (!dir.isDirectory()) {
@@ -42,41 +41,10 @@ public class JarReadUtil {
         // search all class files in the dir
         List<File> files = new ArrayList<>();
         findTypeFiles(dir, files, ".class");
-        // 正则表达式，用于匹配import语句
-//        Pattern importPattern = Pattern.compile("^import\\s(static\\s)?+(.+);$");
-//        Pattern packagePattern = Pattern.compile("^package\\s?+(.+);$");
-
         for (File file : files) {
             classes.add(file.getPath());
-//            Path path = file.toPath();
-//            String content = "";
-//            try {
-//                content = Files.readString(path);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//                continue;
-//            }
-//
-//            String[] lines = content.split("\n");
-//            for (String line : lines) {
-//
-//
-//                Matcher importMatcher = importPattern.matcher(line);
-//                if (importMatcher.matches()) {
-//                    classes.add(importMatcher.group(2));
-//                }
-//                Matcher packageMatcher = packagePattern.matcher(line);
-//                if (packageMatcher.matches()) {
-//                    packageNames.add(packageMatcher.group(1) + ".*|");
-//                }
-//            }
         }
-//        for (String pkg : packageNames) {
-//            packages.append(pkg);
-//        }
-//        if (packages.length() > 0) {
-//            packages.setLength(packages.length() - 1);
-//        }
+
         return classes;
     }
 
@@ -105,12 +73,11 @@ public class JarReadUtil {
     /**
      * get all imported selfPackages
      *
-     * @param jarFilePath  the jar file path
-     * @param tempDir      the temp dir
-     * @param selfPackages the selfPackages
+     * @param jarFilePath the jar file path
+     * @param tempDir     the temp dir
      * @return import info
      */
-    public static Set<String> getAllPackages(String jarFilePath, String tempDir, StringBuilder selfPackages) {
+    public static Set<String> getAllPackages(String jarFilePath, String tempDir) {
 
         upZipJars(jarFilePath, tempDir);
 
@@ -118,7 +85,7 @@ public class JarReadUtil {
 
         log.info(String.valueOf(classes.size()));
 
-        return getImportedPackages(jarFilePath, classes, selfPackages);
+        return getImportedPackages(jarFilePath, classes);
     }
 
     private static void upZipJars(String jarFilePath, String tempDir) {
@@ -158,7 +125,7 @@ public class JarReadUtil {
      * @return the set
      * @throws Exception the exception
      */
-    private static Set<String> getImportedPackages(String jarFile, Set<String> classes, StringBuilder selfPackages) {
+    private static Set<String> getImportedPackages(String jarFile, Set<String> classes) {
         Set<String> importedPackages = new HashSet<>();
         HashSet<String> selfPackageNames = new HashSet<>();
 
@@ -192,10 +159,10 @@ public class JarReadUtil {
             }
         }
 
-        for (String pkg : selfPackageNames) {
-            if (pkg == null) continue;
-            selfPackages.append(pkg);
-        }
+//        for (String pkg : selfPackageNames) {
+//            if (pkg == null) continue;
+//            selfPackages.append(pkg);
+//        }
 //        if (selfPackages.length() > 0) {
 //            selfPackages.setLength(selfPackages.length() - 1);
 //        }

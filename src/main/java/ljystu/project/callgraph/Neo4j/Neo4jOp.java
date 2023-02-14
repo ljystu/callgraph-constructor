@@ -1,7 +1,7 @@
 package ljystu.project.callgraph.Neo4j;
 
 
-import ljystu.project.callgraph.config.Arg;
+import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
 import org.neo4j.driver.*;
@@ -51,10 +51,10 @@ public class Neo4jOp {
      */
     @Deprecated
     private void addEdge(Edge edge) {
-        try (Session session = driver.session(SessionConfig.forDatabase(Arg.getDATABASE()))) {
+        try (Session session = driver.session(SessionConfig.forDatabase(Constants.DATABASE))) {
             Node from = edge.getFrom();
             Node to = edge.getTo();
-            session.executeWrite(tx -> tx.run("MATCH (method_from:Method {packageName: $packagename, className: $classname, " +
+            session.writeTransaction(tx -> tx.run("MATCH (method_from:Method {packageName: $packagename, className: $classname, " +
                             "methodName: $methodname, params: $params, returnType: $returntype }), " +
                             "(method_to:Method {packageName: $packagename2, className: $classname2, " +
                             "methodName: $methodname2, params: $params2, returnType: $returntype2}) " +
@@ -79,9 +79,9 @@ public class Neo4jOp {
         parameters.put("edgeNodePairs", edgeNodePairs);
         parameters.put("type", type);
 
-        try (Session session = driver.session(SessionConfig.forDatabase(Arg.getDATABASE()))) {
+        try (Session session = driver.session(SessionConfig.forDatabase(Constants.DATABASE))) {
 
-            session.executeWrite(tx -> tx.run("UNWIND $edgeNodePairs as row " +
+            session.writeTransaction(tx -> tx.run("UNWIND $edgeNodePairs as row " +
                             "MATCH (method_from:Method {packageName: row.packageName, className: row.className, " +
                             "methodName: row.methodName, params: row.params, returnType: row.returnType, dependency: row.dependency }), " +
                             "(method_to:Method {packageName: row.packageName2, className: row.className2, " +
@@ -109,12 +109,12 @@ public class Neo4jOp {
         String params = node.getParams();
         String returnType = node.getReturnType();
         // Sessions are lightweight and disposable connection wrappers.
-        try (Session session = driver.session(SessionConfig.forDatabase(Arg.getDATABASE()))) {
+        try (Session session = driver.session(SessionConfig.forDatabase(Constants.DATABASE))) {
             // Wrapping a Cypher Query in a Managed Transaction provides atomicity
             // and makes handling errors much easier.
             // Use `session.writeTransaction` for writes and `session.readTransaction` for reading data.
             // These methods are also able to handle connection problems and transient errors using an automatic retry mechanism.
-            session.executeWrite(tx -> tx.run("MERGE (a:Method {packageName: $packagename, className: $classname," +
+            session.writeTransaction(tx -> tx.run("MERGE (a:Method {packageName: $packagename, className: $classname," +
                             " methodName: $methodname, params: $params, returnType: $returntype })",
                     parameters("packagename", packageName, "classname", className,
                             "methodname", methodName, "params", params, "returntype", returnType)));
@@ -130,12 +130,12 @@ public class Neo4jOp {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("batches", nodeList);
         // Sessions are lightweight and disposable connection wrappers.
-        try (Session session = driver.session(SessionConfig.forDatabase(Arg.getDATABASE()))) {
+        try (Session session = driver.session(SessionConfig.forDatabase(Constants.DATABASE))) {
             // Wrapping a Cypher Query in a Managed Transaction provides atomicity
             // and makes handling errors much easier.
             // Use `session.writeTransaction` for writes and `session.readTransaction` for reading data.
             // These methods are also able to handle connection problems and transient errors using an automatic retry mechanism.
-            session.executeWrite(tx -> tx.run("UNWIND $batches as row " +
+            session.writeTransaction(tx -> tx.run("UNWIND $batches as row " +
                             "MERGE (a:Method {packageName: row.packageName, className: row.className," +
                             " methodName: row.methodName, params: row.params, returnType: row.returnType, dependency: row.dependency })",
                     parameters));

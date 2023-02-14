@@ -29,6 +29,14 @@ public class RedisOp {
      */
     public RedisOp() {
         this.neo4JOp = new Neo4jOp("bolt://localhost:7687", "neo4j", "ljystu");
+        this.jedis = new Jedis("localhost");
+    }
+
+    public void uploadAll(Map<String, String> packageToCoordMap) {
+        upload("dynamic", packageToCoordMap);
+        upload("static", packageToCoordMap);
+        neo4JOp.close();
+        jedis.close();
     }
 
     /**
@@ -38,9 +46,6 @@ public class RedisOp {
      * @param map   the map
      */
     public void upload(String label, Map<String, String> map) {
-
-        // 创建Jedis对象，连接到Redis服务器
-        jedis = new Jedis("localhost");
 
         HashSet<Node> nodes = new HashSet<>();
         List<Edge> edges = new ArrayList<>();
@@ -55,7 +60,8 @@ public class RedisOp {
             Node nodeTo = edge.getTo();
 
             getFullCoordinates(nodeFrom, nodeTo, map);
-            if (Objects.equals(nodeFrom.getCoordinate(), "") || Objects.equals(nodeTo.getCoordinate(), "")) continue;
+            if (Objects.equals(nodeFrom.getCoordinate(), null) || Objects.equals(nodeTo.getCoordinate(), null))
+                continue;
 
             nodes.add(nodeFrom);
             nodes.add(nodeTo);
@@ -67,17 +73,19 @@ public class RedisOp {
         neo4JOp.uploadBatch(nodesList, edges, label);
         jedis.del(label);
 
-        neo4JOp.close();
-        jedis.close();
+
     }
 
 
     private void getFullCoordinates(Node nodeFrom, Node nodeTo, Map<String, String> map) {
         String nodeFromMavenCoord = map.get(nodeFrom.getPackageName());
-        nodeFrom.setCoordinate(nodeFromMavenCoord);
-
+        if (nodeFromMavenCoord != null) {
+            nodeFrom.setCoordinate(nodeFromMavenCoord);
+        }
         String nodeToMavenCoord = map.get(nodeTo.getPackageName());
-        nodeTo.setCoordinate(nodeToMavenCoord);
+        if (nodeToMavenCoord != null) {
+            nodeTo.setCoordinate(nodeToMavenCoord);
+        }
     }
 
 }

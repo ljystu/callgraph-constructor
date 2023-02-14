@@ -1,6 +1,5 @@
 package com.example;
 
-import ljystu.project.callgraph.config.Path;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
 import org.json.JSONArray;

@@ -1,7 +1,6 @@
 package ljystu.project.callgraph;
 
 
-import ljystu.project.callgraph.config.Path;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
