@@ -1,9 +1,9 @@
 package com.example;
 
 import com.alibaba.fastjson.JSON;
+import ljystu.project.callgraph.Neo4j.Neo4jOp;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
-import ljystu.project.callgraph.util.Neo4jUtil;
 import org.junit.Test;
 import redis.clients.jedis.Jedis;
 
@@ -15,14 +15,14 @@ import java.util.Set;
 public class RedisOpTest {
     Jedis jedis;
 
-    Neo4jUtil neo4jUtil;
+    Neo4jOp neo4JOp;
 
     public RedisOpTest() {
 
     }
 
     public void init() {
-        this.neo4jUtil = new Neo4jUtil("bolt://localhost:7687", "neo4j", "ljystu");
+        this.neo4JOp = new Neo4jOp("bolt://localhost:7687", "neo4j", "ljystu");
     }
 
 
@@ -43,7 +43,7 @@ public class RedisOpTest {
 //            String value = jedis.get(key);
             Edge edge = JSON.parseObject(value, Edge.class);
             System.out.println(edge.toString());
-//            neo4jUtil.upload(edge);
+//            neo4JOp.upload(edge);
             edges.add(edge);
             nodes.add(edge.getFrom());
             nodes.add(edge.getTo());
@@ -53,9 +53,9 @@ public class RedisOpTest {
         }
         List<Node> nodesList = new ArrayList<>();
         nodesList.addAll(nodes);
-        neo4jUtil.uploadBatch(nodesList, edges, label);
+        neo4JOp.uploadBatch(nodesList, edges, label);
         jedis.del(label);
-        neo4jUtil.close();
+        neo4JOp.close();
         // 关闭Jedis对象
         jedis.close();
     }

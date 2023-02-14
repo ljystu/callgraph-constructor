@@ -46,8 +46,8 @@ public class HelloExampleTest {
 
 //        System.out.println("OK");
 ////        driver.close();
-//        Neo4jUtil neo4jUtil = new Neo4jUtil();
-//        neo4jUtil = new Neo4jUtil();
+//        Neo4j neo4jUtil = new Neo4j();
+//        neo4jUtil = new Neo4j();
 //        neo4jUtil.close();
 //        System.out.println("bolt");
 //        System.out.println;

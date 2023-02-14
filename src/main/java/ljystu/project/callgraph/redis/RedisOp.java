@@ -1,9 +1,9 @@
 package ljystu.project.callgraph.redis;
 
 import com.alibaba.fastjson.JSON;
+import ljystu.project.callgraph.Neo4j.Neo4jOp;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
-import ljystu.project.callgraph.util.Neo4jUtil;
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
 
@@ -22,13 +22,13 @@ public class RedisOp {
     /**
      * The Neo 4 j util.
      */
-    Neo4jUtil neo4jUtil;
+    Neo4jOp neo4JOp;
 
     /**
      * Instantiates a new Redis op.
      */
     public RedisOp() {
-        this.neo4jUtil = new Neo4jUtil("bolt://localhost:7687", "neo4j", "ljystu");
+        this.neo4JOp = new Neo4jOp("bolt://localhost:7687", "neo4j", "ljystu");
     }
 
     /**
@@ -50,7 +50,7 @@ public class RedisOp {
         for (String value : dynamic) {
 
             Edge edge = JSON.parseObject(value, Edge.class);
-            log.debug("Edge upload" + edge.toString());
+            log.debug("Edge upload：" + edge.toString());
             Node nodeFrom = edge.getFrom();
             Node nodeTo = edge.getTo();
 
@@ -64,18 +64,18 @@ public class RedisOp {
         }
 
         List<Node> nodesList = new ArrayList<>(nodes);
-        neo4jUtil.uploadBatch(nodesList, edges, label);
+        neo4JOp.uploadBatch(nodesList, edges, label);
         jedis.del(label);
 
-        neo4jUtil.close();
+        neo4JOp.close();
         jedis.close();
     }
 
 
     private void getFullCoordinates(Node nodeFrom, Node nodeTo, Map<String, String> map) {
-
         String nodeFromMavenCoord = map.get(nodeFrom.getPackageName());
         nodeFrom.setCoordinate(nodeFromMavenCoord);
+
         String nodeToMavenCoord = map.get(nodeTo.getPackageName());
         nodeTo.setCoordinate(nodeToMavenCoord);
     }

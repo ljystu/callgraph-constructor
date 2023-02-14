@@ -13,11 +13,16 @@ import org.apache.maven.shared.invoker.InvocationRequest;
 import java.io.File;
 import java.util.*;
 
+import static ljystu.project.callgraph.util.ProjectUtil.deleteFile;
+
 /**
  * The type Invoker.
  */
 @Slf4j
 public class Invoker {
+    /**
+     * The Maven invoker.
+     */
     public org.apache.maven.shared.invoker.Invoker mavenInvoker = new DefaultInvoker();
 
 //    static String mavenPath = Path.getMavenHome();
@@ -33,14 +38,12 @@ public class Invoker {
      */
     public HashSet<String> analyseProject(String rootPath, HashMap<String, Integer> projectCount, String label) {
 
-
         HashSet<String> set = new HashSet<>();
 
         // 获取Test类的所有import的类型
         StringBuilder inclPackages = new StringBuilder();
 
         PackageUtil packageUtil = new PackageUtil();
-
 
         //get path of all pom files
         List<String> pomFiles = packageUtil.getPomFiles(rootPath);
@@ -49,19 +52,14 @@ public class Invoker {
 
         HashMap<String, String> packageToCoordMap = packageUtil.getPackages(projectCount, set, inclPackages, Path.getJavaagentHome(), rootPath);
 
-
         invokeMavenTask(inclPackages.toString(), rootPath, pomFiles, "test");
 
-
-        File projectDirectory = new File(rootPath).getAbsoluteFile();
-
-//        deleteFile(projectDirectory);
+        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
 
         RedisOp redisOp = new RedisOp();
         redisOp.upload(label, packageToCoordMap);
 
         return set;
-
     }
 
     /**
@@ -70,17 +68,14 @@ public class Invoker {
      * @param inclPackages included packages
      * @param path         root path of maven project
      * @param pomFilePaths all pom files in the project
+     * @param task         the task
      */
     public void invokeMavenTask(String inclPackages, String path, List<String> pomFilePaths, String task) {
 
         // 设置Maven的安装目录
         mavenInvoker.setMavenHome(new File(Path.getMavenHome()));
         if (task == "test") {
-            POMUtil pomUtil = new POMUtil();
-            //add javaagent into surefire configuration of all POM files
-            for (String pomFilePath : pomFilePaths) {
-                pomUtil.editPOM(pomFilePath, inclPackages);
-            }
+            addJavaagent(inclPackages, pomFilePaths);
             invokeTask(path, "test");
         } else {
             invokeTask(path, "dependency:copy-dependencies", "./lib");
@@ -88,11 +83,20 @@ public class Invoker {
 
     }
 
+    private static void addJavaagent(String inclPackages, List<String> pomFilePaths) {
+
+        //add javaagent into surefire configuration of all POM files
+        for (String pomFilePath : pomFilePaths) {
+            POMUtil.editPOM(pomFilePath, inclPackages);
+        }
+    }
+
     /**
      * invoke given maven task
      *
-     * @param rootPath roo path
-     * @param task     task name
+     * @param rootPath  roo path
+     * @param task      task name
+     * @param outputDir the output dir
      */
     public void invokeTask(String rootPath, String task, String outputDir) {
 
@@ -112,6 +116,12 @@ public class Invoker {
 
     }
 
+    /**
+     * Invoke task.
+     *
+     * @param rootPath the root path
+     * @param task     the task
+     */
     public void invokeTask(String rootPath, String task) {
 
         InvocationRequest request = getInvocationRequest(rootPath, task);
@@ -134,7 +144,7 @@ public class Invoker {
         String projectMavenFilePath = rootPath + "/pom.xml";
         File projectMavenFile = new File(projectMavenFilePath);
         if (!projectMavenFile.exists()) {
-            ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
+            deleteFile(new File(rootPath).getAbsoluteFile());
             return null;
         }
         request.setPomFile(projectMavenFile);

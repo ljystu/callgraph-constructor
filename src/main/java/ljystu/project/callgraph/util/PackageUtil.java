@@ -39,12 +39,12 @@ public class PackageUtil {
     public List<String> getPomFiles(String rootPath) {
         List<File> files = new ArrayList<>();
         JarReadUtil.findTypeFiles(new File(rootPath), files, "pom.xml");
-        List<String> paths = new ArrayList<>();
+        List<String> pomFiles = new ArrayList<>();
         for (File file : files) {
-            paths.add(file.getPath());
+            pomFiles.add(file.getPath());
         }
 
-        return paths;
+        return pomFiles;
     }
 
     /**
@@ -58,13 +58,12 @@ public class PackageUtil {
      * @return
      */
     public HashMap<String, String> getPackages(HashMap<String, Integer> projectCount, Set<String> set, StringBuilder packageScan, String javaagent, String rootPath) {
-        //TODO restructure the code
+
         String argLine = argLineLeft + javaagent + argLineRight;
         packageScan.append(argLine);
 
         //possibly useless
         HashSet<String> dependencies = new HashSet<>();
-
 
         Map<String, String> jarToCoordMap = getDependencyInfo(rootPath, dependencies);
 
@@ -88,7 +87,9 @@ public class PackageUtil {
 
         for (String definedPackage : definedPackages) {
             Matcher packageMatcher = selfPackagePattern.matcher(definedPackage);
-            if (!packageMatcher.matches() || isExcluded(definedPackage, excludedPattern)) {
+            if (
+//            !packageMatcher.matches() ||
+                    isExcluded(definedPackage, excludedPattern)) {
                 continue;
             }
             packageScan.append(definedPackage).append(".*,");
@@ -102,7 +103,8 @@ public class PackageUtil {
     private static HashMap<String, String> extractPackages(String rootPath, Map<String, String> jarToCoordMap, StringBuilder selfPackagePatternsNames, Set<String> definedPackages) {
         // find jar files
         List<File> jarFiles = new ArrayList<>();
-        JarReadUtil.findTypeFiles(new File(rootPath + "/lib"), jarFiles, ".jar");
+        JarReadUtil.findTypeFiles(new File(rootPath), jarFiles, ".jar");
+
 
         HashMap<String, String> packageToCoordMap = new HashMap<>();
         for (File jar : jarFiles) {
@@ -110,12 +112,15 @@ public class PackageUtil {
                 Set<String> packagesInJar = JarReadUtil.getAllPackages(jar.getAbsolutePath(), rootPath + "/myjar", selfPackagePatternsNames);
 
                 String selfPackages = selfPackagePatternsNames.toString();
+
                 selfPackages = selfPackages.substring(0, selfPackages.length() - 1);
                 Pattern selfPackagePatternOfJar = Pattern.compile(selfPackages);
 
                 String coord = jarToCoordMap.get(jar.getName());
                 for (String importPackage : packagesInJar) {
                     if (selfPackagePatternOfJar.matcher(importPackage).matches())
+                        //TODO 如果packagename相同，后面的coordinate会覆盖当前类的coordinate 需要进一步修改逻辑或添加
+                        //可能需要用类名进一步筛选？
                         packageToCoordMap.put(importPackage, coord);
                 }
                 definedPackages.addAll(packagesInJar);
@@ -192,7 +197,7 @@ public class PackageUtil {
      * @param dependencies the dependencies
      * @return the map
      */
-    @Deprecated
+
     public Map<String, String> extractCoordinate(Set<String> dependencies) {
         HashMap<String, String> coordinateMap = new HashMap<>();
         for (String dependency : dependencies) {

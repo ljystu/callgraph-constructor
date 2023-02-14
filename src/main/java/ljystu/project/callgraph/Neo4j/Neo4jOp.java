@@ -1,9 +1,9 @@
-package ljystu.project.callgraph.util;
+package ljystu.project.callgraph.Neo4j;
 
 
+import ljystu.project.callgraph.config.Arg;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
-import org.neo4j.driver.Record;
 import org.neo4j.driver.*;
 
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ import static org.neo4j.driver.Values.parameters;
 /**
  * The type Neo 4 j util.
  */
-public class Neo4jUtil {
+public class Neo4jOp {
 
     /**
      * The Driver.
@@ -26,14 +26,9 @@ public class Neo4jUtil {
     Driver driver;
 
     /**
-     * The Database.
-     */
-    final String DATABASE = "neo4j";
-
-    /**
      * Instantiates a new Neo 4 j util.
      */
-    public Neo4jUtil() {
+    public Neo4jOp() {
 
     }
 
@@ -44,7 +39,7 @@ public class Neo4jUtil {
      * @param user     the user
      * @param password the password
      */
-    public Neo4jUtil(String uri, String user, String password) {
+    public Neo4jOp(String uri, String user, String password) {
         driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password));
 
     }
@@ -54,8 +49,9 @@ public class Neo4jUtil {
      *
      * @param edge the edge
      */
-    public void addEdge(Edge edge) {
-        try (Session session = driver.session(SessionConfig.forDatabase(DATABASE))) {
+    @Deprecated
+    private void addEdge(Edge edge) {
+        try (Session session = driver.session(SessionConfig.forDatabase(Arg.getDATABASE()))) {
             Node from = edge.getFrom();
             Node to = edge.getTo();
             session.executeWrite(tx -> tx.run("MATCH (method_from:Method {packageName: $packagename, className: $classname, " +
@@ -78,12 +74,12 @@ public class Neo4jUtil {
      * @param edgeNodePairs the edge node pairs
      * @param type          the type
      */
-    public void addEdgeUnwind(List<Map<String, Object>> edgeNodePairs, String type) {
+    private void addBatchEdge(List<Map<String, Object>> edgeNodePairs, String type) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("edgeNodePairs", edgeNodePairs);
         parameters.put("type", type);
 
-        try (Session session = driver.session(SessionConfig.forDatabase(DATABASE))) {
+        try (Session session = driver.session(SessionConfig.forDatabase(Arg.getDATABASE()))) {
 
             session.executeWrite(tx -> tx.run("UNWIND $edgeNodePairs as row " +
                             "MATCH (method_from:Method {packageName: row.packageName, className: row.className, " +
@@ -105,14 +101,15 @@ public class Neo4jUtil {
      *
      * @param node the node
      */
-    public void addMethod(Node node) {
+    @Deprecated
+    private void addMethod(Node node) {
         String packageName = node.getPackageName();
         String className = node.getClassName();
         String methodName = node.getMethodName();
         String params = node.getParams();
         String returnType = node.getReturnType();
         // Sessions are lightweight and disposable connection wrappers.
-        try (Session session = driver.session(SessionConfig.forDatabase(DATABASE))) {
+        try (Session session = driver.session(SessionConfig.forDatabase(Arg.getDATABASE()))) {
             // Wrapping a Cypher Query in a Managed Transaction provides atomicity
             // and makes handling errors much easier.
             // Use `session.writeTransaction` for writes and `session.readTransaction` for reading data.
@@ -129,11 +126,11 @@ public class Neo4jUtil {
      *
      * @param nodeList the node list
      */
-    public void addMethodUnwind(List<Map<String, Object>> nodeList) {
+    private void addBatchMethod(List<Map<String, Object>> nodeList) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("batches", nodeList);
         // Sessions are lightweight and disposable connection wrappers.
-        try (Session session = driver.session(SessionConfig.forDatabase(DATABASE))) {
+        try (Session session = driver.session(SessionConfig.forDatabase(Arg.getDATABASE()))) {
             // Wrapping a Cypher Query in a Managed Transaction provides atomicity
             // and makes handling errors much easier.
             // Use `session.writeTransaction` for writes and `session.readTransaction` for reading data.
@@ -144,28 +141,6 @@ public class Neo4jUtil {
                     parameters));
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    /**
-     * Print methods.
-     *
-     * @param initial the initial
-     */
-    public void printMethods(String initial) {
-        try (Session session = driver.session(SessionConfig.forDatabase(DATABASE))) {
-            // A Managed transaction is a quick and easy way to wrap a Cypher Query.
-            // The `session.run` method will run the specified Query.
-            // This simpler method does not use any automatic retry mechanism.
-            Result result = session.run(
-                    "MATCH (a:Method) WHERE a.name STARTS WITH $x RETURN a.name AS name",
-                    parameters("x", initial));
-            // Each Cypher execution returns a stream of records.
-            while (result.hasNext()) {
-                Record records = result.next();
-                // Values can be extracted from a record by index or name.
-                System.out.println(records.get("name").asString());
-            }
         }
     }
 
@@ -189,7 +164,7 @@ public class Neo4jUtil {
         for (Node node : nodesList) {
             nodeMap.add(getNodeInfo(node, ""));
         }
-        addMethodUnwind(nodeMap);
+        addBatchMethod(nodeMap);
         List<Map<String, Object>> edgeNodePairs = new ArrayList<>();
 
         for (Edge edge : edges) {
@@ -200,7 +175,7 @@ public class Neo4jUtil {
             nodeInfo.putAll(getNodeInfo(to, "2"));
             edgeNodePairs.add(nodeInfo);
         }
-        addEdgeUnwind(edgeNodePairs, label);
+        addBatchEdge(edgeNodePairs, label);
     }
 
     /**

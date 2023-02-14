@@ -174,9 +174,13 @@ public class JarReadUtil {
                 pool.appendClassPath(jarFile);
                 CtClass cc = pool.get(name);
 
-                getPackageNamesOfParentClasses(cc.getRefClasses(), importedPackages, pool);
+//                getPackageNamesOfParentClasses(cc.getRefClasses(), importedPackages, pool);
 
                 String packageName = cc.getPackageName();
+                if (packageName == null) {
+                    continue;
+                }
+                importedPackages.add(packageName);
                 if (packageName.lastIndexOf(".") == -1) {
                     selfPackageNames.add(packageName);
                 } else {
@@ -189,6 +193,7 @@ public class JarReadUtil {
         }
 
         for (String pkg : selfPackageNames) {
+            if (pkg == null) continue;
             selfPackages.append(pkg);
         }
 //        if (selfPackages.length() > 0) {
@@ -207,6 +212,9 @@ public class JarReadUtil {
             }
 
             String importedClassPackageName = importedClass.getPackageName();
+            if (importedClassPackageName == null) {
+                continue;
+            }
             importedPackages.add(importedClassPackageName);
         }
     }

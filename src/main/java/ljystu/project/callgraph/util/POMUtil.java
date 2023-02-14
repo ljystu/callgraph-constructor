@@ -19,13 +19,12 @@ import java.util.List;
 @Slf4j
 public class POMUtil {
     /**
-     * Edit pom.
+     * edit surefire plugin, add javaagent to argline
      *
      * @param pomFile     the pom file
      * @param packageInfo the package info
      */
-    public void editPOM(String pomFile, String packageInfo) {
-        // 读取 POM 文件
+    public static void editPOM(String pomFile, String packageInfo) {
 
         MavenXpp3Reader reader = new MavenXpp3Reader();
         Model model = null;
@@ -36,15 +35,13 @@ public class POMUtil {
             return;
         }
 
-
-        // 获取构建部分
         Build build = model.getBuild();
         if (build == null) {
             build = new Build();
             model.setBuild(build);
         }
 
-        // 获取插件列表
+        // get plugins
         List<Plugin> plugins = build.getPlugins();
 //        PluginManagement pluginManagement = build.getPluginManagement();
 //
@@ -54,7 +51,7 @@ public class POMUtil {
 //        List<Plugin> plugins = pluginManagement.getPlugins();
 
         Plugin compilerPlugin = new Plugin();
-        // 判断插件是否已存在
+
         boolean exists = false;
         for (Plugin plugin : plugins) {
             if (plugin.getArtifactId().equals("maven-surefire-plugin")) {
@@ -64,7 +61,7 @@ public class POMUtil {
             }
         }
 
-        // 如果不存在则添加插件
+        //
         if (!exists) {
             compilerPlugin.setGroupId("org.apache.maven.plugins");
             compilerPlugin.setArtifactId("maven-surefire-plugin");
@@ -91,8 +88,7 @@ public class POMUtil {
             plugins.add(compilerPlugin);
         }
 
-//        build.setPluginManagement(pluginManagement);
-        // 写入 POM 文件
+        // write back to pom
         MavenXpp3Writer writer = new MavenXpp3Writer();
         try {
 

@@ -1,4 +1,4 @@
-package ljystu.project.callgraph.test;
+package test;
 
 import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.util.config.FileOfClasses;

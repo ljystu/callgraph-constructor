@@ -18,8 +18,8 @@ import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.WalaException;
-import ljystu.project.callgraph.test.ExampleUtil;
 import org.junit.Test;
+import test.ExampleUtil;
 
 import java.io.File;
 import java.io.IOException;

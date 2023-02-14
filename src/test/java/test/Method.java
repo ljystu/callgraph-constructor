@@ -1,4 +1,4 @@
-package ljystu.project.callgraph.test;
+package test;
 
 import lombok.Data;
 
