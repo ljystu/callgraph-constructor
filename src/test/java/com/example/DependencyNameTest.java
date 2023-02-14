@@ -1,5 +1,6 @@
 package com.example;
 
+import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
 import org.json.JSONArray;
@@ -15,7 +16,7 @@ import java.net.URL;
 import java.util.*;
 
 public class DependencyNameTest {
-    static String jarPath = Path.getJavaagentHome();
+    static String jarPath = Constants.JAVAAGENT_HOME;
 
     @Test
     public void getMavenDependencyName() throws Exception {

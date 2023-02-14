@@ -1,6 +1,7 @@
 package ljystu.project.callgraph;
 
 
+import ljystu.project.callgraph.config.Constants;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
@@ -19,8 +20,8 @@ import java.util.regex.Pattern;
 public class HelloExampleTest {
     static org.apache.maven.shared.invoker.Invoker mavenInvoker = new DefaultInvoker();
 
-    static String mavenPath = Path.getMavenHome();
-    static String jarPath = Path.getJavaagentHome();
+    static String mavenPath = Constants.MAVEN_HOME;
+//    static String jarPath = Path.getJavaagentHome();
 
     @Test
     public void testAll() throws Exception {
