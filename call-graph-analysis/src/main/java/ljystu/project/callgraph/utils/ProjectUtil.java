@@ -1,7 +1,8 @@
-package ljystu.project.callgraph.util;
+package ljystu.project.callgraph.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Project;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,7 +57,7 @@ public class ProjectUtil {
         URL url = null;
         String folderName = "";
         try {
-            url = new URL(project.getRepoUrl() + "/archive/refs/heads/master.zip");
+            url = new URL(project.getRepoUrl() + Constants.PROJECT_LINK);
 
             File zipFile = new File(project.getName() + ".zip");
             Files.copy(url.openStream(), Paths.get(zipFile.getPath()));

@@ -120,7 +120,7 @@ public class FastenUriUtilsTest {
     @Test
     void testParsePartialFastenUriEscapeCharsSuccess3() {
         // $ in method name
-        var partialUri = "/nl.tudelft.jpacman.ui/ButtonPanel.lambda$new$0(%2Fjava.util%2FMap,%2Fjava.lang%2FString,%2Fjavax.swing%2FJFrame,%2Fjava.awt.event%2FActionEvent)%2Fjava.lang%2FVoidType";
+        var partialUri = "/nl.tudelft.jpacman.ui/ButtonPanel.lambda$new$0(%2Fjava.utils%2FMap,%2Fjava.lang%2FString,%2Fjavax.swing%2FJFrame,%2Fjava.awt.event%2FActionEvent)%2Fjava.lang%2FVoidType";
         var expectedNamespace = "nl.tudelft.jpacman.ui";
 
         var actual = FastenUriUtils.parsePartialFastenUri(partialUri);
@@ -130,12 +130,12 @@ public class FastenUriUtilsTest {
     @Test
     void testParsePartialFastenEncodedUriSuccess() {
 
-        var partialUri = "/com.sun.istack.localization/Localizer.%3Cinit%3E(%2Fjava.util%2FLocale)%2Fjava.lang%2FVoidType";
+        var partialUri = "/com.sun.istack.localization/Localizer.%3Cinit%3E(%2Fjava.utils%2FLocale)%2Fjava.lang%2FVoidType";
 
         var expectedNamespace = "com.sun.istack.localization";
         var expectedClass = "Localizer";
         var expectedMethod = "<init>";
-        var expectedArgs = "/java.util/Locale";
+        var expectedArgs = "/java.utils/Locale";
         var expectedReturnType = "/java.lang/VoidType";
 
         var actual = FastenUriUtils.parsePartialFastenUri(partialUri);

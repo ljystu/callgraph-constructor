@@ -1,9 +1,9 @@
 package com.example;
 
 import com.alibaba.fastjson.JSON;
-import ljystu.project.callgraph.Neo4j.Neo4jOp;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
+import ljystu.project.callgraph.uploader.Neo4jOp;
 import org.junit.Test;
 import redis.clients.jedis.Jedis;
 
@@ -12,12 +12,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class RedisOpTest {
+public class CallGraphUploaderTest {
     Jedis jedis;
 
     Neo4jOp neo4JOp;
 
-    public RedisOpTest() {
+    public CallGraphUploaderTest() {
 
     }
 
@@ -53,7 +53,7 @@ public class RedisOpTest {
         }
         List<Node> nodesList = new ArrayList<>();
         nodesList.addAll(nodes);
-        neo4JOp.uploadBatch(nodesList, edges, label);
+        neo4JOp.uploadAllToNeo4j(nodesList, edges, label);
         jedis.del(label);
         neo4JOp.close();
         // 关闭Jedis对象

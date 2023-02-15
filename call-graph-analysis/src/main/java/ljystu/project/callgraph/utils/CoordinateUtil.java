@@ -1,4 +1,4 @@
-package ljystu.project.callgraph.util;
+package ljystu.project.callgraph.utils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;

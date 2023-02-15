@@ -1,4 +1,4 @@
-package ljystu.project.callgraph.Neo4j;
+package ljystu.project.callgraph.uploader;
 
 
 import ljystu.project.callgraph.config.Constants;
@@ -15,30 +15,18 @@ import static org.neo4j.driver.Values.parameters;
 
 
 /**
- * The type Neo 4 j util.
+ * The type Neo 4 j utils.
  */
 public class Neo4jOp {
 
-    /**
-     * The Driver.
-     */
-// Driver objects are thread-safe and are typically made available application-wide.
     Driver driver;
 
-    /**
-     * Instantiates a new Neo 4 j util.
-     */
+
     public Neo4jOp() {
 
     }
 
-    /**
-     * Instantiates a new Neo 4 j util.
-     *
-     * @param uri      the uri
-     * @param user     the user
-     * @param password the password
-     */
+
     public Neo4jOp(String uri, String user, String password) {
         driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password));
 
@@ -80,7 +68,6 @@ public class Neo4jOp {
         parameters.put("type", type);
 
         try (Session session = driver.session(SessionConfig.forDatabase(Constants.DATABASE))) {
-
             session.writeTransaction(tx -> tx.run("UNWIND $edgeNodePairs as row " +
                             "MATCH (method_from:Method {packageName: row.packageName, className: row.className, " +
                             "methodName: row.methodName, params: row.params, returnType: row.returnType, dependency: row.dependency }), " +
@@ -88,9 +75,13 @@ public class Neo4jOp {
                             "methodName: row.methodName2, params: row.params2, returnType: row.returnType2, dependency: row.dependency2 }) " +
                             "MERGE (method_from)-[r:CALL]->(method_to)" +
                             "ON CREATE SET r.type = $type \n" +
-                            "ON MATCH SET r.type = 'both'",
+                            "ON MATCH SET r.type = \n" +
+                            "CASE r.type\n" +
+                            "   WHEN $type \n" +
+                            "   THEN $type \n" +
+                            "   ELSE 'both' \n" +
+                            "END",
                     parameters));
-//            System.out.println(result.next().toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -129,12 +120,8 @@ public class Neo4jOp {
     private void addBatchMethod(List<Map<String, Object>> nodeList) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("batches", nodeList);
-        // Sessions are lightweight and disposable connection wrappers.
+
         try (Session session = driver.session(SessionConfig.forDatabase(Constants.DATABASE))) {
-            // Wrapping a Cypher Query in a Managed Transaction provides atomicity
-            // and makes handling errors much easier.
-            // Use `session.writeTransaction` for writes and `session.readTransaction` for reading data.
-            // These methods are also able to handle connection problems and transient errors using an automatic retry mechanism.
             session.writeTransaction(tx -> tx.run("UNWIND $batches as row " +
                             "MERGE (a:Method {packageName: row.packageName, className: row.className," +
                             " methodName: row.methodName, params: row.params, returnType: row.returnType, dependency: row.dependency })",
@@ -148,7 +135,6 @@ public class Neo4jOp {
      * Close.
      */
     public void close() {
-        // Closing a driver immediately shuts down all open connections.
         driver.close();
     }
 
@@ -159,12 +145,12 @@ public class Neo4jOp {
      * @param edges     the edges
      * @param label     the label
      */
-    public void uploadBatch(List<Node> nodesList, List<Edge> edges, String label) {
-        List<Map<String, Object>> nodeMap = new ArrayList<>();
-        for (Node node : nodesList) {
-            nodeMap.add(getNodeInfo(node, ""));
-        }
-        addBatchMethod(nodeMap);
+    public void uploadAllToNeo4j(List<Node> nodesList, List<Edge> edges, String label) {
+        uploadMethodNodes(nodesList);
+        uploadEdges(edges, label);
+    }
+
+    private void uploadEdges(List<Edge> edges, String label) {
         List<Map<String, Object>> edgeNodePairs = new ArrayList<>();
 
         for (Edge edge : edges) {
@@ -176,6 +162,14 @@ public class Neo4jOp {
             edgeNodePairs.add(nodeInfo);
         }
         addBatchEdge(edgeNodePairs, label);
+    }
+
+    private void uploadMethodNodes(List<Node> nodesList) {
+        List<Map<String, Object>> nodeMap = new ArrayList<>();
+        for (Node node : nodesList) {
+            nodeMap.add(getNodeInfo(node, ""));
+        }
+        addBatchMethod(nodeMap);
     }
 
     /**

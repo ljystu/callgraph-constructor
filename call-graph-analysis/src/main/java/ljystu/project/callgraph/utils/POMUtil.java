@@ -1,4 +1,4 @@
-package ljystu.project.callgraph.util;
+package ljystu.project.callgraph.utils;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.model.Build;
@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * The type Pom util.
+ * The type Pom utils.
  */
 @Slf4j
 public class POMUtil {

@@ -207,3 +207,4 @@ bin
 *.nodes
 /docs/
 /docker/
+/.github/

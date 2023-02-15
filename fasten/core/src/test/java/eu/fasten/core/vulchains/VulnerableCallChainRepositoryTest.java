@@ -194,7 +194,7 @@ class VulnerableCallChainRepositoryTest {
         var target1 = FastenURI.create("fasten://mvn!com.google.guava:guava$15.0/com.google" +
                 ".common.collect/AbstractMapBasedMultimap$Itr.next()%2Fjava.lang%2FObject");
         var target2 = FastenURI.create("fasten://mvn!xom:xom$1.2.5/nu.xom.jaxen" +
-                ".util/FollowingSiblingAxisIterator.next()%2Fjava.lang%2FObject");
+                ".utils/FollowingSiblingAxisIterator.next()%2Fjava.lang%2FObject");
         var target3 = FastenURI.create("fasten://mvn!org.apache.jackrabbit.vault:org.apache.jackrabbit" +
                 ".vault$3.1.18/org.apache.jackrabbit.spi.commons" +
                 ".batch/ConsolidatingChangeLog$OperationsBackwardWithSentinel.next()%2Fjava.lang%2FObject");

@@ -1,4 +1,4 @@
-package ljystu.project.callgraph.util;
+package ljystu.project.callgraph.utils;
 
 import ljystu.project.callgraph.config.Constants;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * The type Package util.
+ * The type Package utils.
  */
 @Slf4j
 public class PackageUtil {
@@ -93,9 +93,12 @@ public class PackageUtil {
         HashMap<String, String> packageToCoordMap = new HashMap<>();
         for (File jar : jarFiles) {
             try {
+                //TODO store the read jars, jar to coordinates and package to coordinates in a databse
+                String coord = jarToCoordMap.get(jar.getName());
+
                 Set<String> packagesInJar = JarReadUtil.getAllPackages(jar.getAbsolutePath(), rootPath + "/myjar");
 
-                String coord = jarToCoordMap.get(jar.getName());
+
                 for (String importPackage : packagesInJar) {
                     //TODO 如果packagename相同，后面的coordinate会覆盖当前类的coordinate 需要进一步修改逻辑或添加
                     //可能需要用类名进一步筛选？
@@ -114,7 +117,7 @@ public class PackageUtil {
     private static String readExcludedPackages() {
         StringBuilder str = new StringBuilder();
         try {
-            Path path = new File("src/main/resources/exclusions.txt").toPath();
+            Path path = new File(Constants.EXCLUSION_FILE).toPath();
             String content = Files.readString(path);
             String[] lines = content.split("\r\n");
             for (String line : lines) {

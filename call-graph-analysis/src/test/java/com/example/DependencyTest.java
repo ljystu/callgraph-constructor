@@ -3,6 +3,7 @@ package com.example;
 import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
+import ljystu.project.callgraph.invoker.Invoker;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -15,7 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
 
-public class DependencyNameTest {
+public class DependencyTest {
     static String jarPath = Constants.JAVAAGENT_HOME;
 
     @Test
@@ -27,14 +28,19 @@ public class DependencyNameTest {
         List<Edge> edges = new ArrayList<>();
         Set<String> result = jedis.smembers("static");
         for (String s : result) {
-            String coordinate = getCoordinate("redis.clients.util.JedisURIHelper", "2.9.1");
+            String coordinate = getCoordinate("uploader.clients.utils.JedisURIHelper", "2.9.1");
 
 
         }
 //        Class clazz = Class.forName("org.apache.activemq.broker.AbstractLocker");
 
 
+    }
 
+    @Test
+    public void invokeJarDownloadTest() {
+        Invoker invoker = new Invoker("junit4-main");
+        invoker.invokeTask("dependency:copy-dependencies", "./lib");
     }
 
     public static String getCoordinate(String className, String version) {

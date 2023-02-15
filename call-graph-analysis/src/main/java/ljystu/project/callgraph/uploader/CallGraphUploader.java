@@ -1,7 +1,7 @@
-package ljystu.project.callgraph.redis;
+package ljystu.project.callgraph.uploader;
 
 import com.alibaba.fastjson.JSON;
-import ljystu.project.callgraph.Neo4j.Neo4jOp;
+import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
 import lombok.extern.slf4j.Slf4j;
@@ -13,23 +13,24 @@ import java.util.*;
  * The type Redis op.
  */
 @Slf4j
-public class RedisOp {
+public class CallGraphUploader {
+
     /**
      * The Jedis.
      */
     Jedis jedis;
 
     /**
-     * The Neo 4 j util.
+     * The Neo 4 j utils.
      */
     Neo4jOp neo4JOp;
 
     /**
      * Instantiates a new Redis op.
      */
-    public RedisOp() {
-        this.neo4JOp = new Neo4jOp("bolt://localhost:7687", "neo4j", "ljystu");
-        this.jedis = new Jedis("localhost");
+    public CallGraphUploader() {
+        this.neo4JOp = new Neo4jOp(Constants.NEO4J_PORT, Constants.NEO4J_USERNAME, Constants.NEO4J_PASSWORD);
+        this.jedis = new Jedis(Constants.REDIS_ADDRESS);
     }
 
     public void uploadAll(Map<String, String> packageToCoordMap) {
@@ -50,9 +51,8 @@ public class RedisOp {
         HashSet<Node> nodes = new HashSet<>();
         List<Edge> edges = new ArrayList<>();
 
-        Set<String> dynamic = jedis.smembers(label);
         // 遍历所有键，获取对应的值并删除
-        for (String value : dynamic) {
+        for (String value : jedis.smembers(label)) {
 
             Edge edge = JSON.parseObject(value, Edge.class);
             log.debug("Edge upload：" + edge.toString());
@@ -70,9 +70,8 @@ public class RedisOp {
         }
 
         List<Node> nodesList = new ArrayList<>(nodes);
-        neo4JOp.uploadBatch(nodesList, edges, label);
+        neo4JOp.uploadAllToNeo4j(nodesList, edges, label);
         jedis.del(label);
-
 
     }
 

@@ -2,10 +2,10 @@ package ljystu.project.callgraph.invoker;
 
 import eu.fasten.analyzer.javacgopal.Main;
 import ljystu.project.callgraph.config.Constants;
-import ljystu.project.callgraph.redis.RedisOp;
-import ljystu.project.callgraph.util.POMUtil;
-import ljystu.project.callgraph.util.PackageUtil;
-import ljystu.project.callgraph.util.ProjectUtil;
+import ljystu.project.callgraph.uploader.CallGraphUploader;
+import ljystu.project.callgraph.utils.POMUtil;
+import ljystu.project.callgraph.utils.PackageUtil;
+import ljystu.project.callgraph.utils.ProjectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
@@ -14,7 +14,7 @@ import org.apache.maven.shared.invoker.InvocationRequest;
 import java.io.File;
 import java.util.*;
 
-import static ljystu.project.callgraph.util.ProjectUtil.deleteFile;
+import static ljystu.project.callgraph.utils.ProjectUtil.deleteFile;
 
 /**
  * The type Invoker.
@@ -24,8 +24,8 @@ public class Invoker {
     /**
      * The Maven invoker.
      */
-    public org.apache.maven.shared.invoker.Invoker mavenInvoker;
-    private static String rootPath;
+    private final org.apache.maven.shared.invoker.Invoker mavenInvoker;
+    private final String rootPath;
 
     /**
      * Instantiates a new Invoker.
@@ -47,7 +47,7 @@ public class Invoker {
      * @param projectCount the project count
      * @return hash set
      */
-    public HashSet<String> analyseProject(HashMap<String, Integer> projectCount) {
+    public Set<String> analyseProject(Map<String, Integer> projectCount) {
 
         HashMap<String, String> jarToCoordMap = new HashMap<>();
         HashSet<String> set = new HashSet<>();
@@ -65,8 +65,8 @@ public class Invoker {
         constructStaticCallgraphs(jarToCoordMap);
 
         //upload call graph to neo4j
-        RedisOp redisOp = new RedisOp();
-        redisOp.uploadAll(packageToCoordMap);
+        CallGraphUploader callGraphUploader = new CallGraphUploader();
+        callGraphUploader.uploadAll(packageToCoordMap);
 
 
         ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
@@ -112,7 +112,7 @@ public class Invoker {
 
     }
 
-    private static void addJavaagent(String inclPackages, List<String> pomFilePaths) {
+    private void addJavaagent(String inclPackages, List<String> pomFilePaths) {
 
         //add javaagent into surefire configuration of all POM files
         for (String pomFilePath : pomFilePaths) {
@@ -164,7 +164,7 @@ public class Invoker {
 
     }
 
-    private static InvocationRequest getInvocationRequest(String task) {
+    private InvocationRequest getInvocationRequest(String task) {
         InvocationRequest request = new DefaultInvocationRequest();
 
         // 设置项目的路径

@@ -1,5 +1,6 @@
-package ljystu.project.callgraph.util;
+package ljystu.project.callgraph.utils;
 
+import javassist.ClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.NotFoundException;
@@ -12,7 +13,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- * The type Java read util.
+ * The type Java read utils.
  */
 @Slf4j
 public class JarReadUtil {
@@ -119,16 +120,23 @@ public class JarReadUtil {
     /**
      * Gets imported selfPackages.
      *
-     * @param jarFile      the jar file
-     * @param classes      the classes
-     * @param selfPackages the selfPackages
+     * @param jarFile the jar file
+     * @param classes the classes
      * @return the set
      * @throws Exception the exception
      */
     private static Set<String> getImportedPackages(String jarFile, Set<String> classes) {
         Set<String> importedPackages = new HashSet<>();
-        HashSet<String> selfPackageNames = new HashSet<>();
+//        HashSet<String> selfPackageNames = new HashSet<>();
 
+        ClassPool pool = ClassPool.getDefault();
+        ClassPath classPath = null;
+        try {
+            classPath = pool.appendClassPath(jarFile);
+        } catch (NotFoundException e) {
+            log.error("ClassPool append error:" + jarFile);
+            return importedPackages;
+        }
 
         for (String clazz : classes) {
 //            Class cls = URLClassLoader.newInstance(new URL[]{url}).loadClass(clazz);
@@ -137,8 +145,6 @@ public class JarReadUtil {
                 ClassFile classFile = new ClassFile(dis);
                 String name = classFile.getName();
 
-                ClassPool pool = ClassPool.getDefault();
-                pool.appendClassPath(jarFile);
                 CtClass cc = pool.get(name);
 
 //                getPackageNamesOfParentClasses(cc.getRefClasses(), importedPackages, pool);
@@ -148,16 +154,23 @@ public class JarReadUtil {
                     continue;
                 }
                 importedPackages.add(packageName);
-                if (packageName.lastIndexOf(".") == -1) {
-                    selfPackageNames.add(packageName);
-                } else {
-                    String substring = packageName + ".*|";
-                    selfPackageNames.add(substring);
-                }
+//                if (packageName.lastIndexOf(".") == -1) {
+//                    selfPackageNames.add(packageName);
+//                } else {
+//                    String substring = packageName + ".*|";
+//                    selfPackageNames.add(substring);
+//                }
+                cc.detach();
             } catch (IOException | NotFoundException e) {
                 log.error(e.toString());
+
             }
+
         }
+        if (classPath != null) {
+            pool.removeClassPath(classPath);
+        }
+
 
 //        for (String pkg : selfPackageNames) {
 //            if (pkg == null) continue;

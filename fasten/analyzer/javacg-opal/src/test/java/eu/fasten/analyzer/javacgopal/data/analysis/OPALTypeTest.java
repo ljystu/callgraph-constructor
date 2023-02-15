@@ -514,7 +514,7 @@ class OPALTypeTest {
 
         cg = getRCG("linenumbertests/ProcessIdUtil.class");
 
-        assertLineNumber(cg, "/org.apache.logging.log4j.util/ProcessIdUtil.getProcessId()%2Fjava" + ".lang%2FString",
+        assertLineNumber(cg, "/org.apache.logging.log4j.utils/ProcessIdUtil.getProcessId()%2Fjava" + ".lang%2FString",
                 33, 49);
 
     }
