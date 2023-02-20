@@ -9,6 +9,8 @@ import redis.clients.jedis.Jedis;
 
 import java.util.*;
 
+import static ljystu.project.callgraph.utils.PackageUtil.packageToCoordMap;
+
 /**
  * The type Redis op.
  */
@@ -33,7 +35,8 @@ public class CallGraphUploader {
         this.jedis = new Jedis(Constants.REDIS_ADDRESS);
     }
 
-    public void uploadAll(Map<String, String> packageToCoordMap) {
+    public void uploadAll() {
+
         upload("dynamic", packageToCoordMap);
         upload("static", packageToCoordMap);
         neo4JOp.close();

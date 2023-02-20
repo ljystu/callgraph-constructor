@@ -28,7 +28,7 @@ public class ProjectUtil {
      * @return the list
      */
 // 读取文件并解析项目列表
-    public List<Project> readProjects(String filepath) {
+    public static List<Project> readProjects(String filepath) {
         // 读取文件
         String json = readFile(filepath);
         // 解析项目列表
@@ -52,7 +52,7 @@ public class ProjectUtil {
      * @return the string
      */
 // 下载项目并解压
-    public String downloadAndUnzip(Project project) {
+    public static String downloadAndUnzip(Project project) {
         // 下载项目的zip文件
         URL url = null;
         String folderName = "";
@@ -72,7 +72,7 @@ public class ProjectUtil {
     }
 
     // 读取文件内容
-    private String readFile(String filepath) {
+    private static String readFile(String filepath) {
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filepath)))) {
             String line;
@@ -87,7 +87,7 @@ public class ProjectUtil {
     }
 
     // 解压zip文件
-    private String unzip(File zipFile) throws IOException {
+    private static String unzip(File zipFile) throws IOException {
         String name = "";
         boolean flag = false;
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile))) {

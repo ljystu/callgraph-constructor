@@ -24,7 +24,8 @@ public class Invoker {
     /**
      * The Maven invoker.
      */
-    private final org.apache.maven.shared.invoker.Invoker mavenInvoker;
+    private static final org.apache.maven.shared.invoker.Invoker mavenInvoker = new DefaultInvoker();
+    ;
     private final String rootPath;
 
     /**
@@ -33,8 +34,7 @@ public class Invoker {
      * @param rootPath the root path
      */
     public Invoker(String rootPath) {
-        this.mavenInvoker = new DefaultInvoker();
-        this.mavenInvoker.setMavenHome(new File(Constants.MAVEN_HOME));
+        mavenInvoker.setMavenHome(new File(Constants.MAVEN_HOME));
         this.rootPath = rootPath;
     }
 
@@ -49,48 +49,45 @@ public class Invoker {
      */
     public Set<String> analyseProject(Map<String, Integer> projectCount) {
 
-        HashMap<String, String> jarToCoordMap = new HashMap<>();
         HashSet<String> set = new HashSet<>();
-
-        // 获取Test类的所有import的类型
-        StringBuilder inclPackages = new StringBuilder();
 
         //acquire dependencies
         invokeTask("dependency:copy-dependencies", "./lib");
         //map packages to coordinates
-        Map<String, String> packageToCoordMap = PackageUtil.getPackages(jarToCoordMap, inclPackages, rootPath);
+        String packageScan = PackageUtil.getPackages(rootPath);
 
-        mavenTestWithJavaAgent(inclPackages);
+        mavenTestWithJavaAgent(packageScan);
 
-        constructStaticCallgraphs(jarToCoordMap);
+        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
+
+        constructStaticCallGraphs();
 
         //upload call graph to neo4j
         CallGraphUploader callGraphUploader = new CallGraphUploader();
-        callGraphUploader.uploadAll(packageToCoordMap);
 
+        callGraphUploader.uploadAll();
 
-        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
 
         return set;
     }
 
-    private void constructStaticCallgraphs(HashMap<String, String> jarToCoordMap) {
-        for (Map.Entry<String, String> entry : jarToCoordMap.entrySet()) {
-            Main.main(getParameters(entry.getValue()));
+    private void constructStaticCallGraphs() {
+        for (String coordinate : PackageUtil.currentJars) {
+            Main.main(getParameters(coordinate));
+
         }
     }
 
-    private void mavenTestWithJavaAgent(StringBuilder inclPackages) {
+    private void mavenTestWithJavaAgent(String inclPackages) {
         //get path of all pom files
         List<String> pomFiles = PackageUtil.getPomFiles(rootPath);
         //maven test with javaagent
-        addJavaagent(inclPackages.toString(), pomFiles);
+        addJavaagent(inclPackages, pomFiles);
         invokeTask("test");
     }
 
     private String[] getParameters(String coordinate) {
-        String[] params = new String[]{"-a", coordinate, "-an", coordinate, "-g", "-i", "COORD", "-m",};
-        return params;
+        return new String[]{"-a", coordinate, "-an", coordinate, "-g", "-i", "COORD", "-m"};
     }
 
     /**

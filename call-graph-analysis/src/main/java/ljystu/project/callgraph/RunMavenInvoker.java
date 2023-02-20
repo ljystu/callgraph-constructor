@@ -12,13 +12,13 @@ import java.util.Objects;
 
 public class RunMavenInvoker {
     public static void main(String[] args) {
-        ProjectUtil projectUtil = new ProjectUtil();
-        List<Project> projects = projectUtil.readProjects(Constants.PROJECT_LIST);
+
+        List<Project> projects = ProjectUtil.readProjects(Constants.PROJECT_LIST);
 
         HashMap<String, Integer> projectCount = new HashMap<>();
 
         for (Project p : projects) {
-            String folderName = projectUtil.downloadAndUnzip(p);
+            String folderName = ProjectUtil.downloadAndUnzip(p);
             if (Objects.equals(folderName, "")) continue;
             Invoker invoker = new Invoker(folderName);
             invoker.analyseProject(projectCount);

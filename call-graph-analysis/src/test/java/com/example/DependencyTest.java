@@ -33,8 +33,6 @@ public class DependencyTest {
 
         }
 //        Class clazz = Class.forName("org.apache.activemq.broker.AbstractLocker");
-
-
     }
 
     @Test

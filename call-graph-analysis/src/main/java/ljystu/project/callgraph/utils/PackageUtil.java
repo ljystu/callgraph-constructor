@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,6 +23,24 @@ public class PackageUtil {
      * The Paths.
      */
     List<String> paths = new ArrayList<>();
+
+    static long tenMegabytes = 10485760L; // 10MB的字节数
+
+
+    /**
+     * The constant jarToCoordMap.
+     */
+    public static Map<String, String> jarToCoordMap = new HashMap<>();
+    /**
+     * The constant jarToPackageMap.
+     */
+    public static Map<String, Set<String>> jarToPackageMap = new HashMap<>();
+    /**
+     * The constant packageToCoordMap.
+     */
+    public static Map<String, String> packageToCoordMap = new HashMap<>();
+
+    public static Set<String> currentJars = new HashSet<>();
 
     /**
      * Gets pom files.
@@ -43,31 +62,21 @@ public class PackageUtil {
     /**
      * Gets packages.
      *
-     * @param jarToCoordMap the jar to coord map
-     * @param packageScan   the package scan
-     * @param rootPath      the root path
+     * @param rootPath the root path
      * @return packages packages
      */
-    public static Map<String, String> getPackages(Map<String, String> jarToCoordMap, StringBuilder packageScan, String rootPath) {
+    public static String getPackages(String rootPath) {
+        getJarToCoordMap(rootPath);
 
-        String argLine = Constants.argLineLeft + Constants.JAVAAGENT_HOME + Constants.argLineRight;
-        packageScan.append(argLine);
+        Set<String> inclPackages = extractPackagesFromJar(rootPath);
 
-        //possibly useless
-//        HashSet<String> dependencies = new HashSet<>();
-
-        jarToCoordMap.putAll(getJarToCoordMap(rootPath));
-
-        Set<String> definedPackages = new HashSet<>();
-
-        HashMap<String, String> packageToCoordMap = extractPackagesFromJar(rootPath, jarToCoordMap, definedPackages);
-
-        constructPackageScan(packageScan, definedPackages);
-
-        return packageToCoordMap;
+        return constructPackageScan(inclPackages).toString();
     }
 
-    private static void constructPackageScan(StringBuilder packageScan, Set<String> definedPackages) {
+    private static StringBuilder constructPackageScan(Set<String> definedPackages) {
+        StringBuilder packageScan = new StringBuilder();
+        String argLine = Constants.argLineLeft + Constants.JAVAAGENT_HOME + Constants.argLineRight;
+        packageScan.append(argLine);
         Pattern excludedPattern = Pattern.compile(readExcludedPackages());
 
         for (String definedPackage : definedPackages) {
@@ -83,35 +92,53 @@ public class PackageUtil {
 
         packageScan.setLength(packageScan.length() - 1);
         packageScan.append(";");
+        return packageScan;
     }
 
-    private static HashMap<String, String> extractPackagesFromJar(String rootPath, Map<String, String> jarToCoordMap, Set<String> definedPackages) {
+    private static Set<String> extractPackagesFromJar(String rootPath) {
         // find jar files
         List<File> jarFiles = new ArrayList<>();
+        currentJars.clear();
         JarReadUtil.findTypeFiles(new File(rootPath), jarFiles, ".jar");
 
-        HashMap<String, String> packageToCoordMap = new HashMap<>();
+
+        Set<String> inclPkgs = new HashSet<>();
         for (File jar : jarFiles) {
             try {
                 //TODO store the read jars, jar to coordinates and package to coordinates in a databse
+
+                if (jar.length() > tenMegabytes * 2L) {
+                    log.info(jar.getName() + "Byte value is greater than 10MB");
+                    continue;
+                }
+
+                if (jarToPackageMap.containsKey(jar.getName())) {
+                    inclPkgs.addAll(jarToPackageMap.get(jar.getName()));
+                    continue;
+                }
                 String coord = jarToCoordMap.get(jar.getName());
 
-                Set<String> packagesInJar = JarReadUtil.getAllPackages(jar.getAbsolutePath(), rootPath + "/myjar");
+                Set<String> packagesInJar = JarReadUtil.getPackages(new JarFile(jar));
 
+                jarToPackageMap.put(jar.getName(), packagesInJar);
 
+                currentJars.add(coord);
                 for (String importPackage : packagesInJar) {
                     //TODO 如果packagename相同，后面的coordinate会覆盖当前类的coordinate 需要进一步修改逻辑或添加
                     //可能需要用类名进一步筛选？
+
                     packageToCoordMap.put(importPackage, coord);
                 }
-                definedPackages.addAll(packagesInJar);
+                inclPkgs.addAll(packagesInJar);
+                ProjectUtil.deleteFile(jar);
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally {
-                ProjectUtil.deleteFile(new File(rootPath + "/myjar"));
             }
         }
-        return packageToCoordMap;
+        for (File jarFile : jarFiles) {
+            ProjectUtil.deleteFile(jarFile);
+        }
+        return inclPkgs;
     }
 
     private static String readExcludedPackages() {
@@ -144,11 +171,11 @@ public class PackageUtil {
      * @param rootPath the root path
      * @return the dependency info
      */
-    public static Map<String, String> getJarToCoordMap(String rootPath) {
+    public static void getJarToCoordMap(String rootPath) {
 
         String dependencyList = execCmd("mvn dependency:list", rootPath);
         if (dependencyList == null) {
-            return new HashMap<>();
+            return;
         }
         String[] lines = dependencyList.split("\n");
         Pattern pattern = Pattern.compile("    (.*):(compile|runtime|test)");
@@ -165,7 +192,7 @@ public class PackageUtil {
 
         log.debug("dependency size:" + dependencies.size());
 
-        return extractCoordinate(dependencies);
+        jarToCoordMap.putAll(extractCoordinate(dependencies));
     }
 
     /**

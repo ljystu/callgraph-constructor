@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -22,6 +24,34 @@ public class JarReadUtil {
 
     }
 
+    public static Set<String> getPackages(JarFile jarFile) {
+        Set<String> packageNames = new HashSet<>();
+        if (jarFile == null) {
+            return packageNames;
+        }
+
+        Enumeration<JarEntry> entries = jarFile.entries();
+        while (entries.hasMoreElements()) {
+            JarEntry entry = entries.nextElement();
+            String name = entry.getName();
+            if (name.endsWith(".class")) {
+                // remove the ".class" suffix
+//                    name = name.substring(0, name.length() - 6);
+                // replace "/" with "."
+
+                // get the package name
+                int index = name.lastIndexOf('/');
+                name = name.replace('/', '.');
+                if (index > 0) {
+                    String pkgName = name.substring(0, index);
+                    // add the package name to the set
+                    packageNames.add(pkgName);
+                }
+            }
+        }
+
+        return packageNames;
+    }
 
     /**
      * get all class files in the jar
@@ -80,7 +110,7 @@ public class JarReadUtil {
      */
     public static Set<String> getAllPackages(String jarFilePath, String tempDir) {
 
-        upZipJars(jarFilePath, tempDir);
+//        upZipJars(jarFilePath, tempDir);
 
         Set<String> classes = JarReadUtil.getClasses(tempDir);
 
@@ -103,8 +133,7 @@ public class JarReadUtil {
                     file.getParentFile().mkdirs();
                 }
 
-                try (InputStream input = zipFile.getInputStream(entry);
-                     OutputStream output = new FileOutputStream(file)) {
+                try (InputStream input = zipFile.getInputStream(entry); OutputStream output = new FileOutputStream(file)) {
                     byte[] buffer = new byte[1024];
                     int len;
                     while ((len = input.read(buffer)) != -1) {

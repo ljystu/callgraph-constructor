@@ -20,6 +20,6 @@ public class Constants {
     public static final String REDIS_ADDRESS = "localhost";
     public static final String PROJECT_LINK = "/archive/refs/heads/master.zip";
 
-    public static final String PROJECT_LIST = "/Users/ljystu/Library/CloudStorage/OneDrive-DelftUniversityofTechnology/thesis/pythonProject/repo_result_per_halfyear_100_test.json";
+    public static final String PROJECT_LIST = "/Users/ljystu/Desktop/pythonProject/repo_result_per_halfyear_100_test.json";
 
 }

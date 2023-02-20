@@ -23,11 +23,11 @@ public class JarTest {
 //        Invoker invoker = new Invoker();
         String rootPath = "junit4-main";
         HashSet<String> dependencies = new HashSet<>();
-        Map<String, String> coordinateMap = new PackageUtil().getJarToCoordMap(rootPath);
-        System.out.println(coordinateMap.toString());
-//        assertThat(coordinateMap.contains(jar),true);
-        if (coordinateMap.containsKey(jar)) {
-            System.out.println(coordinateMap.get(jar));
+        PackageUtil.getJarToCoordMap(rootPath);
+        System.out.println(PackageUtil.jarToCoordMap.toString());
+//        assertThat(PackageUtil.jarToCoordMap.contains(jar),true);
+        if (PackageUtil.jarToCoordMap.containsKey(jar)) {
+            System.out.println(PackageUtil.jarToCoordMap.get(jar));
         }
 
     }
@@ -49,6 +49,7 @@ public class JarTest {
 
     }
 
+    @Test
     public void readJarTest() throws IOException {
         String jarFilePath = "/Users/ljystu/Desktop/java-callgraph/target/javacg-0.1-SNAPSHOT-dycg-agent.jar";
         String tempDir = "src/main/resources/" + "javacg-0.1-SNAPSHOT-dycg-agent";
@@ -144,4 +145,25 @@ public class JarTest {
         System.out.println(importedPackages.size());
         return importedPackages;
     }
+
+    @Test
+    public void readJarWithoutUnzip() throws IOException {
+        // code blocks syntax from markdown
+// assume jarFiles is an array of JarFile objects
+// assume packageNames is a set of String objects
+        Set<String> packageNames = new HashSet<>();
+
+        File file = new File("/Users/ljystu/Downloads/jython-2.7.3.jar");
+        long length = file.length();
+
+        long tenMegabytes = 10485760L; // 10MB的字节数
+
+        if (length > tenMegabytes) {
+            System.out.println("Byte value is greater than 10MB");
+        } else {
+            System.out.println("Byte value is less than or equal to 10MB");
+        }
+
+    }
+
 }

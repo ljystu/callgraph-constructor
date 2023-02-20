@@ -19,12 +19,10 @@
 package eu.fasten.analyzer.javacgopal;
 
 import com.alibaba.fastjson.JSON;
-import eu.fasten.analyzer.javacgopal.Util.GraphUtil;
 import eu.fasten.analyzer.javacgopal.data.CGAlgorithm;
 import eu.fasten.analyzer.javacgopal.data.OPALCallGraphConstructor;
 import eu.fasten.analyzer.javacgopal.data.OPALPartialCallGraphConstructor;
 import eu.fasten.analyzer.javacgopal.entity.Edge;
-import eu.fasten.analyzer.javacgopal.entity.GraphNode;
 import eu.fasten.core.data.DirectedGraph;
 import eu.fasten.core.data.JSONUtils;
 import eu.fasten.core.data.PartialJavaCallGraph;
@@ -45,7 +43,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import static eu.fasten.analyzer.javacgopal.data.CallPreservationStrategy.INCLUDING_ALL_SUBTYPES;
 
@@ -106,6 +106,7 @@ public class Main implements Runnable {
      */
     public static void main(String[] args) {
         new CommandLine(new Main()).execute(args);
+//        System.gc();
     }
 
     /**
@@ -114,7 +115,7 @@ public class Main implements Runnable {
      */
     public void run() {
         if (doGenerate) runGenerate();
-        if (doMerge) runMerge();
+//        if (doMerge) runMerge();
     }
 
     /**
@@ -272,15 +273,15 @@ public class Main implements Runnable {
     }
 
     private void redisGraphUpload(PartialJavaCallGraph result) {
-        Jedis jedis = new Jedis("localhost");
-
-        HashMap<Integer, GraphNode> nodes = GraphUtil.getNodes(result);
-        HashSet<Edge> allEdges = GraphUtil.getAllEdges(result, nodes);
-
-        for (Edge edge : allEdges) {
-            jedis.sadd("static", JSON.toJSONString(edge));
-        }
-        jedis.close();
+//        Jedis jedis = new Jedis("localhost");
+//
+//        HashMap<Integer, GraphNode> nodes = GraphUtil.getNodes(result);
+//        HashSet<Edge> allEdges = GraphUtil.getAllEdges(result, nodes);
+//
+//        for (Edge edge : allEdges) {
+//            jedis.sadd("static", JSONUtil.buildData(edge));
+//        }
+//        jedis.close();
     }
 
 
