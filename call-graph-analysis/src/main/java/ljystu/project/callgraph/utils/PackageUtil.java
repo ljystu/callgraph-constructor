@@ -117,10 +117,12 @@ public class PackageUtil {
                     continue;
                 }
                 String coord = jarToCoordMap.get(jar.getName());
+                if (coord == null) continue;
 
                 Set<String> packagesInJar = JarReadUtil.getPackages(new JarFile(jar));
 
                 jarToPackageMap.put(jar.getName(), packagesInJar);
+
 
                 currentJars.add(coord);
                 for (String importPackage : packagesInJar) {

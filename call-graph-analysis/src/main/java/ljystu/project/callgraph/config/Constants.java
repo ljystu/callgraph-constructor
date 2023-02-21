@@ -15,7 +15,7 @@ public class Constants {
 
     public static final String NEO4J_PORT = "bolt://localhost:7687";
     public static final String NEO4J_USERNAME = "neo4j";
-    public static final String NEO4J_PASSWORD = "ljystu";
+    public static final String NEO4J_PASSWORD = "ljystuneo";
 
     public static final String REDIS_ADDRESS = "localhost";
     public static final String PROJECT_LINK = "/archive/refs/heads/master.zip";

@@ -1,6 +1,4 @@
 package ljystu.project.callgraph.uploader;
-
-
 import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
@@ -69,10 +67,12 @@ public class Neo4jOp {
 
         try (Session session = driver.session(SessionConfig.forDatabase(Constants.DATABASE))) {
             session.writeTransaction(tx -> tx.run("UNWIND $edgeNodePairs as row " +
-                            "MATCH (method_from:Method {packageName: row.packageName, className: row.className, " +
-                            "methodName: row.methodName, params: row.params, returnType: row.returnType, dependency: row.dependency }), " +
-                            "(method_to:Method {packageName: row.packageName2, className: row.className2, " +
-                            "methodName: row.methodName2, params: row.params2, returnType: row.returnType2, dependency: row.dependency2 }) " +
+                            "MATCH (method_from:Class {packageName: row.packageName, className: row.className, " +
+//                            "methodName: row.methodName, params: row.params, returnType: row.returnType, " +
+                            "dependency: row.dependency }), " +
+                            "(method_to:Class {packageName: row.packageName2, className: row.className2, " +
+//                            "methodName: row.methodName2, params: row.params2, returnType: row.returnType2, " +
+                            "dependency: row.dependency2 }) " +
                             "MERGE (method_from)-[r:CALL]->(method_to)" +
                             "ON CREATE SET r.type = $type \n" +
                             "ON MATCH SET r.type = \n" +
@@ -123,8 +123,10 @@ public class Neo4jOp {
 
         try (Session session = driver.session(SessionConfig.forDatabase(Constants.DATABASE))) {
             session.writeTransaction(tx -> tx.run("UNWIND $batches as row " +
-                            "MERGE (a:Method {packageName: row.packageName, className: row.className," +
-                            " methodName: row.methodName, params: row.params, returnType: row.returnType, dependency: row.dependency })",
+                            "MERGE (a:Class {packageName: row.packageName, className: row.className," +
+//                            " methodName: row.methodName, params: row.params, returnType: row.returnType, " +
+                            "dependency: row.dependency })",
+
                     parameters));
         } catch (Exception e) {
             e.printStackTrace();

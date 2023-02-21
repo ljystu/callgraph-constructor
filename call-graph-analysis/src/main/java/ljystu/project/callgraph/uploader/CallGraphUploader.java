@@ -38,7 +38,7 @@ public class CallGraphUploader {
     public void uploadAll() {
 
         upload("dynamic", packageToCoordMap);
-        upload("static", packageToCoordMap);
+//        upload("static", packageToCoordMap);
         neo4JOp.close();
         jedis.close();
     }

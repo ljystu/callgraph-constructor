@@ -19,10 +19,13 @@
 package eu.fasten.analyzer.javacgopal;
 
 import com.alibaba.fastjson.JSON;
+import eu.fasten.analyzer.javacgopal.Util.GraphUtil;
+import eu.fasten.analyzer.javacgopal.Util.MongodbUtil;
 import eu.fasten.analyzer.javacgopal.data.CGAlgorithm;
 import eu.fasten.analyzer.javacgopal.data.OPALCallGraphConstructor;
 import eu.fasten.analyzer.javacgopal.data.OPALPartialCallGraphConstructor;
 import eu.fasten.analyzer.javacgopal.entity.Edge;
+import eu.fasten.analyzer.javacgopal.entity.GraphNode;
 import eu.fasten.core.data.DirectedGraph;
 import eu.fasten.core.data.JSONUtils;
 import eu.fasten.core.data.PartialJavaCallGraph;
@@ -43,9 +46,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static eu.fasten.analyzer.javacgopal.data.CallPreservationStrategy.INCLUDING_ALL_SUBTYPES;
 
@@ -106,7 +107,6 @@ public class Main implements Runnable {
      */
     public static void main(String[] args) {
         new CommandLine(new Main()).execute(args);
-//        System.gc();
     }
 
     /**
@@ -262,7 +262,7 @@ public class Main implements Runnable {
 //        if (output.isEmpty()) {
 //            return result;
 //        }
-        redisGraphUpload(result);
+        mongoGraphUpload(result);
 //        try {
 //            CallGraphUtils.writeToFile(getPath(result.getRevisionName()),
 //                    JSONUtils.toJSONString(result), "");
@@ -272,16 +272,14 @@ public class Main implements Runnable {
         return result;
     }
 
-    private void redisGraphUpload(PartialJavaCallGraph result) {
+    private void mongoGraphUpload(PartialJavaCallGraph result) {
 //        Jedis jedis = new Jedis("localhost");
 //
-//        HashMap<Integer, GraphNode> nodes = GraphUtil.getNodes(result);
-//        HashSet<Edge> allEdges = GraphUtil.getAllEdges(result, nodes);
-//
-//        for (Edge edge : allEdges) {
-//            jedis.sadd("static", JSONUtil.buildData(edge));
-//        }
-//        jedis.close();
+        HashMap<Integer, GraphNode> nodes = GraphUtil.getNodes(result);
+        HashSet<Edge> allEdges = GraphUtil.getAllEdges(result, nodes);
+
+        MongodbUtil.uploadEdges(allEdges, artifact);
+
     }
 
 

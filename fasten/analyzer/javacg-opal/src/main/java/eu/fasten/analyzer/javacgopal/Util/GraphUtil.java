@@ -46,6 +46,7 @@ public class GraphUtil {
 
                     graphNode.setParams(str.toString());
                     graphNode.setReturnType(signature.substring(signature.indexOf(")") + 2));
+
                     nodeHashMap.put(key, graphNode);
                 }
 

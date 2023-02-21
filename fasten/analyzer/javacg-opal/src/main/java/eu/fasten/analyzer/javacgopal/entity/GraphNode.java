@@ -10,6 +10,16 @@ public class GraphNode implements Serializable {
     private String params;
     private String returnType;
 
+    private String coordinate;
+
+    public String getCoordinate() {
+        return coordinate;
+    }
+
+    public void setCoordinate(String coordinate) {
+        this.coordinate = coordinate;
+    }
+
     public GraphNode() {
 
     }

@@ -33,6 +33,7 @@ public class MongodbTest {
         //通过连接认证获取MongoDB连接
         MongoClient mongoClient = new MongoClient(addrs, credentials);
 
+
         // 获取MongoDB数据库
         MongoDatabase database = mongoClient.getDatabase("mydatabase");
 

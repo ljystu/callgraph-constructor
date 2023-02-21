@@ -37,6 +37,11 @@
             <artifactId>abstract-interpretation-framework_2.12</artifactId>
             <version>4.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>3.12.7</version>
+        </dependency>
         <!--		<dependency>-->
         <!--			<groupId>org.neo4j.driver</groupId>-->
         <!--			<artifactId>neo4j-java-driver</artifactId>-->
