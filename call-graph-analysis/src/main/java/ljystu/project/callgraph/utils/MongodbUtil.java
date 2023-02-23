@@ -1,17 +1,14 @@
-package eu.fasten.analyzer.javacgopal.Util;
+package ljystu.project.callgraph.utils;
 
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
-import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.WriteModel;
-import eu.fasten.analyzer.javacgopal.entity.Edge;
-import eu.fasten.analyzer.javacgopal.entity.GraphNode;
+import com.mongodb.client.model.Filters;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -32,8 +29,6 @@ public class MongodbUtil {
     private static int port = 0;
     private static int poolSize = 0;
     private static int blockSize = 0;
-    private static int edgeCount = 0;
-    private static int collectionCount = 0;
 
     // 初始化连接池，设置参数
     static {
@@ -69,65 +64,20 @@ public class MongodbUtil {
         return mongo;
     }
 
-    public static void uploadEdges(HashSet<Edge> allEdges) {
+    public static void deleteEdges(String coord) {
         // 创建MongoDB客户端连接
-        if (allEdges.isEmpty()) return;
 
         // 获取MongoDB数据库
 
         MongoDatabase database = mongo.getDatabase("mydatabase");
-        if (edgeCount > 50000000) {
-            collectionCount++;
-            edgeCount = 0;
-        }
+
         // 获取MongoDB集合
-        MongoCollection<Document> collection = database.getCollection("mycollection" + collectionCount);
 
-        List<WriteModel<Document>> bulkWrites = new ArrayList<>();
-
-        Pattern excludedPattern = Pattern.compile(readExcludedPackages());
-        edgeCount += allEdges.size();
-        // 创建起始节点的Document
-        for (Edge edge : allEdges) {
-            GraphNode fromNode = edge.getFrom();
-            GraphNode toNode = edge.getTo();
-            if (isExcluded(toNode.getPackageName(), excludedPattern)) {
-                continue;
-            }
-            Document startNode = new Document("packageName", fromNode.getPackageName())
-                    .append("className", fromNode.getClassName())
-                    .append("coordinate", fromNode.getCoordinate());
-
-
-            Document endNode = new Document("packageName", toNode.getPackageName())
-                    .append("className", toNode.getClassName())
-                    .append("coordinate", toNode.getCoordinate());
-
-            Document mongoEdge = new Document("startNode", startNode)
-                    .append("endNode", endNode).append("type", "static");
-
-            //upsert
-//            Bson filter = Filters.and(
-//                    Filters.eq("startNode.packageName", fromNode.getPackageName()),
-//                    Filters.eq("startNode.className", fromNode.getClassName()),
-//                    Filters.eq("startNode.coordinate", fromNode.getCoordinate()),
-//                    Filters.eq("endNode.packageName", toNode.getPackageName()),
-//                    Filters.eq("endNode.className", toNode.getClassName()),
-//                    Filters.eq("endNode.coordinate", toNode.getCoordinate())
-//            );
-//            Bson update = Updates.combine(
-//                    Updates.setOnInsert("startNode", startNode),
-//                    Updates.setOnInsert("endNode", endNode),
-//                    Updates.set("type", "static")
-////                    Updates.currentDate("lastModified")
-//            );
-//            bulkWrites.add(new UpdateOneModel<Document>(filter, update, new UpdateOptions().upsert(true)));
-            bulkWrites.add(new InsertOneModel<>(mongoEdge));
-
-        }
+        MongoCollection<Document> collection = database.getCollection("mycollection");
 
         try {
-            BulkWriteResult result = collection.bulkWrite(bulkWrites);
+            Bson filter = Filters.eq("startNode.coordinate", coord);
+            collection.deleteMany(filter);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -159,5 +109,12 @@ public class MongodbUtil {
         return str.toString();
     }
 
+    public static HashSet<String> findAllCoords() {
+        HashSet<String> set = new HashSet<>();
+        MongoCollection<Document> collection = mongo.getDatabase("mydatabase").getCollection("mycollection");
+        collection.distinct("startNode.coordinate", String.class).into(set);
+        return set;
 
+
+    }
 }

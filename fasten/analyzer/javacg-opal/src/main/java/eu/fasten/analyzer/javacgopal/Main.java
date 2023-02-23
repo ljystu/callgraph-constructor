@@ -262,7 +262,7 @@ public class Main implements Runnable {
 //        if (output.isEmpty()) {
 //            return result;
 //        }
-        mongoGraphUpload(result);
+        graphUpload(result);
 //        try {
 //            CallGraphUtils.writeToFile(getPath(result.getRevisionName()),
 //                    JSONUtils.toJSONString(result), "");
@@ -272,13 +272,17 @@ public class Main implements Runnable {
         return result;
     }
 
-    private void mongoGraphUpload(PartialJavaCallGraph result) {
-//        Jedis jedis = new Jedis("localhost");
-//
-        HashMap<Integer, GraphNode> nodes = GraphUtil.getNodes(result);
-        HashSet<Edge> allEdges = GraphUtil.getAllEdges(result, nodes);
+    private void graphUpload(PartialJavaCallGraph result) {
 
-        MongodbUtil.uploadEdges(allEdges, artifact);
+        HashMap<Integer, GraphNode> nodes = GraphUtil.getNodes(result);
+        HashSet<Edge> allEdges = GraphUtil.getAllEdges(result, nodes, artifact);
+//        Neo4jOp neo4jOp = new Neo4jOp("bolt://localhost:7687", "neo4j", "ljystuneo");
+//        neo4jOp.uploadMethodNodes(nodesList);
+
+//        neo4jOp.uploadEdges(allEdges, "static", artifact);
+        MongodbUtil.uploadEdges(allEdges);
+
+//        neo4jOp.close();
 
     }
 

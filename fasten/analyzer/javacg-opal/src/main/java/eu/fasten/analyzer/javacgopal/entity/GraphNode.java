@@ -2,6 +2,7 @@ package eu.fasten.analyzer.javacgopal.entity;
 
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class GraphNode implements Serializable {
     private String packageName;
@@ -18,6 +19,19 @@ public class GraphNode implements Serializable {
 
     public void setCoordinate(String coordinate) {
         this.coordinate = coordinate;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GraphNode graphNode = (GraphNode) o;
+        return Objects.equals(packageName, graphNode.packageName) && Objects.equals(className, graphNode.className) && Objects.equals(coordinate, graphNode.coordinate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(packageName, className, coordinate);
     }
 
     public GraphNode() {
@@ -64,12 +78,13 @@ public class GraphNode implements Serializable {
         this.returnType = returnType;
     }
 
-    public GraphNode(String packageName, String className, String methodName, String params, String returnType) {
+    public GraphNode(String packageName, String className, String methodName, String params, String returnType, String coordinate) {
         this.packageName = packageName;
         this.className = className;
         this.methodName = methodName;
         this.params = params;
         this.returnType = returnType;
+        this.coordinate = coordinate;
     }
 
     @Override

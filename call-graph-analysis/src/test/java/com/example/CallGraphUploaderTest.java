@@ -22,7 +22,7 @@ public class CallGraphUploaderTest {
     }
 
     public void init() {
-        this.neo4JOp = new Neo4jOp("bolt://localhost:7687", "neo4j", "ljystu");
+        this.neo4JOp = new Neo4jOp("bolt://localhost:7687", "neo4j", "ljystuneo");
     }
 
 
@@ -36,7 +36,7 @@ public class CallGraphUploaderTest {
         // 获取所有键
 //        Set<String> keys = jedis.keys("*");
         HashSet<Node> nodes = new HashSet<>();
-        List<Edge> edges = new ArrayList<>();
+        Set<Edge> edges = new HashSet<>();
         Set<String> dynamic = jedis.smembers(label);
         // 遍历所有键，获取对应的值并删除
         for (String value : dynamic) {

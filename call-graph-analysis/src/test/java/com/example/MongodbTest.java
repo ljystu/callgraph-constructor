@@ -10,9 +10,13 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.WriteModel;
+import ljystu.project.callgraph.uploader.Neo4jOp;
+import ljystu.project.callgraph.utils.MongodbUtil;
 import org.bson.Document;
+import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class MongodbTest {
@@ -86,4 +90,14 @@ public class MongodbTest {
         // 关闭MongoDB客户端连接
         mongoClient.close();
     }
+
+    @Test
+    public void uploadTest() {
+        Neo4jOp neo4jOp = new Neo4jOp("bolt://localhost:7687", "neo4j", "ljystuneo");
+        HashSet<String> allCoords = MongodbUtil.findAllCoords();
+        for (String coord : allCoords) {
+            neo4jOp.uploadFromMongo(coord);
+        }
+    }
+
 }

@@ -56,12 +56,14 @@ public class GraphUtil {
         return nodeHashMap;
     }
 
-    public static HashSet<Edge> getAllEdges(PartialJavaCallGraph result, HashMap<Integer, GraphNode> nodes) {
+    public static HashSet<Edge> getAllEdges(PartialJavaCallGraph result, HashMap<Integer, GraphNode> nodes, String artifact) {
         HashSet<Edge> set = new HashSet<>();
         for (Map.Entry<IntIntPair, Map<Object, Object>> map : result.getGraph().getCallSites().entrySet()) {
             IntIntPair key = map.getKey();
             GraphNode nodeFrom = nodes.get(key.leftInt());
+            nodeFrom.setCoordinate(artifact);
             GraphNode nodeTo = nodes.get(key.rightInt());
+            nodeTo.setCoordinate(artifact);
             Edge edge = new Edge(nodeFrom, nodeTo);
             set.add(edge);
         }

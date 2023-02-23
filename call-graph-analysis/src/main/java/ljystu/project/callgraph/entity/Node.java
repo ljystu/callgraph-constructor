@@ -1,6 +1,8 @@
 package ljystu.project.callgraph.entity;
 
 
+import java.util.Objects;
+
 public class Node {
     private String packageName;
     private String className;
@@ -9,6 +11,19 @@ public class Node {
     private String returnType;
 
     String coordinate;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Node node = (Node) o;
+        return Objects.equals(packageName, node.packageName) && Objects.equals(className, node.className) && Objects.equals(coordinate, node.coordinate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(packageName, className, coordinate);
+    }
 
     @Override
     public String toString() {
@@ -78,7 +93,7 @@ public class Node {
         this.returnType = returnType;
     }
 
-    public Node(){
+    public Node() {
 
     }
 }

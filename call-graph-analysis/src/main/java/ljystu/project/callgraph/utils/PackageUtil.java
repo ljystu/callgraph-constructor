@@ -105,9 +105,8 @@ public class PackageUtil {
         Set<String> inclPkgs = new HashSet<>();
         for (File jar : jarFiles) {
             try {
-                //TODO store the read jars, jar to coordinates and package to coordinates in a databse
 
-                if (jar.length() > tenMegabytes * 2L) {
+                if (jar.length() > tenMegabytes) {
                     log.info(jar.getName() + "Byte value is greater than 10MB");
                     continue;
                 }
@@ -122,7 +121,6 @@ public class PackageUtil {
                 Set<String> packagesInJar = JarReadUtil.getPackages(new JarFile(jar));
 
                 jarToPackageMap.put(jar.getName(), packagesInJar);
-
 
                 currentJars.add(coord);
                 for (String importPackage : packagesInJar) {

@@ -49,10 +49,10 @@ public class CallGraphUploader {
      * @param label the label
      * @param map   the map
      */
-    public void upload(String label, Map<String, String> map) {
+    private void upload(String label, Map<String, String> map) {
 
         HashSet<Node> nodes = new HashSet<>();
-        List<Edge> edges = new ArrayList<>();
+        HashSet<Edge> edges = new HashSet<>();
 
         // 遍历所有键，获取对应的值并删除
         for (String value : jedis.smembers(label)) {

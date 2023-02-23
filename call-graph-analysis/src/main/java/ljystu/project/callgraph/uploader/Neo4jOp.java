@@ -1,13 +1,12 @@
 package ljystu.project.callgraph.uploader;
+
 import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
+import ljystu.project.callgraph.utils.MongodbUtil;
 import org.neo4j.driver.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.neo4j.driver.Values.parameters;
 
@@ -67,13 +66,13 @@ public class Neo4jOp {
 
         try (Session session = driver.session(SessionConfig.forDatabase(Constants.DATABASE))) {
             session.writeTransaction(tx -> tx.run("UNWIND $edgeNodePairs as row " +
-                            "MATCH (method_from:Class {packageName: row.packageName, className: row.className, " +
+                            "MERGE (method_from:Class {packageName: row.packageName, className: row.className, " +
 //                            "methodName: row.methodName, params: row.params, returnType: row.returnType, " +
-                            "dependency: row.dependency }), " +
-                            "(method_to:Class {packageName: row.packageName2, className: row.className2, " +
+                            "coordinate: row.dependency }) " +
+                            "MERGE(method_to:Class {packageName: row.packageName2, className: row.className2, " +
 //                            "methodName: row.methodName2, params: row.params2, returnType: row.returnType2, " +
-                            "dependency: row.dependency2 }) " +
-                            "MERGE (method_from)-[r:CALL]->(method_to)" +
+                            "coordinate: row.dependency2 }) " +
+                            "MERGE (method_from)-[r:Call]->(method_to)" +
                             "ON CREATE SET r.type = $type \n" +
                             "ON MATCH SET r.type = \n" +
                             "CASE r.type\n" +
@@ -85,6 +84,69 @@ public class Neo4jOp {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+//    private void addBatchEdge(List<Map<String, Object>> edgeNodePairs, String type) {
+////        Map<String, Object> parameters = new HashMap<>();
+////        parameters.put("items", edgeNodePairs);
+////        parameters.put("type", type);
+//
+//        String query = "UNWIND $dataList AS row return row";
+//        String action =
+//                "MERGE (method_from:Class {packageName: row.packageName, className: row.className, returnType: row.returnType, coordinate: row.dependency }) " +
+//                        "MERGE (method_to:Class {packageName: row.packageName2, className: row.className2, returnType: row.returnType2, coordinate: row.dependency2 }) " +
+//                        "MERGE (method_from)-[r:Call]->(method_to) " +
+//                        "ON CREATE SET r.type = $type " +
+//                        "ON MATCH SET r.type = " +
+//                        "CASE r.type " +
+//                        "   WHEN $type " +
+//                        "   THEN $type " +
+//                        "   ELSE 'both' " +
+//                        "END";
+//
+//        Map<String, Object> parameters = new HashMap<>();
+//        parameters.put("dataList", edgeNodePairs);
+//        parameters.put("type", "your_type_value");
+//
+//        String iterateQuery = "CALL apoc.periodic.iterate($query,$action, $queryBatchParams)";
+//
+//        Map<String, Object> queryBatchParams = new HashMap<>();
+//        queryBatchParams.put("batchSize", 1000);
+//        queryBatchParams.put("parallel", true);
+//        queryBatchParams.put("iterateList", true);
+//        queryBatchParams.put("params", parameters);
+//
+//        try (Session session = driver.session(SessionConfig.forDatabase("test"))) {
+//            Result result = session.run(iterateQuery, ImmutableMap.of("query", query, "action", action, "queryBatchParams", queryBatchParams));
+//            // process the result as needed
+//        } catch (
+//                Exception e) {
+//            e.printStackTrace();
+//        }
+//
+//    }
+
+    public void uploadFromMongo(String coord) {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("coord", coord);
+        try (Session session = driver.session(SessionConfig.forDatabase(Constants.DATABASE))) {
+            session.writeTransaction(tx -> tx.run("CALL apoc.mongodb.find('mongodb://admin:123456@localhost:27017', 'mydatabase', 'mycollection', { `startNode.coordinate`: $coord },{},{}) YIELD value\n" +
+                    "UNWIND value AS edgeData\n" +
+                    "WITH edgeData.startNode AS startNode, edgeData.endNode AS endNode, edgeData.type AS type\n" +
+                    "MERGE (start:Class {packageName: startNode.packageName, className: startNode.className, coordinate: startNode.coordinate})\n" +
+                    "MERGE (end:Class {packageName: endNode.packageName, className: endNode.className, coordinate: endNode.coordinate})\n" +
+                    "MERGE (start)-[r:Call]->(end)\n" +
+                    "ON CREATE SET r.type = type\n" +
+                    "ON MATCH SET r.type = \n" +
+                    "CASE r.type\n" +
+                    "WHEN type \n" +
+                    "THEN type \n" +
+                    "ELSE 'both'\n" +
+                    "END ", parameters));
+            MongodbUtil.deleteEdges(coord);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     /**
@@ -125,7 +187,7 @@ public class Neo4jOp {
             session.writeTransaction(tx -> tx.run("UNWIND $batches as row " +
                             "MERGE (a:Class {packageName: row.packageName, className: row.className," +
 //                            " methodName: row.methodName, params: row.params, returnType: row.returnType, " +
-                            "dependency: row.dependency })",
+                            "coordinate: row.dependency })",
 
                     parameters));
         } catch (Exception e) {
@@ -147,12 +209,16 @@ public class Neo4jOp {
      * @param edges     the edges
      * @param label     the label
      */
-    public void uploadAllToNeo4j(List<Node> nodesList, List<Edge> edges, String label) {
-        uploadMethodNodes(nodesList);
+    public void uploadAllToNeo4j(List<Node> nodesList, Set<Edge> edges, String label) {
+//        uploadMethodNodes(nodesList);
         uploadEdges(edges, label);
+//        HashSet<String> allCoords = MongodbUtil.findAllCoords();
+//        for (String coord : allCoords) {
+//            uploadFromMongo(coord);
+//        }
     }
 
-    private void uploadEdges(List<Edge> edges, String label) {
+    private void uploadEdges(Set<Edge> edges, String label) {
         List<Map<String, Object>> edgeNodePairs = new ArrayList<>();
 
         for (Edge edge : edges) {
