@@ -18,13 +18,12 @@ public class RunMavenInvoker {
         HashMap<String, Integer> projectCount = new HashMap<>();
 
         for (Project p : projects) {
-            String folderName = ProjectUtil.downloadAndUnzip(p);
+            String folderName = ProjectUtil.gitDownload(p);
             if (Objects.equals(folderName, "")) continue;
             Invoker invoker = new Invoker(folderName);
             invoker.analyseProject(projectCount);
 
         }
-//        dependencies
 
 
     }

@@ -9,6 +9,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.WriteModel;
+import eu.fasten.analyzer.javacgopal.Constants;
 import eu.fasten.analyzer.javacgopal.entity.Edge;
 import eu.fasten.analyzer.javacgopal.entity.GraphNode;
 import org.bson.Document;
@@ -24,6 +25,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+/**
+ * The type Mongodb util.
+ */
 public class MongodbUtil {
 
     private static MongoClient mongo = null;
@@ -64,30 +68,51 @@ public class MongodbUtil {
         }
     }
 
-    // 获取连接对象
+    /**
+     * Gets mongo.
+     *
+     * @return the mongo
+     */
+// 获取连接对象
     public static Mongo getMongo() {
         return mongo;
     }
 
+    /**
+     * Upload edges.
+     *
+     * @param allEdges the all edges
+     */
     public static void uploadEdges(HashSet<Edge> allEdges) {
-        // 创建MongoDB客户端连接
         if (allEdges.isEmpty()) return;
-
-        // 获取MongoDB数据库
 
         MongoDatabase database = mongo.getDatabase("mydatabase");
         if (edgeCount > 50000000) {
             collectionCount++;
             edgeCount = 0;
         }
-        // 获取MongoDB集合
+
         MongoCollection<Document> collection = database.getCollection("mycollection" + collectionCount);
 
         List<WriteModel<Document>> bulkWrites = new ArrayList<>();
 
         Pattern excludedPattern = Pattern.compile(readExcludedPackages());
+
         edgeCount += allEdges.size();
-        // 创建起始节点的Document
+
+        addDocuments(allEdges, bulkWrites, excludedPattern);
+
+        try {
+            BulkWriteResult result = collection.bulkWrite(bulkWrites);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // 关闭MongoDB客户端连接
+//        mongo.close();
+    }
+
+    private static void addDocuments(HashSet<Edge> allEdges, List<WriteModel<Document>> bulkWrites, Pattern excludedPattern) {
         for (Edge edge : allEdges) {
             GraphNode fromNode = edge.getFrom();
             GraphNode toNode = edge.getTo();
@@ -125,15 +150,6 @@ public class MongodbUtil {
             bulkWrites.add(new InsertOneModel<>(mongoEdge));
 
         }
-
-        try {
-            BulkWriteResult result = collection.bulkWrite(bulkWrites);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // 关闭MongoDB客户端连接
-//        mongo.close();
     }
 
     private static boolean isExcluded(String definedPackage, Pattern importPattern) {
@@ -144,7 +160,7 @@ public class MongodbUtil {
     private static String readExcludedPackages() {
         StringBuilder str = new StringBuilder();
         try {
-            Path path = new File("/Users/ljystu/Desktop/neo4j/fasten/analyzer/javacg-opal/src/main/resources/exclusions.txt").toPath();
+            Path path = new File(Constants.EXCLUSION_FILE).toPath();
             String content = Files.readString(path);
             String[] lines = content.split("\r\n");
             for (String line : lines) {

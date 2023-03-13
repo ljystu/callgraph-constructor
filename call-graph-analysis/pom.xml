@@ -162,6 +162,11 @@
             <artifactId>com.ibm.wala.cast</artifactId>
             <version>1.5.4</version>
         </dependency>
+        <dependency>
+            <groupId>net.sf.supercsv</groupId>
+            <artifactId>super-csv</artifactId>
+            <version>2.1.0</version>
+        </dependency>
 
     </dependencies>
 

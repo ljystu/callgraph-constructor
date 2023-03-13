@@ -75,7 +75,7 @@ public class PackageUtil {
 
     private static StringBuilder constructPackageScan(Set<String> definedPackages) {
         StringBuilder packageScan = new StringBuilder();
-        String argLine = Constants.argLineLeft + Constants.JAVAAGENT_HOME + Constants.argLineRight;
+        String argLine = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME + Constants.ARG_LINE_RIGHT;
         packageScan.append(argLine);
         Pattern excludedPattern = Pattern.compile(readExcludedPackages());
 
@@ -105,6 +105,10 @@ public class PackageUtil {
         Set<String> inclPkgs = new HashSet<>();
         for (File jar : jarFiles) {
             try {
+                String coord = jarToCoordMap.get(jar.getName());
+                if (coord == null) {
+                    continue;
+                }
 
                 if (jar.length() > tenMegabytes) {
                     log.info(jar.getName() + "Byte value is greater than 10MB");
@@ -115,21 +119,9 @@ public class PackageUtil {
                     inclPkgs.addAll(jarToPackageMap.get(jar.getName()));
                     continue;
                 }
-                String coord = jarToCoordMap.get(jar.getName());
-                if (coord == null) continue;
 
-                Set<String> packagesInJar = JarReadUtil.getPackages(new JarFile(jar));
+                extractPackagesToMap(inclPkgs, jar, coord);
 
-                jarToPackageMap.put(jar.getName(), packagesInJar);
-
-                currentJars.add(coord);
-                for (String importPackage : packagesInJar) {
-                    //TODO 如果packagename相同，后面的coordinate会覆盖当前类的coordinate 需要进一步修改逻辑或添加
-                    //可能需要用类名进一步筛选？
-
-                    packageToCoordMap.put(importPackage, coord);
-                }
-                inclPkgs.addAll(packagesInJar);
                 ProjectUtil.deleteFile(jar);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -139,6 +131,22 @@ public class PackageUtil {
             ProjectUtil.deleteFile(jarFile);
         }
         return inclPkgs;
+    }
+
+    private static void extractPackagesToMap(Set<String> inclPackages, File jar, String coord) throws IOException {
+        Set<String> packagesInJar = JarReadUtil.getPackages(new JarFile(jar));
+
+        jarToPackageMap.put(jar.getName(), packagesInJar);
+
+        currentJars.add(coord);
+        for (String importPackage : packagesInJar) {
+            //TODO 如果packagename相同，后面的coordinate会覆盖当前类的coordinate 需要进一步修改逻辑或添加
+            //可能需要用类名进一步筛选？
+
+            packageToCoordMap.put(importPackage, coord);
+        }
+        inclPackages.addAll(packagesInJar);
+
     }
 
     private static String readExcludedPackages() {

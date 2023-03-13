@@ -71,6 +71,50 @@ public class ProjectUtil {
         return folderName;
     }
 
+    public static String gitDownload(Project project) {
+
+        String path = Constants.PROJECT_FOLDER + project.getName();
+        try {
+            String cloneCommand = "git clone " + project.getRepoUrl() + " " + project.getName();
+            Process cloneProcess = Runtime.getRuntime().exec(cloneCommand, null, new File(Constants.PROJECT_FOLDER));
+            cloneProcess.waitFor();
+            System.out.println("Clone done");
+
+            String cdCommand = "cd " + path;
+            Process cdProcess = Runtime.getRuntime().exec(cdCommand);
+            cdProcess.waitFor();
+
+
+            String describeCommand = "git for-each-ref refs/tags --sort=-taggerdate --format '%(refname:short)' | head";
+            Process describeProcess = Runtime.getRuntime().exec(describeCommand, null, new File(path));
+            BufferedReader describeInput = new BufferedReader(new InputStreamReader(describeProcess.getInputStream()));
+            String describeOutput = describeInput.readLine();
+
+
+            describeProcess.waitFor();
+            describeInput.close();
+            if (describeOutput == null || describeOutput.startsWith("fatal")) {
+                return path;
+            }
+
+            System.out.println("Latest tag: " + describeOutput);
+
+            String switchCommand = "git checkout " + describeOutput.substring(1, describeOutput.length() - 1);
+            Process switchProcess = Runtime.getRuntime().exec(switchCommand, null, new File(path));
+            BufferedReader checkInput = new BufferedReader(new InputStreamReader(switchProcess.getInputStream()));
+            String line;
+            while ((line = checkInput.readLine()) != null) {
+                System.out.println(line);
+            }
+            switchProcess.waitFor();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+        return path;
+    }
+
     // 读取文件内容
     private static String readFile(String filepath) {
         StringBuilder sb = new StringBuilder();

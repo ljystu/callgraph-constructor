@@ -65,7 +65,7 @@ public class Invoker {
         //upload call graph to neo4j
         CallGraphUploader callGraphUploader = new CallGraphUploader();
 
-        callGraphUploader.uploadAll();
+//        callGraphUploader.uploadAll();
 
 
         return set;
