@@ -10,7 +10,7 @@ public class Constants {
     public static final String MAVEN_HOME = "/opt/apache-maven-3.8.1";
     public static final String JAVAAGENT_HOME = "/Users/ljystu/Desktop/java-callgraph/target/javacg-0.1-SNAPSHOT-dycg-agent.jar";
 
-    public static final String JAVA_HOME = "/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home";
+    public static final String JAVA_HOME = "/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home";
 
     public static final String EXCLUSION_FILE = "src/main/resources/exclusions.txt";
 
@@ -21,7 +21,7 @@ public class Constants {
     public static final String REDIS_ADDRESS = "localhost";
     public static final String PROJECT_LINK = "/archive/refs/heads/master.zip";
 
-    public static final String PROJECT_LIST = "/Users/ljystu/Desktop/pythonProject/project_priority.json";
+    public static final String PROJECT_LIST = "/Users/ljystu/Desktop/pythonProject/commons_lang_project.json";
     public static final String PROJECT_FOLDER = "/Users/ljystu/Desktop/projects/";
 
 }

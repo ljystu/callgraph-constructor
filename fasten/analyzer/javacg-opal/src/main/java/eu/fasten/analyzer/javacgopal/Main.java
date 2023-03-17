@@ -273,14 +273,16 @@ public class Main implements Runnable {
     }
 
     private void graphUpload(PartialJavaCallGraph result) {
-
+        if (result == null) {
+            return;
+        }
         HashMap<Integer, GraphNode> nodes = GraphUtil.getNodes(result);
         HashSet<Edge> allEdges = GraphUtil.getAllEdges(result, nodes, artifact);
 //        Neo4jOp neo4jOp = new Neo4jOp("bolt://localhost:7687", "neo4j", "ljystuneo");
 //        neo4jOp.uploadMethodNodes(nodesList);
 
 //        neo4jOp.uploadEdges(allEdges, "static", artifact);
-        MongodbUtil.uploadEdges(allEdges);
+        MongodbUtil.uploadEdges(allEdges, artifact);
 
 //        neo4jOp.close();
 

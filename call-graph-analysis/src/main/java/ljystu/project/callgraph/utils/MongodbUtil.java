@@ -1,12 +1,12 @@
 package ljystu.project.callgraph.utils;
 
-import com.mongodb.Mongo;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
+import com.mongodb.*;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.*;
+import ljystu.project.callgraph.config.Constants;
+import ljystu.project.callgraph.entity.Edge;
+import ljystu.project.callgraph.entity.Node;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -86,6 +86,82 @@ public class MongodbUtil {
 //        mongo.close();
     }
 
+    /**
+     * Upload edges.
+     *
+     * @param allEdges the all edges
+     */
+    public static void uploadEdges(HashSet<Edge> allEdges, String artifact) {
+        if (allEdges.isEmpty()) {
+            return;
+        }
+
+        artifact = artifact.substring(0, artifact.lastIndexOf(":"));
+        MongoDatabase database = mongo.getDatabase("mydatabase");
+
+        MongoCollection<Document> collection = database.getCollection(artifact);
+
+        collection.createIndex(Indexes.compoundIndex(Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className"),
+                Indexes.ascending("startNode.coordinate"), Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className"),
+                Indexes.ascending("endNode.coordinate"), Indexes.ascending("type")), new IndexOptions().unique(true));
+
+        Pattern excludedPattern = Pattern.compile(readExcludedPackages());
+
+        List<WriteModel<Document>> bulkWrites = getAllDocuments(allEdges, excludedPattern);
+
+        BulkWriteOptions options = new BulkWriteOptions().ordered(false);
+
+        try {
+            collection.bulkWrite(bulkWrites, options);
+        } catch (MongoBulkWriteException e) {
+            System.out.println("duplicate key skipped");
+        }
+
+        // 关闭MongoDB客户端连接
+//        mongo.close();
+    }
+
+    private static List<WriteModel<Document>> getAllDocuments(HashSet<Edge> allEdges, Pattern excludedPattern) {
+        List<WriteModel<Document>> bulkWrites = new ArrayList<>();
+        for (Edge edge : allEdges) {
+            Node fromNode = edge.getFrom();
+            Node toNode = edge.getTo();
+//            if (isExcluded(toNode.getPackageName(), excludedPattern)) {
+//                continue;
+//            }
+            Document startNode = new Document("packageName", fromNode.getPackageName())
+                    .append("className", fromNode.getClassName())
+                    .append("coordinate", fromNode.getCoordinate());
+
+            Document endNode = new Document("packageName", toNode.getPackageName())
+                    .append("className", toNode.getClassName())
+                    .append("coordinate", toNode.getCoordinate());
+
+            Document mongoEdge = new Document("startNode", startNode)
+                    .append("endNode", endNode).append("type", "dynamic");
+
+            //upsert
+//            Bson filter = Filters.and(
+//                    Filters.eq("startNode.packageName", fromNode.getPackageName()),
+//                    Filters.eq("startNode.className", fromNode.getClassName()),
+//                    Filters.eq("startNode.coordinate", fromNode.getCoordinate()),
+//                    Filters.eq("endNode.packageName", toNode.getPackageName()),
+//                    Filters.eq("endNode.className", toNode.getClassName()),
+//                    Filters.eq("endNode.coordinate", toNode.getCoordinate())
+//            );
+//            Bson update = Updates.combine(
+//                    Updates.setOnInsert("startNode", startNode),
+//                    Updates.setOnInsert("endNode", endNode),
+//                    Updates.set("type", "static")
+////                    Updates.currentDate("lastModified")
+//            );
+//            bulkWrites.add(new UpdateOneModel<Document>(filter, update, new UpdateOptions().upsert(true)));
+            bulkWrites.add(new InsertOneModel<>(mongoEdge));
+
+        }
+        return bulkWrites;
+    }
+
     private static boolean isExcluded(String definedPackage, Pattern importPattern) {
         Matcher matcher = importPattern.matcher(definedPackage);
         return matcher.matches();
@@ -94,7 +170,7 @@ public class MongodbUtil {
     private static String readExcludedPackages() {
         StringBuilder str = new StringBuilder();
         try {
-            Path path = new File("/Users/ljystu/Desktop/neo4j/fasten/analyzer/javacg-opal/src/main/resources/exclusions.txt").toPath();
+            Path path = new File(Constants.EXCLUSION_FILE).toPath();
             String content = Files.readString(path);
             String[] lines = content.split("\r\n");
             for (String line : lines) {
@@ -108,6 +184,7 @@ public class MongodbUtil {
 
         return str.toString();
     }
+
 
     public static HashSet<String> findAllCoords() {
         HashSet<String> set = new HashSet<>();

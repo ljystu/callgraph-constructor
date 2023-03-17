@@ -47,25 +47,28 @@ public class Invoker {
      * @param projectCount the project count
      * @return hash set
      */
-    public Set<String> analyseProject(Map<String, Integer> projectCount) {
+    public Set<String> analyseProject(Map<String, Integer> projectCount, String dependencyCoordianate) {
 
         HashSet<String> set = new HashSet<>();
 
         //acquire dependencies
         invokeTask("dependency:copy-dependencies", "./lib");
         //map packages to coordinates
-        String packageScan = PackageUtil.getPackages(rootPath);
+//        String argLine = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME + Constants.ARG_LINE_RIGHT;
+        String packageScan =
+//                argLine+"org.apache.commons.math3.*;";
+                PackageUtil.getPackages(rootPath);
 
         mavenTestWithJavaAgent(packageScan);
 
         ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
 
-        constructStaticCallGraphs();
+//        constructStaticCallGraphs();
 
         //upload call graph to neo4j
         CallGraphUploader callGraphUploader = new CallGraphUploader();
 
-//        callGraphUploader.uploadAll();
+        callGraphUploader.uploadAll(dependencyCoordianate);
 
 
         return set;
@@ -126,7 +129,9 @@ public class Invoker {
     public void invokeTask(String task, String outputDir) {
 
         InvocationRequest request = getInvocationRequest(task);
-        if (request == null) return;
+        if (request == null) {
+            return;
+        }
         Properties properties = new Properties();
         if (outputDir.length() != 0) {
             properties.setProperty("outputDirectory", outputDir);
@@ -149,7 +154,9 @@ public class Invoker {
     public void invokeTask(String task) {
 
         InvocationRequest request = getInvocationRequest(task);
-        if (request == null) return;
+        if (request == null) {
+            return;
+        }
         Properties properties = new Properties();
 
         request.setProperties(properties);

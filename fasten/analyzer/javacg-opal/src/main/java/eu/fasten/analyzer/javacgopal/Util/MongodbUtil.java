@@ -1,14 +1,9 @@
 package eu.fasten.analyzer.javacgopal.Util;
 
-import com.mongodb.Mongo;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
-import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.*;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.*;
 import eu.fasten.analyzer.javacgopal.Constants;
 import eu.fasten.analyzer.javacgopal.entity.Edge;
 import eu.fasten.analyzer.javacgopal.entity.GraphNode;
@@ -83,36 +78,38 @@ public class MongodbUtil {
      *
      * @param allEdges the all edges
      */
-    public static void uploadEdges(HashSet<Edge> allEdges) {
-        if (allEdges.isEmpty()) return;
-
-        MongoDatabase database = mongo.getDatabase("mydatabase");
-        if (edgeCount > 50000000) {
-            collectionCount++;
-            edgeCount = 0;
+    public static void uploadEdges(HashSet<Edge> allEdges, String artifact) {
+        if (allEdges.isEmpty()) {
+            return;
         }
 
-        MongoCollection<Document> collection = database.getCollection("mycollection" + collectionCount);
+        artifact = artifact.substring(0, artifact.lastIndexOf(":"));
+        MongoDatabase database = mongo.getDatabase("mydatabase");
 
-        List<WriteModel<Document>> bulkWrites = new ArrayList<>();
+        MongoCollection<Document> collection = database.getCollection(artifact);
+
+        collection.createIndex(Indexes.compoundIndex(Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className"),
+                Indexes.ascending("startNode.coordinate"), Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className"),
+                Indexes.ascending("endNode.coordinate")), new IndexOptions().unique(true));
 
         Pattern excludedPattern = Pattern.compile(readExcludedPackages());
 
-        edgeCount += allEdges.size();
+        List<WriteModel<Document>> bulkWrites = getAllDocuments(allEdges, excludedPattern);
 
-        addDocuments(allEdges, bulkWrites, excludedPattern);
+        BulkWriteOptions options = new BulkWriteOptions().ordered(false);
 
         try {
-            BulkWriteResult result = collection.bulkWrite(bulkWrites);
-        } catch (Exception e) {
-            e.printStackTrace();
+            collection.bulkWrite(bulkWrites, options);
+        } catch (MongoBulkWriteException e) {
+            System.out.println("duplicate key skipped");
         }
 
         // 关闭MongoDB客户端连接
 //        mongo.close();
     }
 
-    private static void addDocuments(HashSet<Edge> allEdges, List<WriteModel<Document>> bulkWrites, Pattern excludedPattern) {
+    private static List<WriteModel<Document>> getAllDocuments(HashSet<Edge> allEdges, Pattern excludedPattern) {
+        List<WriteModel<Document>> bulkWrites = new ArrayList<>();
         for (Edge edge : allEdges) {
             GraphNode fromNode = edge.getFrom();
             GraphNode toNode = edge.getTo();
@@ -122,7 +119,6 @@ public class MongodbUtil {
             Document startNode = new Document("packageName", fromNode.getPackageName())
                     .append("className", fromNode.getClassName())
                     .append("coordinate", fromNode.getCoordinate());
-
 
             Document endNode = new Document("packageName", toNode.getPackageName())
                     .append("className", toNode.getClassName())
@@ -150,6 +146,7 @@ public class MongodbUtil {
             bulkWrites.add(new InsertOneModel<>(mongoEdge));
 
         }
+        return bulkWrites;
     }
 
     private static boolean isExcluded(String definedPackage, Pattern importPattern) {

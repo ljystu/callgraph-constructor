@@ -103,6 +103,9 @@ public class OPALPartialCallGraphConstructor {
             logger.info("About to download {} from {}", coordinate, artifactRepo);
 
             file = new MavenArtifactDownloader(coordinate).downloadArtifact(artifactRepo);
+            if (file.length() > 10485760L) {
+                return null;
+            }
             final var opalCG = new OPALCallGraphConstructor().construct(file, algorithm);
 
             final var partialCallGraph = new OPALPartialCallGraphConstructor().construct(opalCG, callSiteOnly);

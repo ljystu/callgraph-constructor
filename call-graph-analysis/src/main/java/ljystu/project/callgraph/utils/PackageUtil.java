@@ -24,7 +24,7 @@ public class PackageUtil {
      */
     List<String> paths = new ArrayList<>();
 
-    static long tenMegabytes = 10485760L; // 10MB的字节数
+    static long tenMegabytes = 10485760L;
 
 
     /**
@@ -139,6 +139,7 @@ public class PackageUtil {
         jarToPackageMap.put(jar.getName(), packagesInJar);
 
         currentJars.add(coord);
+
         for (String importPackage : packagesInJar) {
             //TODO 如果packagename相同，后面的coordinate会覆盖当前类的coordinate 需要进一步修改逻辑或添加
             //可能需要用类名进一步筛选？

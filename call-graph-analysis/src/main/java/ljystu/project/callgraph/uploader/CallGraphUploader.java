@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
+import ljystu.project.callgraph.utils.MongodbUtil;
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
 
@@ -35,9 +36,9 @@ public class CallGraphUploader {
         this.jedis = new Jedis(Constants.REDIS_ADDRESS);
     }
 
-    public void uploadAll() {
+    public void uploadAll(String dependencyCoordinate) {
 
-        upload("dynamic", packageToCoordMap);
+        upload("dynamic", packageToCoordMap, dependencyCoordinate);
 //        upload("static", packageToCoordMap);
         neo4JOp.close();
         jedis.close();
@@ -49,7 +50,7 @@ public class CallGraphUploader {
      * @param label the label
      * @param map   the map
      */
-    private void upload(String label, Map<String, String> map) {
+    private void upload(String label, Map<String, String> map, String dependencyCoordinate) {
 
         HashSet<Node> nodes = new HashSet<>();
         HashSet<Edge> edges = new HashSet<>();
@@ -63,17 +64,21 @@ public class CallGraphUploader {
             Node nodeTo = edge.getTo();
 
             getFullCoordinates(nodeFrom, nodeTo, map);
-            if (Objects.equals(nodeFrom.getCoordinate(), null) || Objects.equals(nodeTo.getCoordinate(), null))
+            if (Objects.equals(nodeFrom.getCoordinate(), null) || Objects.equals(nodeTo.getCoordinate(), null)) {
                 continue;
+            }
+            if (edge.getFrom().getCoordinate().startsWith(dependencyCoordinate) || edge.getTo().getCoordinate().startsWith(dependencyCoordinate)) {
 
-            nodes.add(nodeFrom);
-            nodes.add(nodeTo);
+                nodes.add(nodeFrom);
+                nodes.add(nodeTo);
 
-            edges.add(new Edge(nodeFrom, nodeTo));
+                edges.add(new Edge(nodeFrom, nodeTo));
+            }
         }
 
         List<Node> nodesList = new ArrayList<>(nodes);
-        neo4JOp.uploadAllToNeo4j(nodesList, edges, label);
+//        neo4JOp.uploadAllToNeo4j(nodesList, edges, label);
+        MongodbUtil.uploadEdges(edges, dependencyCoordinate);
         jedis.del(label);
 
     }

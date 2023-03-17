@@ -16,15 +16,16 @@ public class RunMavenInvoker {
         List<Project> projects = ProjectUtil.readProjects(Constants.PROJECT_LIST);
 
         HashMap<String, Integer> projectCount = new HashMap<>();
-
+        String dependencyCoordinate = "com.google.guava:guava";
         for (Project p : projects) {
             String folderName = ProjectUtil.gitDownload(p);
-            if (Objects.equals(folderName, "")) continue;
+            if (Objects.equals(folderName, "")) {
+                continue;
+            }
             Invoker invoker = new Invoker(folderName);
-            invoker.analyseProject(projectCount);
+            invoker.analyseProject(projectCount, dependencyCoordinate);
 
         }
-
 
     }
 }
