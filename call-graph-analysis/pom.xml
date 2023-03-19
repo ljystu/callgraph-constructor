@@ -139,34 +139,45 @@
         </dependency>
 
 
-        <dependency>
-            <groupId>com.ibm.wala</groupId>
-            <artifactId>com.ibm.wala.util</artifactId>
-            <version>1.5.8</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.ibm.wala/com.ibm.wala.shrike -->
-        <dependency>
-            <groupId>com.ibm.wala</groupId>
-            <artifactId>com.ibm.wala.shrike</artifactId>
-            <version>1.5.8</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.ibm.wala/com.ibm.wala.core -->
-        <dependency>
-            <groupId>com.ibm.wala</groupId>
-            <artifactId>com.ibm.wala.core</artifactId>
-            <version>1.5.8</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.ibm.wala/com.ibm.wala.cast -->
-        <dependency>
-            <groupId>com.ibm.wala</groupId>
-            <artifactId>com.ibm.wala.cast</artifactId>
-            <version>1.5.4</version>
-        </dependency>
+        <!--        <dependency>-->
+        <!--            <groupId>com.ibm.wala</groupId>-->
+        <!--            <artifactId>com.ibm.wala.util</artifactId>-->
+        <!--            <version>1.5.8</version>-->
+        <!--        </dependency>-->
+        <!--        &lt;!&ndash; https://mvnrepository.com/artifact/com.ibm.wala/com.ibm.wala.shrike &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.ibm.wala</groupId>-->
+        <!--            <artifactId>com.ibm.wala.shrike</artifactId>-->
+        <!--            <version>1.5.8</version>-->
+        <!--        </dependency>-->
+        <!--        &lt;!&ndash; https://mvnrepository.com/artifact/com.ibm.wala/com.ibm.wala.core &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.ibm.wala</groupId>-->
+        <!--            <artifactId>com.ibm.wala.core</artifactId>-->
+        <!--            <version>1.5.8</version>-->
+        <!--        </dependency>-->
+        <!--        &lt;!&ndash; https://mvnrepository.com/artifact/com.ibm.wala/com.ibm.wala.cast &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.ibm.wala</groupId>-->
+        <!--            <artifactId>com.ibm.wala.cast</artifactId>-->
+        <!--            <version>1.5.4</version>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>net.sf.supercsv</groupId>
             <artifactId>super-csv</artifactId>
             <version>2.1.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.14.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.9.9.3</version>
+        </dependency>
+
 
     </dependencies>
 
@@ -183,6 +194,66 @@
                     <source>11</source>
                     <target>11</target>
                 </configuration>
+            </plugin>
+            <!--            <plugin>-->
+            <!--                <artifactId>maven-jar-plugin</artifactId>-->
+            <!--                <version>3.2.0</version>-->
+            <!--                <configuration>-->
+            <!--                    <archive>-->
+            <!--                        <manifest>-->
+            <!--                            <mainClass>ljystu.project.callgraph.RunMavenInvoker</mainClass>-->
+            <!--                        </manifest>-->
+            <!--                    </archive>-->
+
+            <!--                </configuration>-->
+
+            <!--            </plugin>-->
+            <!--            <plugin>-->
+            <!--                <groupId>org.apache.maven.plugins</groupId>-->
+            <!--                <artifactId>maven-assembly-plugin</artifactId>-->
+            <!--                <version>3.0.0</version>-->
+            <!--                <configuration>-->
+            <!--                    <descriptors>-->
+            <!--                        <descriptor>assembly.xml</descriptor>-->
+
+            <!--                    </descriptors>-->
+
+            <!--                    <archive>-->
+            <!--                        <manifest>-->
+            <!--                            <mainClass>ljystu.project.callgraph.RunMavenInvoker</mainClass>-->
+            <!--                            <addClasspath>true</addClasspath>-->
+            <!--                            <classpathPrefix>${project.build.directory}/classes/lib</classpathPrefix>-->
+            <!--                        </manifest>-->
+            <!--                    </archive>-->
+            <!--                </configuration>-->
+            <!--                <executions>-->
+            <!--                    <execution>-->
+            <!--                        <id>make-assembly</id>-->
+            <!--                        <phase>package</phase>-->
+            <!--                        <goals>-->
+            <!--                            <goal>single</goal>-->
+            <!--                        </goals>-->
+            <!--                    </execution>-->
+            <!--                </executions>-->
+            <!--            </plugin>-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <configuration>
+                    <createDependencyReducedPom>true</createDependencyReducedPom>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>my-app</finalName>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

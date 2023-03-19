@@ -21,7 +21,8 @@ public class Constants {
     public static final String REDIS_ADDRESS = "localhost";
     public static final String PROJECT_LINK = "/archive/refs/heads/master.zip";
 
-    public static final String PROJECT_LIST = "/Users/ljystu/Desktop/pythonProject/commons_lang_project.json";
+    public static final String PROJECT_LIST = "/Users/ljystu/Desktop/pythonProject/parts/repo_result_per_halfyear_100_test.json";
+    //            "/Users/ljystu/Desktop/pythonProject/commons_lang_project.json";
     public static final String PROJECT_FOLDER = "/Users/ljystu/Desktop/projects/";
 
 }

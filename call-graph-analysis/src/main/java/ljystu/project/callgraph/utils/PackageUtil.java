@@ -101,7 +101,8 @@ public class PackageUtil {
         currentJars.clear();
         JarReadUtil.findTypeFiles(new File(rootPath), jarFiles, ".jar");
 
-
+//        jarToCoordMap.clear();
+//        jarToPackageMap.clear();
         Set<String> inclPkgs = new HashSet<>();
         for (File jar : jarFiles) {
             try {

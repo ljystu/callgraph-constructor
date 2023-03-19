@@ -16,7 +16,7 @@ public class RunMavenInvoker {
         List<Project> projects = ProjectUtil.readProjects(Constants.PROJECT_LIST);
 
         HashMap<String, Integer> projectCount = new HashMap<>();
-        String dependencyCoordinate = "com.google.guava:guava";
+        String dependencyCoordinate = "org.apache.zookeeper:zookeeper";
         for (Project p : projects) {
             String folderName = ProjectUtil.gitDownload(p);
             if (Objects.equals(folderName, "")) {
