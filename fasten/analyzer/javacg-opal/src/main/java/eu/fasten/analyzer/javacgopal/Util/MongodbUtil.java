@@ -89,8 +89,7 @@ public class MongodbUtil {
         MongoCollection<Document> collection = database.getCollection(artifact);
 
         collection.createIndex(Indexes.compoundIndex(Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className"),
-                Indexes.ascending("startNode.coordinate"), Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className"),
-                Indexes.ascending("endNode.coordinate")), new IndexOptions().unique(true));
+                Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className")), new IndexOptions().unique(true));
 
         Pattern excludedPattern = Pattern.compile(readExcludedPackages());
 

@@ -6,6 +6,13 @@ public class Project {
 
     public Project() {
     }
+
+    public Project(String name, String repoUrl) {
+        this.name = name;
+        this.repoUrl = repoUrl;
+    }
+
+
     public String getName() {
         return name;
     }

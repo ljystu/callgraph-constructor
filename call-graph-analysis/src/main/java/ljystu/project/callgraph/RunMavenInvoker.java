@@ -1,22 +1,30 @@
 package ljystu.project.callgraph;
 
-import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Project;
 import ljystu.project.callgraph.invoker.Invoker;
 import ljystu.project.callgraph.utils.ProjectUtil;
+import picocli.CommandLine;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-
 public class RunMavenInvoker {
+    @CommandLine.Option(names = {"-a",
+            "--artifact"}, paramLabel = "ARTIFACT")
+
+    static String artifact;
+
     public static void main(String[] args) {
 
-        List<Project> projects = ProjectUtil.readProjects(Constants.PROJECT_LIST);
+        //arg[1] is the artifact coordinate
+        String filename = args[1];
+        List<Project> projects = ProjectUtil.readProjects(args[1]);
 
         HashMap<String, Integer> projectCount = new HashMap<>();
+        // do not pass version here only GroupId:ArtifactId
         String dependencyCoordinate = "org.apache.zookeeper:zookeeper";
+//        filename.substring(0, filename.lastIndexOf("."));
         for (Project p : projects) {
             String folderName = ProjectUtil.gitDownload(p);
             if (Objects.equals(folderName, "")) {

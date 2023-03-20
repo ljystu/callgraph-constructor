@@ -8,7 +8,9 @@ import ljystu.project.callgraph.utils.MongodbUtil;
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
 
 import static ljystu.project.callgraph.utils.PackageUtil.packageToCoordMap;
 
@@ -32,15 +34,16 @@ public class CallGraphUploader {
      * Instantiates a new Redis op.
      */
     public CallGraphUploader() {
-        this.neo4JOp = new Neo4jOp(Constants.NEO4J_PORT, Constants.NEO4J_USERNAME, Constants.NEO4J_PASSWORD);
+//        this.neo4JOp = new Neo4jOp(Constants.NEO4J_PORT, Constants.NEO4J_USERNAME, Constants.NEO4J_PASSWORD);
         this.jedis = new Jedis(Constants.REDIS_ADDRESS);
+        this.jedis.auth(Constants.REDIS_PASSWORD);
     }
 
     public void uploadAll(String dependencyCoordinate) {
 
         upload("dynamic", packageToCoordMap, dependencyCoordinate);
 //        upload("static", packageToCoordMap);
-        neo4JOp.close();
+//        neo4JOp.close();
         jedis.close();
     }
 
@@ -58,10 +61,17 @@ public class CallGraphUploader {
         // 遍历所有键，获取对应的值并删除
         for (String value : jedis.smembers(label)) {
 
-            Edge edge = JSON.parseObject(value, Edge.class);
+            Edge edge;
+            try {
+                edge = JSON.parseObject(value, Edge.class);
+            } catch (Exception e) {
+                continue;
+            }
+            if (edge == null) continue;
             log.debug("Edge upload：" + edge.toString());
             Node nodeFrom = edge.getFrom();
             Node nodeTo = edge.getTo();
+
 
             getFullCoordinates(nodeFrom, nodeTo, map);
             if (Objects.equals(nodeFrom.getCoordinate(), null) || Objects.equals(nodeTo.getCoordinate(), null)) {
@@ -76,23 +86,28 @@ public class CallGraphUploader {
             }
         }
 
-        List<Node> nodesList = new ArrayList<>(nodes);
+//        List<Node> nodesList = new ArrayList<>(nodes);
 //        neo4JOp.uploadAllToNeo4j(nodesList, edges, label);
         MongodbUtil.uploadEdges(edges, dependencyCoordinate);
-        jedis.del(label);
+//        jedis.del(label);
 
     }
 
 
     private void getFullCoordinates(Node nodeFrom, Node nodeTo, Map<String, String> map) {
+
         String nodeFromMavenCoord = map.get(nodeFrom.getPackageName());
-        if (nodeFromMavenCoord != null) {
-            nodeFrom.setCoordinate(nodeFromMavenCoord);
+        if (nodeFromMavenCoord == null) {
+            nodeFromMavenCoord = jedis.get(nodeFrom.getPackageName());
         }
+        nodeFrom.setCoordinate(nodeFromMavenCoord);
+
         String nodeToMavenCoord = map.get(nodeTo.getPackageName());
-        if (nodeToMavenCoord != null) {
-            nodeTo.setCoordinate(nodeToMavenCoord);
+        if (nodeToMavenCoord == null) {
+            nodeToMavenCoord = jedis.get(nodeTo.getPackageName());
         }
+        nodeTo.setCoordinate(nodeToMavenCoord);
+
     }
 
 }

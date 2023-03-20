@@ -2,6 +2,7 @@ package ljystu.project.callgraph.utils;
 
 import ljystu.project.callgraph.config.Constants;
 import lombok.extern.slf4j.Slf4j;
+import redis.clients.jedis.Jedis;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +27,7 @@ public class PackageUtil {
 
     static long tenMegabytes = 10485760L;
 
+    public static HashMap<String, Integer> packageAugment = new HashMap<>();
 
     /**
      * The constant jarToCoordMap.
@@ -79,6 +81,7 @@ public class PackageUtil {
         packageScan.append(argLine);
         Pattern excludedPattern = Pattern.compile(readExcludedPackages());
 
+        HashSet<String> packagePrefix = new HashSet<>();
         for (String definedPackage : definedPackages) {
 //            Matcher packageMatcher = selfPackagePattern.matcher(definedPackage);
             if (
@@ -86,7 +89,21 @@ public class PackageUtil {
                     isExcluded(definedPackage, excludedPattern)) {
                 continue;
             }
-            packageScan.append(definedPackage).append(".*,");
+
+            String[] split = definedPackage.split("\\.");
+            String prefix;
+            if (split.length < 2) {
+                prefix = definedPackage;
+            } else {
+                prefix = split[0] + "." + split[1];
+            }
+            if (packagePrefix.contains(prefix)) {
+                continue;
+            }
+            packagePrefix.add(prefix);
+
+
+            packageScan.append(prefix).append(".*,");
 
         }
 
@@ -250,4 +267,12 @@ public class PackageUtil {
     }
 
 
+    public static void uploadCoordToRedis() {
+        Jedis jedis = new Jedis(Constants.REDIS_ADDRESS);
+        jedis.auth(Constants.REDIS_PASSWORD);
+        for (Map.Entry<String, String> entry : packageToCoordMap.entrySet()) {
+            jedis.set(entry.getKey(), entry.getValue());
+        }
+        jedis.close();
+    }
 }

@@ -34,11 +34,16 @@ public class MongodbUtil {
     static {
         properties = new Properties();
         try {
-            properties.load(MongodbUtil.class.getClassLoader().getResourceAsStream("mongo.properties"));
-            host = properties.getProperty("host");
-            port = Integer.parseInt(properties.getProperty("port"));
-            poolSize = Integer.parseInt(properties.getProperty("poolSize"));
-            blockSize = Integer.parseInt(properties.getProperty("blockSize"));
+//            properties.load(MongodbUtil.class.getClassLoader().getResourceAsStream("mongo.properties"));
+            host =
+                    Constants.REDIS_ADDRESS;
+//                    properties.getProperty("host");
+            port = Constants.MONGO_PORT;
+//                    Integer.parseInt(properties.getProperty("port"));
+            poolSize = 10;
+//                    Integer.parseInt(properties.getProperty("poolSize"));
+            blockSize = 10;
+//                    Integer.parseInt(properties.getProperty("blockSize"));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -96,14 +101,13 @@ public class MongodbUtil {
             return;
         }
 
-        artifact = artifact.substring(0, artifact.lastIndexOf(":"));
+//        artifact = artifact.substring(0, artifact.lastIndexOf(":"));
         MongoDatabase database = mongo.getDatabase("mydatabase");
 
         MongoCollection<Document> collection = database.getCollection(artifact);
 
-        collection.createIndex(Indexes.compoundIndex(Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className"),
-                Indexes.ascending("startNode.coordinate"), Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className"),
-                Indexes.ascending("endNode.coordinate"), Indexes.ascending("type")), new IndexOptions().unique(true));
+        collection.createIndex(Indexes.compoundIndex(Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className")
+                , Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className")), new IndexOptions().unique(true));
 
         Pattern excludedPattern = Pattern.compile(readExcludedPackages());
 
@@ -156,6 +160,7 @@ public class MongodbUtil {
 ////                    Updates.currentDate("lastModified")
 //            );
 //            bulkWrites.add(new UpdateOneModel<Document>(filter, update, new UpdateOptions().upsert(true)));
+
             bulkWrites.add(new InsertOneModel<>(mongoEdge));
 
         }

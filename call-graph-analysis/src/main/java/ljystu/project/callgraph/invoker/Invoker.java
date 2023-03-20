@@ -5,11 +5,11 @@ import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.uploader.CallGraphUploader;
 import ljystu.project.callgraph.utils.POMUtil;
 import ljystu.project.callgraph.utils.PackageUtil;
+import ljystu.project.callgraph.utils.ProjectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -53,13 +53,19 @@ public class Invoker {
      */
     public Set<String> analyseProject(Map<String, Integer> projectCount, String dependencyCoordianate) {
 
-        String describeCommand = "git for-each-ref refs/tags --sort=-taggerdate --format '%(refname:short)' | head";
+        String describeCommand = "git for-each-ref refs/tags --sort=-taggerdate --format '%(refname:short)' | head ";
         HashSet<String> set = new HashSet<>();
         HashSet<String> tagNames = getOutput(describeCommand, rootPath);
         for (String tag : tagNames) {
             if (!switchTag(tag, rootPath)) {
+                System.out.println("switch tag failed");
                 continue;
             }
+
+            tag = tag.substring(9, tag.length() - 1);
+
+            Main.main(getParameters(dependencyCoordianate + ":" + tag));
+
             //acquire dependencies
             invokeTask("dependency:copy-dependencies", "./lib");
             //map packages to coordinates
@@ -70,15 +76,17 @@ public class Invoker {
 
             mavenTestWithJavaAgent(packageScan);
 
-//            ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
-
 //        constructStaticCallGraphs();
+
+            PackageUtil.uploadCoordToRedis();
 
             //upload call graph to neo4j
             CallGraphUploader callGraphUploader = new CallGraphUploader();
 
             callGraphUploader.uploadAll(dependencyCoordianate);
+
         }
+        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
 
         return set;
     }
@@ -224,8 +232,8 @@ public class Invoker {
         return true;
     }
 
-    @Nullable
-    private static HashSet<String> getOutput(String describeCommand, String path) {
+
+    public static HashSet<String> getOutput(String describeCommand, String path) {
         HashSet<String> describeOutput = new HashSet<>();
         try {
             Process describeProcess = Runtime.getRuntime().exec(describeCommand, null, new File(path));
@@ -242,6 +250,9 @@ public class Invoker {
                     break;
                 }
                 describeOutput.add(line);
+                if (describeOutput.size() == 10) {
+                    break;
+                }
             }
             describeInput.close();
             describeProcess.destroy();

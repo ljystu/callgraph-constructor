@@ -79,7 +79,9 @@ public class POMUtil {
             configuration.addChild(configArgLine);
         }
         if (configArgLine.getValue() != null) {
-            configArgLine.setValue(configArgLine.getValue() + " " + packageInfo);
+            if (!configArgLine.getValue().contains(packageInfo)) {
+                configArgLine.setValue(configArgLine.getValue() + " " + packageInfo);
+            }
         } else {
             configArgLine.setValue(packageInfo);
         }
@@ -91,7 +93,6 @@ public class POMUtil {
         // write back to pom
         MavenXpp3Writer writer = new MavenXpp3Writer();
         try {
-
             writer.write(new FileWriter(pomFile), model);
         } catch (IOException e) {
             e.printStackTrace();

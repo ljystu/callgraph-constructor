@@ -186,6 +186,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>ljystu.project.callgraph.RunMavenInvoker</mainClass>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -193,56 +196,13 @@
                 <configuration>
                     <source>11</source>
                     <target>11</target>
+
                 </configuration>
             </plugin>
-            <!--            <plugin>-->
-            <!--                <artifactId>maven-jar-plugin</artifactId>-->
-            <!--                <version>3.2.0</version>-->
-            <!--                <configuration>-->
-            <!--                    <archive>-->
-            <!--                        <manifest>-->
-            <!--                            <mainClass>ljystu.project.callgraph.RunMavenInvoker</mainClass>-->
-            <!--                        </manifest>-->
-            <!--                    </archive>-->
-
-            <!--                </configuration>-->
-
-            <!--            </plugin>-->
-            <!--            <plugin>-->
-            <!--                <groupId>org.apache.maven.plugins</groupId>-->
-            <!--                <artifactId>maven-assembly-plugin</artifactId>-->
-            <!--                <version>3.0.0</version>-->
-            <!--                <configuration>-->
-            <!--                    <descriptors>-->
-            <!--                        <descriptor>assembly.xml</descriptor>-->
-
-            <!--                    </descriptors>-->
-
-            <!--                    <archive>-->
-            <!--                        <manifest>-->
-            <!--                            <mainClass>ljystu.project.callgraph.RunMavenInvoker</mainClass>-->
-            <!--                            <addClasspath>true</addClasspath>-->
-            <!--                            <classpathPrefix>${project.build.directory}/classes/lib</classpathPrefix>-->
-            <!--                        </manifest>-->
-            <!--                    </archive>-->
-            <!--                </configuration>-->
-            <!--                <executions>-->
-            <!--                    <execution>-->
-            <!--                        <id>make-assembly</id>-->
-            <!--                        <phase>package</phase>-->
-            <!--                        <goals>-->
-            <!--                            <goal>single</goal>-->
-            <!--                        </goals>-->
-            <!--                    </execution>-->
-            <!--                </executions>-->
-            <!--            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.2.4</version>
-                <configuration>
-                    <createDependencyReducedPom>true</createDependencyReducedPom>
-                </configuration>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -250,11 +210,31 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <finalName>my-app</finalName>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>ljystu.project.callgraph.RunMavenInvoker</mainClass>
+                                </transformer>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+
+
         </plugins>
     </build>
 </project>
