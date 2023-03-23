@@ -1,10 +1,8 @@
 apple.*
 com.apple.*
-com.google.*
 com.oracle.*
 com.sun.*
 dalvik.*
-java.*
 java.beans.*
 java.io.ObjectStreamClass*
 java.rmi.*

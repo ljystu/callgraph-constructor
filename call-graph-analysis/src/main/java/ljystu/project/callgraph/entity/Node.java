@@ -17,7 +17,7 @@ public class Node {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Node node = (Node) o;
-        return Objects.equals(packageName, node.packageName) && Objects.equals(className, node.className) && Objects.equals(coordinate, node.coordinate);
+        return Objects.equals(packageName, node.packageName) && Objects.equals(className, node.className);
     }
 
     @Override

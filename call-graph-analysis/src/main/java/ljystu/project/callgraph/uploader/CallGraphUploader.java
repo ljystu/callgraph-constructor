@@ -68,22 +68,31 @@ public class CallGraphUploader {
                 continue;
             }
             if (edge == null) continue;
-            log.debug("Edge upload：" + edge.toString());
+
             Node nodeFrom = edge.getFrom();
             Node nodeTo = edge.getTo();
 
-
             getFullCoordinates(nodeFrom, nodeTo, map);
-            if (Objects.equals(nodeFrom.getCoordinate(), null) || Objects.equals(nodeTo.getCoordinate(), null)) {
-                continue;
+
+            if (Objects.equals(nodeFrom.getCoordinate(), null)) {
+                nodeFrom.setCoordinate("not found");
             }
+            if (Objects.equals(nodeTo.getCoordinate(), null)) {
+                nodeTo.setCoordinate("not found");
+            }
+
             if (edge.getFrom().getCoordinate().startsWith(dependencyCoordinate) || edge.getTo().getCoordinate().startsWith(dependencyCoordinate)) {
+                Edge newEdge = new Edge(nodeFrom, nodeTo);
+                log.info("Edge upload: " + newEdge);
 
                 nodes.add(nodeFrom);
                 nodes.add(nodeTo);
 
-                edges.add(new Edge(nodeFrom, nodeTo));
+                edges.add(newEdge);
+                jedis.sadd(dependencyCoordinate, JSON.toJSONString(edge));
+                jedis.srem("dynamic", value);
             }
+
         }
 
 //        List<Node> nodesList = new ArrayList<>(nodes);

@@ -23,7 +23,7 @@ public class JarTest {
 //        Invoker invoker = new Invoker();
         String rootPath = "junit4-main";
         HashSet<String> dependencies = new HashSet<>();
-        PackageUtil.getJarToCoordMap(rootPath);
+//        PackageUtil.getJarToCoordMap(rootPath,jarName,  coord);
         System.out.println(PackageUtil.jarToCoordMap.toString());
 //        assertThat(PackageUtil.jarToCoordMap.contains(jar),true);
         if (PackageUtil.jarToCoordMap.containsKey(jar)) {

@@ -1,19 +1,34 @@
 package ljystu.project.callgraph.invoker;
 
+import com.alibaba.fastjson.JSON;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import eu.fasten.analyzer.javacgopal.Main;
+import eu.fasten.core.data.opal.MavenArtifactDownloader;
+import eu.fasten.core.data.opal.MavenCoordinate;
+import eu.fasten.core.data.opal.exceptions.MissingArtifactException;
+import eu.fasten.core.maven.utils.MavenUtilities;
 import ljystu.project.callgraph.config.Constants;
+import ljystu.project.callgraph.entity.myEdge;
 import ljystu.project.callgraph.uploader.CallGraphUploader;
 import ljystu.project.callgraph.utils.POMUtil;
 import ljystu.project.callgraph.utils.PackageUtil;
-import ljystu.project.callgraph.utils.ProjectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
+import org.bson.Document;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -51,47 +66,177 @@ public class Invoker {
      * @param projectCount the project count
      * @return hash set
      */
-    public Set<String> analyseProject(Map<String, Integer> projectCount, String dependencyCoordianate) {
+    public Set<String> analyseProject(Map<String, Integer> projectCount, String dependencyCoordinateWithoutVersion, String tagPrefix, String tagSuffix) {
 
-        String describeCommand = "git for-each-ref refs/tags --sort=-taggerdate --format '%(refname:short)' | head ";
+        //switch tag(maybe need to use commits when there is no tag for smaller projects)
+        String switchTagCommand =
+                "git for-each-ref refs/tags --sort=-taggerdate --format '%(refname:short)' | head ";
         HashSet<String> set = new HashSet<>();
-        HashSet<String> tagNames = getOutput(describeCommand, rootPath);
+        List<String> tagNames = getOutput(switchTagCommand, rootPath);
+
+        System.out.println("tagNames: " + tagNames);
+
+        String stashCommand = "git stash";
+        //traverse all tags
         for (String tag : tagNames) {
+
+            getOutput(stashCommand, rootPath);
+
             if (!switchTag(tag, rootPath)) {
                 System.out.println("switch tag failed");
                 continue;
             }
+            System.out.println("analyze tag: " + tag + " start");
 
-            tag = tag.substring(9, tag.length() - 1);
+            //get specific tag name from git command output
+            if (tag.charAt(tag.length() - 1) == '\'') {
+                tag = tag.substring(0, tag.length() - 1);
+            }
+            tag = tag.substring(tag.indexOf(tagPrefix) + tagPrefix.length(), tag.length() - tagSuffix.length() + 1);
 
-            Main.main(getParameters(dependencyCoordianate + ":" + tag));
+
+            String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
+            File jar = null;
+            String dependencyCoordinates = dependencyCoordinateWithoutVersion + ":" + tag;
+
+            try {
+                jar = new MavenArtifactDownloader(MavenCoordinate.fromString(dependencyCoordinates, "jar")).downloadArtifact(MavenUtilities.MAVEN_CENTRAL_REPO);
+                // 复制文件到目标文件夹
+                Path targetDirectory = Paths.get(rootPath);
+
+                Files.copy(jar.toPath(), targetDirectory.resolve(artifactId + "-" + tag + ".jar"));
+                System.out.println("File copied successfully!");
+            } catch (MissingArtifactException | IOException e) {
+                log.info("Artifact not found: " + dependencyCoordinateWithoutVersion + ":" + tag);
+                continue;
+            } finally {
+                if (jar != null) {
+                    jar.delete();
+                }
+            }
 
             //acquire dependencies
             invokeTask("dependency:copy-dependencies", "./lib");
-            //map packages to coordinates
-//        String argLine = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME + Constants.ARG_LINE_RIGHT;
-            String packageScan =
-//                argLine+"org.apache.commons.math3.*;";
-                    PackageUtil.getPackages(rootPath);
 
+            //map packages to coordinates
+            String packageScan = PackageUtil.getPackages(rootPath, artifactId + "-" + tag + ".jar", dependencyCoordinates);
+
+            //javaagent maven test
             mavenTestWithJavaAgent(packageScan);
 
-//        constructStaticCallGraphs();
-
+            //upload package:coordinate to redis
             PackageUtil.uploadCoordToRedis();
 
-            //upload call graph to neo4j
+            //upload call graph to mongodb
             CallGraphUploader callGraphUploader = new CallGraphUploader();
 
-            callGraphUploader.uploadAll(dependencyCoordianate);
+            callGraphUploader.uploadAll(dependencyCoordinateWithoutVersion);
 
+//            constructStaticCallGraphs();
+            Main.main(getParameters(dependencyCoordinates));
+
+            // analysis of call graph in mongo
+            mongoData(dependencyCoordinateWithoutVersion);
+
+            System.out.println("analyse " + tag + " finished");
         }
-        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
+
+//        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
 
         return set;
     }
 
+    public void mongoData(String dependencyCoordinate) {
+        ServerAddress serverAddress = new ServerAddress(Constants.REDIS_ADDRESS, 27017);
+        List<ServerAddress> addrs = new ArrayList<ServerAddress>();
+        addrs.add(serverAddress);
+
+        MongoCredential credential = MongoCredential.createScramSha1Credential("ljystu", "admin", "Ljystu110!".toCharArray());
+        List<MongoCredential> credentials = new ArrayList<MongoCredential>();
+        credentials.add(credential);
+
+        //通过连接认证获取MongoDB连接
+        MongoClient mongoClient = new MongoClient(addrs, credentials);
+
+        // 获取MongoDB数据库
+        MongoDatabase database = mongoClient.getDatabase("mydatabase");
+
+        // 获取MongoDB集合
+        MongoCollection<Document> collection = database.getCollection(dependencyCoordinate);
+
+        int staticCount = 0;
+        int dynamicCount = 0;
+        int bothCount = 0;
+        int internalDynamicCall = 0;
+        int externalDynamicCall = 0;
+        int dynCalled = 0;
+        int dynCalling = 0;
+
+        HashMap<String, Integer> dynamicCoordinates = new HashMap<>();
+        HashMap<String, Integer> staticCoordinates = new HashMap<>();
+        HashSet<myEdge> edges = new HashSet<>();
+        HashSet<String> staticCoords = new HashSet<>();
+        HashMap<String, Integer> bothCoordinates = new HashMap<>();
+
+        for (Document document : collection.find()) {
+            myEdge edge = JSON.parseObject(document.toJson(), myEdge.class);
+
+            String endCoordinate = edge.getEndNode().getCoordinate();
+            String startCoordinate = edge.getStartNode().getCoordinate();
+
+            edges.add(edge);
+            if (edge.getType().equals("static")) {
+                staticCount++;
+                if (startCoordinate.startsWith(dependencyCoordinate)) {
+                    staticCoordinates.put(startCoordinate, staticCoordinates.getOrDefault(startCoordinate, 0) + 1);
+                }
+                staticCoords.add(startCoordinate);
+
+            } else if (edge.getType().equals("dynamic")) {
+                dynamicCount++;
+                if (startCoordinate.startsWith(dependencyCoordinate) && endCoordinate.startsWith(dependencyCoordinate)) {
+                    internalDynamicCall++;
+                    dynamicCoordinates.put(startCoordinate, dynamicCoordinates.getOrDefault(startCoordinate, 0) + 1);
+                } else {
+                    externalDynamicCall++;
+                    if (startCoordinate.startsWith(dependencyCoordinate)) {
+                        dynamicCoordinates.put(startCoordinate, dynamicCoordinates.getOrDefault(startCoordinate, 0) + 1);
+                        dynCalling++;
+                    } else {
+                        dynamicCoordinates.put(startCoordinate, dynamicCoordinates.getOrDefault(startCoordinate, 0) + 1);
+                        dynCalled++;
+                    }
+                }
+            } else {
+                bothCount++;
+                if (startCoordinate.startsWith(dependencyCoordinate) || endCoordinate.startsWith(dependencyCoordinate)) {
+                    bothCoordinates.put(startCoordinate, bothCoordinates.getOrDefault(startCoordinate, 0) + 1);
+                }
+            }
+        }
+        System.out.println("staticCount = " + staticCount);
+        System.out.println("dynamicCount = " + dynamicCount);
+        System.out.println("internalDynCount = " + internalDynamicCall);
+        System.out.println("externalDynCount = " + externalDynamicCall);
+        System.out.println("dynCalled = " + dynCalled);
+        System.out.println("dynCalling = " + dynCalling);
+        System.out.println("bothCount = " + bothCount);
+
+        for (Map.Entry<String, Integer> entry : dynamicCoordinates.entrySet()) {
+            System.out.println(entry.getKey() + " : " + entry.getValue());
+        }
+        System.out.println("static");
+        for (Map.Entry<String, Integer> entry : staticCoordinates.entrySet()) {
+            System.out.println(entry.getKey() + " : " + entry.getValue());
+        }
+
+        // 关闭MongoClient
+        mongoClient.close();
+
+    }
+
     private void constructStaticCallGraphs() {
+
         for (String coordinate : PackageUtil.currentJars) {
             Main.main(getParameters(coordinate));
 
@@ -153,7 +298,7 @@ public class Invoker {
         if (outputDir.length() != 0) {
             properties.setProperty("outputDirectory", outputDir);
         }
-
+        request.setMavenOpts("-Drat.numUnapprovedLicenses=1000");
         request.setProperties(properties);
         try {
             mavenInvoker.execute(request);
@@ -233,8 +378,8 @@ public class Invoker {
     }
 
 
-    public static HashSet<String> getOutput(String describeCommand, String path) {
-        HashSet<String> describeOutput = new HashSet<>();
+    public static List<String> getOutput(String describeCommand, String path) {
+        List<String> describeOutput = new ArrayList<>();
         try {
             Process describeProcess = Runtime.getRuntime().exec(describeCommand, null, new File(path));
 
@@ -250,7 +395,7 @@ public class Invoker {
                     break;
                 }
                 describeOutput.add(line);
-                if (describeOutput.size() == 10) {
+                if (describeOutput.size() == 15) {
                     break;
                 }
             }

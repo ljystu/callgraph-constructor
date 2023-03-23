@@ -67,8 +67,13 @@ public class PackageUtil {
      * @param rootPath the root path
      * @return packages packages
      */
-    public static String getPackages(String rootPath) {
-        getJarToCoordMap(rootPath);
+    public static String getPackages(String rootPath, String jarName, String coord) {
+        packageToCoordMap.clear();
+        jarToPackageMap.clear();
+        jarToCoordMap.clear();
+        currentJars.clear();
+
+        getJarToCoordMap(rootPath, jarName, coord);
 
         Set<String> inclPackages = extractPackagesFromJar(rootPath);
 
@@ -141,6 +146,7 @@ public class PackageUtil {
                 extractPackagesToMap(inclPkgs, jar, coord);
 
                 ProjectUtil.deleteFile(jar);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -198,7 +204,7 @@ public class PackageUtil {
      * @param rootPath the root path
      * @return the dependency info
      */
-    public static void getJarToCoordMap(String rootPath) {
+    public static void getJarToCoordMap(String rootPath, String jarName, String coord) {
 
         String dependencyList = execCmd("mvn dependency:list", rootPath);
         if (dependencyList == null) {
@@ -218,6 +224,7 @@ public class PackageUtil {
         }
 
         log.debug("dependency size:" + dependencies.size());
+        jarToCoordMap.put(jarName, coord);
 
         jarToCoordMap.putAll(extractCoordinate(dependencies));
     }
@@ -241,6 +248,7 @@ public class PackageUtil {
             String coordinate = split[0] + ":" + artifactId + ":" + split[3];
             coordinateMap.put(key, coordinate);
         }
+
 
         return coordinateMap;
     }

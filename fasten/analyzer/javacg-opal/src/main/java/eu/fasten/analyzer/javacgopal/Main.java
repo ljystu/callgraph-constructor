@@ -280,7 +280,7 @@ public class Main implements Runnable {
         HashSet<Edge> allEdges = GraphUtil.getAllEdges(result, nodes, artifact);
 //        Neo4jOp neo4jOp = new Neo4jOp("bolt://localhost:7687", "neo4j", "ljystuneo");
 //        neo4jOp.uploadMethodNodes(nodesList);
-
+//
 //        neo4jOp.uploadEdges(allEdges, "static", artifact);
         MongodbUtil.uploadEdges(allEdges, artifact);
 

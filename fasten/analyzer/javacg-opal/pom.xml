@@ -143,7 +143,7 @@
     </repositories>
 
     <build>
-        <testSourceDirectory>${project.basedir}/src/test/java/</testSourceDirectory>
+        <testSourceDirectory>src/main/resources/java/</testSourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

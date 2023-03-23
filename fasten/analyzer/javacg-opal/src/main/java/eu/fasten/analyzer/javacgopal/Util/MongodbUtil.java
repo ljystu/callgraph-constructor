@@ -1,6 +1,9 @@
 package eu.fasten.analyzer.javacgopal.Util;
 
-import com.mongodb.*;
+import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.*;
@@ -8,6 +11,7 @@ import eu.fasten.analyzer.javacgopal.Constants;
 import eu.fasten.analyzer.javacgopal.entity.Edge;
 import eu.fasten.analyzer.javacgopal.entity.GraphNode;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -35,33 +39,23 @@ public class MongodbUtil {
     private static int collectionCount = 0;
 
     // 初始化连接池，设置参数
-    static {
-        properties = new Properties();
-        try {
-            properties.load(MongodbUtil.class.getClassLoader().getResourceAsStream("mongo.properties"));
-            host = properties.getProperty("host");
-            port = Integer.parseInt(properties.getProperty("port"));
-            poolSize = Integer.parseInt(properties.getProperty("poolSize"));
-            blockSize = Integer.parseInt(properties.getProperty("blockSize"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        try {
-            // 设置连接参数
-            ServerAddress serverAddress = new ServerAddress(host, port);
-//                MongoOptions mongoOptions = new MongoOptions();
-//                mongoOptions.connectionsPerHost = poolSize; // 连接池大小
-//                mongoOptions.threadsAllowedToBlockForConnectionMultiplier = blockSize; // 等待队列长度
-            // 创建连接对象
-            MongoCredential credential = MongoCredential.createScramSha1Credential("admin", "admin", "123456".toCharArray());
-            List<MongoCredential> credentials = new ArrayList<MongoCredential>();
-            credentials.add(credential);
-            mongo = new MongoClient(serverAddress, credentials);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+//    static {
+//        try {
+//            // 设置连接参数
+//            ServerAddress serverAddress = new ServerAddress(Constants.MONGO_ADDRESS, 27017);
+////                MongoOptions mongoOptions = new MongoOptions();
+////                mongoOptions.connectionsPerHost = poolSize; // 连接池大小
+////                mongoOptions.threadsAllowedToBlockForConnectionMultiplier = blockSize; // 等待队列长度
+//            // 创建连接对象
+//            MongoCredential credential = MongoCredential.createScramSha1Credential("ljystu", "admin", "Ljystu110!".toCharArray());
+//            List<MongoCredential> credentials = new ArrayList<MongoCredential>();
+//            credentials.add(credential);
+//            mongo = new MongoClient(serverAddress, credentials);
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     /**
      * Gets mongo.
@@ -79,6 +73,17 @@ public class MongodbUtil {
      * @param allEdges the all edges
      */
     public static void uploadEdges(HashSet<Edge> allEdges, String artifact) {
+        if (mongo == null) {
+            ServerAddress serverAddress = new ServerAddress(Constants.MONGO_ADDRESS, 27017);
+//                MongoOptions mongoOptions = new MongoOptions();
+//                mongoOptions.connectionsPerHost = poolSize; // 连接池大小
+//                mongoOptions.threadsAllowedToBlockForConnectionMultiplier = blockSize; // 等待队列长度
+            // 创建连接对象
+            MongoCredential credential = MongoCredential.createScramSha1Credential("ljystu", "admin", "Ljystu110!".toCharArray());
+            List<MongoCredential> credentials = new ArrayList<MongoCredential>();
+            credentials.add(credential);
+            mongo = new MongoClient(serverAddress, credentials);
+        }
         if (allEdges.isEmpty()) {
             return;
         }
@@ -91,15 +96,16 @@ public class MongodbUtil {
         collection.createIndex(Indexes.compoundIndex(Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className"),
                 Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className")), new IndexOptions().unique(true));
 
-        Pattern excludedPattern = Pattern.compile(readExcludedPackages());
+        Pattern excludedPattern = null;
+//                Pattern.compile(readExcludedPackages());
 
-        List<WriteModel<Document>> bulkWrites = getAllDocuments(allEdges, excludedPattern);
+        List<WriteModel<Document>> bulkWrites = getAllDocuments(allEdges, excludedPattern, collection);
 
         BulkWriteOptions options = new BulkWriteOptions().ordered(false);
 
         try {
             collection.bulkWrite(bulkWrites, options);
-        } catch (MongoBulkWriteException e) {
+        } catch (Exception e) {
             System.out.println("duplicate key skipped");
         }
 
@@ -107,14 +113,14 @@ public class MongodbUtil {
 //        mongo.close();
     }
 
-    private static List<WriteModel<Document>> getAllDocuments(HashSet<Edge> allEdges, Pattern excludedPattern) {
+    private static List<WriteModel<Document>> getAllDocuments(HashSet<Edge> allEdges, Pattern excludedPattern, MongoCollection<Document> collection) {
         List<WriteModel<Document>> bulkWrites = new ArrayList<>();
         for (Edge edge : allEdges) {
             GraphNode fromNode = edge.getFrom();
             GraphNode toNode = edge.getTo();
-            if (isExcluded(toNode.getPackageName(), excludedPattern)) {
-                continue;
-            }
+//            if (isExcluded(toNode.getPackageName(), excludedPattern)) {
+//                continue;
+//            }
             Document startNode = new Document("packageName", fromNode.getPackageName())
                     .append("className", fromNode.getClassName())
                     .append("coordinate", fromNode.getCoordinate());
@@ -123,26 +129,27 @@ public class MongodbUtil {
                     .append("className", toNode.getClassName())
                     .append("coordinate", toNode.getCoordinate());
 
-            Document mongoEdge = new Document("startNode", startNode)
-                    .append("endNode", endNode).append("type", "static");
 
-            //upsert
-//            Bson filter = Filters.and(
-//                    Filters.eq("startNode.packageName", fromNode.getPackageName()),
-//                    Filters.eq("startNode.className", fromNode.getClassName()),
-//                    Filters.eq("startNode.coordinate", fromNode.getCoordinate()),
-//                    Filters.eq("endNode.packageName", toNode.getPackageName()),
-//                    Filters.eq("endNode.className", toNode.getClassName()),
-//                    Filters.eq("endNode.coordinate", toNode.getCoordinate())
-//            );
-//            Bson update = Updates.combine(
-//                    Updates.setOnInsert("startNode", startNode),
-//                    Updates.setOnInsert("endNode", endNode),
-//                    Updates.set("type", "static")
-////                    Updates.currentDate("lastModified")
-//            );
-//            bulkWrites.add(new UpdateOneModel<Document>(filter, update, new UpdateOptions().upsert(true)));
-            bulkWrites.add(new InsertOneModel<>(mongoEdge));
+            String type = "static";
+
+            Bson filter = Filters.and(Filters.eq("startNode", startNode),
+                    Filters.eq("endNode", endNode)
+                    , Filters.eq("type", "dynamic"));
+
+            Document existingDocument = collection.find(filter).first();
+
+            if (existingDocument != null) {
+                // 已经存在具有相同startNode和endNode，但具有不同type的文档，更新type为both
+                Bson update = new Document("$set", new Document("type", "both"));
+                bulkWrites.add(new UpdateOneModel<>(filter, update));
+            } else {
+                // 插入新文档
+                Document newDocument = new Document("startNode", startNode)
+                        .append("endNode", endNode)
+                        .append("type", type);
+
+                bulkWrites.add(new InsertOneModel<>(newDocument));
+            }
 
         }
         return bulkWrites;

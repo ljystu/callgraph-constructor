@@ -1,16 +1,16 @@
 package ljystu.project.callgraph.utils;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.maven.model.Build;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.Plugin;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -25,78 +25,200 @@ public class POMUtil {
      * @param packageInfo the package info
      */
     public static void editPOM(String pomFile, String packageInfo) {
-
-        MavenXpp3Reader reader = new MavenXpp3Reader();
-        Model model = null;
+        // Read the POM file with JSoup
+        Document document;
         try {
-            model = reader.read(new FileReader(pomFile));
-        } catch (Exception e) {
-            log.error("pomFile not found");
+            document = Jsoup.parse(new File(pomFile), StandardCharsets.UTF_8.name(), "", Parser.xmlParser());
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("pomFile not found");
             return;
         }
 
-        Build build = model.getBuild();
-        if (build == null) {
-            build = new Build();
-            model.setBuild(build);
-        }
+        // Update the surefire-plugin and maven-compiler-plugin configurations
+        updatePluginConfiguration(document, "maven-surefire-plugin", packageInfo);
+//        updatePluginConfiguration(document, "maven-compiler-plugin", packageInfo);
 
-        // get plugins
-        List<Plugin> plugins = build.getPlugins();
-//        PluginManagement pluginManagement = build.getPluginManagement();
-//
-//        if (pluginManagement == null) {
-//            pluginManagement = new PluginManagement();
-//        }
-//        List<Plugin> plugins = pluginManagement.getPlugins();
-
-        Plugin compilerPlugin = new Plugin();
-
-        boolean exists = false;
-        for (Plugin plugin : plugins) {
-            if (plugin.getArtifactId().equals("maven-surefire-plugin")) {
-                compilerPlugin = plugin;
-                exists = true;
-                break;
-            }
-        }
-
-        //
-        if (!exists) {
-            compilerPlugin.setGroupId("org.apache.maven.plugins");
-            compilerPlugin.setArtifactId("maven-surefire-plugin");
-        }
-
-        Xpp3Dom configuration = (Xpp3Dom) compilerPlugin.getConfiguration();
-        if (configuration == null) {
-            configuration = new Xpp3Dom("configuration");
-            compilerPlugin.setConfiguration(configuration);
-        }
-
-        Xpp3Dom configArgLine = configuration.getChild("argLine");
-        if (configArgLine == null) {
-            configArgLine = new Xpp3Dom("argLine");
-            configuration.addChild(configArgLine);
-        }
-        if (configArgLine.getValue() != null) {
-            if (!configArgLine.getValue().contains(packageInfo)) {
-                configArgLine.setValue(configArgLine.getValue() + " " + packageInfo);
-            }
-        } else {
-            configArgLine.setValue(packageInfo);
-        }
-
-        if (!exists) {
-            plugins.add(compilerPlugin);
-        }
-
-        // write back to pom
-        MavenXpp3Writer writer = new MavenXpp3Writer();
+        // Write the modified POM file back to disk, preserving comments
         try {
-            writer.write(new FileWriter(pomFile), model);
+            Files.write(Paths.get(pomFile), document.outerHtml().getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             e.printStackTrace();
-            log.error(pomFile + "update failed");
+            System.err.println(pomFile + " update failed");
         }
     }
+
+    private static void updatePluginConfiguration(Document document, String pluginName, String packageInfo) {
+        // Find the plugin with the specified name
+        Element plugin = document.select("plugin").stream()
+                .filter(p -> p.selectFirst("artifactId").text().equals(pluginName))
+                .findFirst().orElse(null);
+
+        if (plugin == null) {
+            // Create a new plugin with the specified groupId and artifactId
+            plugin = new Element("plugin");
+            Element groupId = new Element("groupId");
+            groupId.text("org.apache.maven.plugins");
+            Element artifactId = new Element("artifactId");
+            artifactId.text(pluginName);
+            plugin.appendChild(groupId);
+            plugin.appendChild(artifactId);
+
+            // Append the new plugin to the build plugins list
+            Element build = document.selectFirst("build");
+            if (build == null) {
+                build = new Element("build");
+                document.selectFirst("project").appendChild(build);
+            }
+            Element plugins = build.selectFirst("plugins");
+            if (plugins == null) {
+                plugins = new Element("plugins");
+                build.appendChild(plugins);
+            }
+            plugins.appendChild(plugin);
+        }
+
+        Element configuration = plugin.selectFirst("configuration");
+        if (configuration == null) {
+            configuration = new Element("configuration");
+            plugin.appendChild(configuration);
+        }
+
+        if (pluginName.equals("maven-surefire-plugin")) {
+            Element argLine = configuration.selectFirst("argLine");
+            if (argLine == null) {
+                argLine = new Element("argLine");
+                configuration.appendChild(argLine);
+            }
+            if (argLine.text() != null && !argLine.text().contains(packageInfo)) {
+                argLine.text(argLine.text() + " " + packageInfo);
+            }
+        } else {
+            List<String> options = List.of("release", "source", "target");
+            for (String option : options) {
+                Element optionElement = configuration.selectFirst(option);
+                if (optionElement == null) {
+                    optionElement = new Element(option);
+                    configuration.appendChild(optionElement);
+                }
+                if (option.equals("release")) {
+                    optionElement.text("11");
+                } else {
+                    optionElement.text("1.6");
+                }
+            }
+        }
+
+    }
+//    public static void editPOM(String pomFile, String packageInfo) {
+//
+//        MavenXpp3Reader reader = new MavenXpp3Reader();
+//        Model model = null;
+//        try {
+//            model = reader.read(new FileReader(pomFile));
+//        } catch (Exception e) {
+//            log.error("pomFile not found");
+//            return;
+//        }
+//
+//        Build build = model.getBuild();
+//        if (build == null) {
+//            build = new Build();
+//            model.setBuild(build);
+//        }
+//
+//        // get plugins
+//        List<Plugin> plugins = build.getPlugins();
+////        PluginManagement pluginManagement = build.getPluginManagement();
+////
+////        if (pluginManagement == null) {
+////            pluginManagement = new PluginManagement();
+////        }
+////        List<Plugin> plugins = pluginManagement.getPlugins();
+//
+//        Plugin surefirePlugin = new Plugin();
+//        Plugin compilerPlugin = new Plugin();
+//
+//        boolean sureFireExists = false;
+//        boolean compilerExists = false;
+//
+//        for (Plugin plugin : plugins) {
+//            if (plugin.getArtifactId().equals("maven-surefire-plugin")) {
+//                surefirePlugin = plugin;
+//                sureFireExists = true;
+//            }
+//            if (plugin.getArtifactId().equals("maven-compiler-plugin")) {
+//                compilerPlugin = plugin;
+//                compilerExists = true;
+//
+//            }
+//        }
+//
+//        //
+//        updateSurefire("maven-surefire-plugin", packageInfo, plugins, surefirePlugin, sureFireExists);
+////        updateSurefire("maven-compiler-plugin", packageInfo, plugins, compilerPlugin, compilerExists);
+//        // write back to pom
+//        MavenXpp3Writer writer = new MavenXpp3Writer();
+//        try {
+//            writer.write(new FileWriter(pomFile), model);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            log.error(pomFile + "update failed");
+//        }
+//    }
+//
+//    private static void updateSurefire(String name, String packageInfo, List<Plugin> plugins, Plugin plugin, boolean exists) {
+//        if (!exists) {
+//            plugin.setGroupId("org.apache.maven.plugins");
+//            plugin.setArtifactId(name);
+//        }
+//
+//        Xpp3Dom configuration = (Xpp3Dom) plugin.getConfiguration();
+//        if (configuration == null) {
+//            configuration = new Xpp3Dom("configuration");
+//            plugin.setConfiguration(configuration);
+//        }
+//
+//        if (name.equals("maven-surefire-plugin")) {
+//
+//            Xpp3Dom configArgLine = configuration.getChild("argLine");
+//            if (configArgLine == null) {
+//                configArgLine = new Xpp3Dom("argLine");
+//                configuration.addChild(configArgLine);
+//            }
+//            if (configArgLine.getValue() != null) {
+//                if (!configArgLine.getValue().contains(packageInfo)) {
+//                    configArgLine.setValue(configArgLine.getValue() + " " + packageInfo);
+//                }
+//            } else {
+//                configArgLine.setValue(packageInfo);
+//            }
+//        } else {
+//            Xpp3Dom releaseArgLine = configuration.getChild("release");
+//            if (releaseArgLine == null) {
+//                releaseArgLine = new Xpp3Dom("release");
+//                configuration.addChild(releaseArgLine);
+//            }
+//            releaseArgLine.setValue("11");
+//
+//            Xpp3Dom sourceArgLine = configuration.getChild("source");
+//            if (sourceArgLine == null) {
+//                sourceArgLine = new Xpp3Dom("source");
+//                configuration.addChild(sourceArgLine);
+//            }
+//            sourceArgLine.setValue("1.6");
+//
+//            Xpp3Dom targetArgLine = configuration.getChild("target");
+//            if (targetArgLine == null) {
+//                targetArgLine = new Xpp3Dom("target");
+//                configuration.addChild(targetArgLine);
+//            }
+//            targetArgLine.setValue("1.6");
+//
+//        }
+//
+//        if (!exists) {
+//            plugins.add(plugin);
+//        }
+//    }
 }

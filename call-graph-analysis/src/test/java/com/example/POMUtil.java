@@ -18,10 +18,10 @@ public class POMUtil {
     public void POMTest() throws Exception {
         String pomFile = "src/main/resources/pom.xml";
         String packageInfo = "-noverify -javaagent:";
-        editPOM(pomFile, packageInfo);
+        ljystu.project.callgraph.utils.POMUtil.editPOM(pomFile, packageInfo);
     }
 
-    public void editPOM(String pomFile, String packageInfo) throws Exception {
+    public static void editPOM(String pomFile, String packageInfo) throws Exception {
         // 读取 POM 文件
 
         MavenXpp3Reader reader = new MavenXpp3Reader();

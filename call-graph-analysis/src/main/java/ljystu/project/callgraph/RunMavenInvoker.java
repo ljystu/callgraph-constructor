@@ -1,5 +1,6 @@
 package ljystu.project.callgraph;
 
+import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Project;
 import ljystu.project.callgraph.invoker.Invoker;
 import ljystu.project.callgraph.utils.ProjectUtil;
@@ -18,20 +19,28 @@ public class RunMavenInvoker {
     public static void main(String[] args) {
 
         //arg[1] is the artifact coordinate
-        String filename = args[1];
-        List<Project> projects = ProjectUtil.readProjects(args[1]);
+        String filename = args[0];
+        Constants.MAVEN_HOME = args[1];
+        Constants.JAVAAGENT_HOME = args[2];
+        Constants.JAVA_HOME = args[3];
+        Constants.EXCLUSION_FILE = args[4];
+        Constants.PROJECT_FOLDER = args[5];
+        String dependencyCoordinate = args[6];
+        String tagPrefix = args[7];
+        String tagSuffix = args[8];
+
+        List<Project> projects = ProjectUtil.readProjects(filename);
 
         HashMap<String, Integer> projectCount = new HashMap<>();
         // do not pass version here only GroupId:ArtifactId
-        String dependencyCoordinate = "org.apache.zookeeper:zookeeper";
-//        filename.substring(0, filename.lastIndexOf("."));
+
         for (Project p : projects) {
             String folderName = ProjectUtil.gitDownload(p);
             if (Objects.equals(folderName, "")) {
                 continue;
             }
             Invoker invoker = new Invoker(folderName);
-            invoker.analyseProject(projectCount, dependencyCoordinate);
+            invoker.analyseProject(projectCount, dependencyCoordinate, tagPrefix, tagSuffix);
 
         }
 

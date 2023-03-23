@@ -54,7 +54,7 @@ public class MongodbUtil {
 //                mongoOptions.connectionsPerHost = poolSize; // 连接池大小
 //                mongoOptions.threadsAllowedToBlockForConnectionMultiplier = blockSize; // 等待队列长度
             // 创建连接对象
-            MongoCredential credential = MongoCredential.createScramSha1Credential("admin", "admin", "123456".toCharArray());
+            MongoCredential credential = MongoCredential.createScramSha1Credential("ljystu", "admin", "Ljystu110!".toCharArray());
             List<MongoCredential> credentials = new ArrayList<MongoCredential>();
             credentials.add(credential);
             mongo = new MongoClient(serverAddress, credentials);
