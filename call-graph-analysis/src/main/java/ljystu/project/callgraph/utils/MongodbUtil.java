@@ -50,11 +50,7 @@ public class MongodbUtil {
         try {
             // 设置连接参数
             ServerAddress serverAddress = new ServerAddress(host, port);
-//                MongoOptions mongoOptions = new MongoOptions();
-//                mongoOptions.connectionsPerHost = poolSize; // 连接池大小
-//                mongoOptions.threadsAllowedToBlockForConnectionMultiplier = blockSize; // 等待队列长度
-            // 创建连接对象
-            MongoCredential credential = MongoCredential.createScramSha1Credential("ljystu", "admin", "Ljystu110!".toCharArray());
+            MongoCredential credential = MongoCredential.createScramSha1Credential(Constants.username, "admin", Constants.password.toCharArray());
             List<MongoCredential> credentials = new ArrayList<MongoCredential>();
             credentials.add(credential);
             mongo = new MongoClient(serverAddress, credentials);
@@ -106,12 +102,16 @@ public class MongodbUtil {
 
         MongoCollection<Document> collection = database.getCollection(artifact);
 
-        collection.createIndex(Indexes.compoundIndex(Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className")
-                , Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className")), new IndexOptions().unique(true));
+        collection.createIndex(Indexes.compoundIndex(
+                Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className")
+                , Indexes.ascending("startNode.methodName"), Indexes.ascending("startNode.params"), Indexes.ascending("startNode.returnType")
+                , Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className")
+                , Indexes.ascending("endNode.methodName"), Indexes.ascending("endNode.params"), Indexes.ascending("endNode.returnType")
+        ), new IndexOptions().unique(true));
 
         Pattern excludedPattern = Pattern.compile(readExcludedPackages());
 
-        List<WriteModel<Document>> bulkWrites = getAllDocuments(allEdges, excludedPattern);
+        List<WriteModel<Document>> bulkWrites = getAllDocuments(collection, allEdges, excludedPattern);
 
         BulkWriteOptions options = new BulkWriteOptions().ordered(false);
 
@@ -125,7 +125,7 @@ public class MongodbUtil {
 //        mongo.close();
     }
 
-    private static List<WriteModel<Document>> getAllDocuments(HashSet<Edge> allEdges, Pattern excludedPattern) {
+    private static List<WriteModel<Document>> getAllDocuments(MongoCollection<Document> collection, HashSet<Edge> allEdges, Pattern excludedPattern) {
         List<WriteModel<Document>> bulkWrites = new ArrayList<>();
         for (Edge edge : allEdges) {
             Node fromNode = edge.getFrom();
@@ -135,33 +135,40 @@ public class MongodbUtil {
 //            }
             Document startNode = new Document("packageName", fromNode.getPackageName())
                     .append("className", fromNode.getClassName())
+                    .append("methodName", fromNode.getMethodName())
+                    .append("params", fromNode.getParams())
+                    .append("returnType", fromNode.getReturnType())
                     .append("coordinate", fromNode.getCoordinate());
 
             Document endNode = new Document("packageName", toNode.getPackageName())
                     .append("className", toNode.getClassName())
+                    .append("methodName", fromNode.getMethodName())
+                    .append("params", fromNode.getParams())
+                    .append("returnType", fromNode.getReturnType())
                     .append("coordinate", toNode.getCoordinate());
 
-            Document mongoEdge = new Document("startNode", startNode)
-                    .append("endNode", endNode).append("type", "dynamic");
+//            Document mongoEdge = new Document("startNode", startNode)
+//                    .append("endNode", endNode).append("type", "dynamic");
 
-            //upsert
-//            Bson filter = Filters.and(
-//                    Filters.eq("startNode.packageName", fromNode.getPackageName()),
-//                    Filters.eq("startNode.className", fromNode.getClassName()),
-//                    Filters.eq("startNode.coordinate", fromNode.getCoordinate()),
-//                    Filters.eq("endNode.packageName", toNode.getPackageName()),
-//                    Filters.eq("endNode.className", toNode.getClassName()),
-//                    Filters.eq("endNode.coordinate", toNode.getCoordinate())
-//            );
-//            Bson update = Updates.combine(
-//                    Updates.setOnInsert("startNode", startNode),
-//                    Updates.setOnInsert("endNode", endNode),
-//                    Updates.set("type", "static")
-////                    Updates.currentDate("lastModified")
-//            );
-//            bulkWrites.add(new UpdateOneModel<Document>(filter, update, new UpdateOptions().upsert(true)));
+            Bson filter = Filters.and(Filters.eq("startNode", startNode),
+                    Filters.eq("endNode", endNode)
+                    , Filters.eq("type", "static"));
 
-            bulkWrites.add(new InsertOneModel<>(mongoEdge));
+            Document existingDocument = collection.find(filter).first();
+
+            String type = "dynamic";
+            if (existingDocument != null) {
+                // 已经存在具有相同startNode和endNode，但具有不同type的文档，更新type为both
+                Bson update = new Document("$set", new Document("type", "both"));
+                bulkWrites.add(new UpdateOneModel<>(filter, update));
+            } else {
+                // 插入新文档
+                Document newDocument = new Document("startNode", startNode)
+                        .append("endNode", endNode)
+                        .append("type", type);
+
+                bulkWrites.add(new InsertOneModel<>(newDocument));
+            }
 
         }
         return bulkWrites;
@@ -196,7 +203,5 @@ public class MongodbUtil {
         MongoCollection<Document> collection = mongo.getDatabase("mydatabase").getCollection("mycollection");
         collection.distinct("startNode.coordinate", String.class).into(set);
         return set;
-
-
     }
 }

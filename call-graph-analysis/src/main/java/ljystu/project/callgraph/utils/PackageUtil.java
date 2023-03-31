@@ -67,7 +67,8 @@ public class PackageUtil {
      * @param rootPath the root path
      * @return packages packages
      */
-    public static String getPackages(String rootPath, String jarName, String coord) {
+    public static String getPackages(String rootPath, String jarName, String coord, String packagePrefix) {
+
         packageToCoordMap.clear();
         jarToPackageMap.clear();
         jarToCoordMap.clear();
@@ -75,7 +76,7 @@ public class PackageUtil {
 
         getJarToCoordMap(rootPath, jarName, coord);
 
-        Set<String> inclPackages = extractPackagesFromJar(rootPath);
+        Set<String> inclPackages = extractPackagesFromJar(rootPath, packagePrefix);
 
         return constructPackageScan(inclPackages).toString();
     }
@@ -117,7 +118,7 @@ public class PackageUtil {
         return packageScan;
     }
 
-    private static Set<String> extractPackagesFromJar(String rootPath) {
+    private static Set<String> extractPackagesFromJar(String rootPath, String packagePrefix) {
         // find jar files
         List<File> jarFiles = new ArrayList<>();
         currentJars.clear();
@@ -143,7 +144,7 @@ public class PackageUtil {
                     continue;
                 }
 
-                extractPackagesToMap(inclPkgs, jar, coord);
+                extractPackagesToMap(inclPkgs, jar, coord, packagePrefix);
 
                 ProjectUtil.deleteFile(jar);
 
@@ -157,9 +158,10 @@ public class PackageUtil {
         return inclPkgs;
     }
 
-    private static void extractPackagesToMap(Set<String> inclPackages, File jar, String coord) throws IOException {
+    private static void extractPackagesToMap(Set<String> inclPackages, File jar, String coord, String packagePrefix) throws IOException {
         Set<String> packagesInJar = JarReadUtil.getPackages(new JarFile(jar));
 
+        // jar to package
         jarToPackageMap.put(jar.getName(), packagesInJar);
 
         currentJars.add(coord);
@@ -167,7 +169,10 @@ public class PackageUtil {
         for (String importPackage : packagesInJar) {
             //TODO 如果packagename相同，后面的coordinate会覆盖当前类的coordinate 需要进一步修改逻辑或添加
             //可能需要用类名进一步筛选？
-
+            if (importPackage.startsWith(packagePrefix)) {
+                packageToCoordMap.put(importPackage, coord);
+                continue;
+            }
             packageToCoordMap.put(importPackage, coord);
         }
         inclPackages.addAll(packagesInJar);

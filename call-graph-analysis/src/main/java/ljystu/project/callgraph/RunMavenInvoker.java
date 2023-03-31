@@ -18,18 +18,20 @@ public class RunMavenInvoker {
 
     public static void main(String[] args) {
 
-        //arg[1] is the artifact coordinate
         String filename = args[0];
         Constants.MAVEN_HOME = args[1];
         Constants.JAVAAGENT_HOME = args[2];
         Constants.JAVA_HOME = args[3];
         Constants.EXCLUSION_FILE = args[4];
         Constants.PROJECT_FOLDER = args[5];
-        String dependencyCoordinate = args[6];
+        String dependencyCoordinateWithoutVersion = args[6];
         String tagPrefix = args[7];
         String tagSuffix = args[8];
+        Constants.PACKAGE_PREFIX = args[9];
 
         List<Project> projects = ProjectUtil.readProjects(filename);
+
+        String version = filename.substring(filename.lastIndexOf(":") + 1, filename.lastIndexOf("."));
 
         HashMap<String, Integer> projectCount = new HashMap<>();
         // do not pass version here only GroupId:ArtifactId
@@ -40,7 +42,7 @@ public class RunMavenInvoker {
                 continue;
             }
             Invoker invoker = new Invoker(folderName);
-            invoker.analyseProject(projectCount, dependencyCoordinate, tagPrefix, tagSuffix);
+            invoker.analyseProject(p.getName(), projectCount, dependencyCoordinateWithoutVersion, tagPrefix, tagSuffix, version);
 
         }
 

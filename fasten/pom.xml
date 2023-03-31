@@ -5,7 +5,7 @@
 
     <groupId>eu.fasten</groupId>
     <artifactId>parent</artifactId>
-    <version>0.0.17-SNAPSHOT</version>
+    <version>0.0.17</version>
     <packaging>pom</packaging>
 
 
@@ -366,9 +366,9 @@
         <repository>
             <id>github</id>
             <url>https://maven.pkg.github.com/cops-lab/test-utils/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
+            <!--            <snapshots>-->
+            <!--                <enabled>true</enabled>-->
+            <!--            </snapshots>-->
         </repository>
     </repositories>
 

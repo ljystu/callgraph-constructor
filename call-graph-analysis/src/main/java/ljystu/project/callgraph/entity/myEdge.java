@@ -4,7 +4,6 @@ public class myEdge {
     String id;
     Node startNode;
     Node endNode;
-
     String type;
 
     public myEdge() {

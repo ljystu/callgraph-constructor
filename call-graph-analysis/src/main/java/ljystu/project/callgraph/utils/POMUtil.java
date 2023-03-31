@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 
 /**
  * The type Pom utils.
@@ -37,11 +36,13 @@ public class POMUtil {
 
         // Update the surefire-plugin and maven-compiler-plugin configurations
         updatePluginConfiguration(document, "maven-surefire-plugin", packageInfo);
-//        updatePluginConfiguration(document, "maven-compiler-plugin", packageInfo);
+//        updatePluginConfiguration(document, "maven-failsafe-plugin", packageInfo);
+
 
         // Write the modified POM file back to disk, preserving comments
         try {
             Files.write(Paths.get(pomFile), document.outerHtml().getBytes(StandardCharsets.UTF_8));
+
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println(pomFile + " update failed");
@@ -50,9 +51,15 @@ public class POMUtil {
 
     private static void updatePluginConfiguration(Document document, String pluginName, String packageInfo) {
         // Find the plugin with the specified name
-        Element plugin = document.select("plugin").stream()
-                .filter(p -> p.selectFirst("artifactId").text().equals(pluginName))
-                .findFirst().orElse(null);
+        Element plugin = null;
+        try {
+            plugin = document.select("plugin").stream()
+                    .filter(p -> p.selectFirst("artifactId").text().equals(pluginName))
+                    .findFirst().orElse(null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
         if (plugin == null) {
             // Create a new plugin with the specified groupId and artifactId
@@ -93,24 +100,34 @@ public class POMUtil {
             if (argLine.text() != null && !argLine.text().contains(packageInfo)) {
                 argLine.text(argLine.text() + " " + packageInfo);
             }
-        } else {
-            List<String> options = List.of("release", "source", "target");
-            for (String option : options) {
-                Element optionElement = configuration.selectFirst(option);
-                if (optionElement == null) {
-                    optionElement = new Element(option);
-                    configuration.appendChild(optionElement);
-                }
-                if (option.equals("release")) {
-                    optionElement.text("11");
-                } else {
-                    optionElement.text("1.6");
-                }
+            Element parallel = configuration.selectFirst("parallel");
+            if (parallel == null) {
+                parallel = new Element("parallel");
+                configuration.appendChild(parallel);
             }
+            parallel.text("methods");
+
+            // Set the threadCount property for parallelism
+            Element threadCount = configuration.selectFirst("threadCount");
+            if (threadCount == null) {
+                threadCount = new Element("threadCount");
+                configuration.appendChild(threadCount);
+            }
+            threadCount.text("10");
+        } else {
+
+            Element skipElement = configuration.selectFirst("skip");
+            if (skipElement == null) {
+                skipElement = new Element("skip");
+                configuration.appendChild(skipElement);
+            }
+            skipElement.text("true");
+
         }
 
     }
-//    public static void editPOM(String pomFile, String packageInfo) {
+
+    //    public static void editPOM(String pomFile, String packageInfo) {
 //
 //        MavenXpp3Reader reader = new MavenXpp3Reader();
 //        Model model = null;

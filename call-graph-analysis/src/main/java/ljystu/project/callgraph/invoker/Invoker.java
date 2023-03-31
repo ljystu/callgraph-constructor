@@ -1,21 +1,18 @@
 package ljystu.project.callgraph.invoker;
 
 import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import eu.fasten.analyzer.javacgopal.Main;
-import eu.fasten.core.data.opal.MavenArtifactDownloader;
-import eu.fasten.core.data.opal.MavenCoordinate;
-import eu.fasten.core.data.opal.exceptions.MissingArtifactException;
-import eu.fasten.core.maven.utils.MavenUtilities;
 import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.myEdge;
 import ljystu.project.callgraph.uploader.CallGraphUploader;
 import ljystu.project.callgraph.utils.POMUtil;
 import ljystu.project.callgraph.utils.PackageUtil;
+import ljystu.project.callgraph.utils.ProjectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
@@ -26,9 +23,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -57,8 +51,6 @@ public class Invoker {
         this.rootPath = rootPath;
     }
 
-    //    static String mavenPath = Path.getMavenHome();
-//    static String jarPath = Path.getJavaagentHome();
 
     /**
      * Analyse project hash set.
@@ -66,60 +58,71 @@ public class Invoker {
      * @param projectCount the project count
      * @return hash set
      */
-    public Set<String> analyseProject(Map<String, Integer> projectCount, String dependencyCoordinateWithoutVersion, String tagPrefix, String tagSuffix) {
+    public List<String> analyseProject(String projectName, Map<String, Integer> projectCount, String dependencyCoordinateWithoutVersion, String tagPrefix, String tagSuffix, String version) {
 
         //switch tag(maybe need to use commits when there is no tag for smaller projects)
-        String switchTagCommand =
-                "git for-each-ref refs/tags --sort=-taggerdate --format '%(refname:short)' | head ";
-        HashSet<String> set = new HashSet<>();
+        String switchTagCommand = "git for-each-ref refs/tags --sort=-creatordate --format '%(refname:short)' | head ";
+        List<String> projectList = new ArrayList<>();
         List<String> tagNames = getOutput(switchTagCommand, rootPath);
 
-        System.out.println("tagNames: " + tagNames);
+        System.out.println("tagNames: " + projectName);
+//                tagNames);
 
         String stashCommand = "git stash";
+        HashMap<String, HashMap<String, Object>> analysisResult = new HashMap<>();
+
+        String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
         //traverse all tags
         for (String tag : tagNames) {
 
-            getOutput(stashCommand, rootPath);
-
-            if (!switchTag(tag, rootPath)) {
-                System.out.println("switch tag failed");
-                continue;
-            }
-            System.out.println("analyze tag: " + tag + " start");
-
-            //get specific tag name from git command output
-            if (tag.charAt(tag.length() - 1) == '\'') {
-                tag = tag.substring(0, tag.length() - 1);
-            }
-            tag = tag.substring(tag.indexOf(tagPrefix) + tagPrefix.length(), tag.length() - tagSuffix.length() + 1);
-
-
-            String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
-            File jar = null;
-            String dependencyCoordinates = dependencyCoordinateWithoutVersion + ":" + tag;
-
-            try {
-                jar = new MavenArtifactDownloader(MavenCoordinate.fromString(dependencyCoordinates, "jar")).downloadArtifact(MavenUtilities.MAVEN_CENTRAL_REPO);
-                // 复制文件到目标文件夹
-                Path targetDirectory = Paths.get(rootPath);
-
-                Files.copy(jar.toPath(), targetDirectory.resolve(artifactId + "-" + tag + ".jar"));
-                System.out.println("File copied successfully!");
-            } catch (MissingArtifactException | IOException e) {
-                log.info("Artifact not found: " + dependencyCoordinateWithoutVersion + ":" + tag);
-                continue;
-            } finally {
-                if (jar != null) {
-                    jar.delete();
-                }
-            }
+            //stash all changes in current branch/tag/commit
+//            getOutput(stashCommand, rootPath);
+//
+//            if (!switchTag(tag, rootPath)) {
+//                System.out.println("switch tag failed");
+//                continue;
+//            }
+//            System.out.println("analyze tag: " + tag + " start");
+//
+////            //get specific tag name from git command output
+//            if (tag.charAt(tag.length() - 1) == '\'') {
+//                tag = tag.substring(0, tag.length() - 1);
+//            }
+//
+//            //version
+//            tag = tag.substring(tag.indexOf(tagPrefix) + tagPrefix.length(), tag.length() - tagSuffix.length() + 1);
+//
+//            String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
+//            File jar = null;
+//            String dependencyCoordinates = dependencyCoordinateWithoutVersion + ":" + tag;
+//
+//            try {
+//                //download jar
+//                jar = new MavenArtifactDownloader(MavenCoordinate.fromString(dependencyCoordinates, "jar")).downloadArtifact(MavenUtilities.MAVEN_CENTRAL_REPO);
+//                //copy jar to lib
+//                Path targetDirectory = Paths.get(rootPath);
+//                Files.copy(jar.toPath(), targetDirectory.resolve(artifactId + "-" + tag + ".jar"));
+//
+//                System.out.println("File copied successfully!");
+//            } catch (MissingArtifactException | IOException e) {
+//                log.info("Artifact not found: " + dependencyCoordinateWithoutVersion + ":" + tag);
+//                continue;
+//            } finally {
+//                if (jar != null) {
+//                    jar.delete();
+//                }
+//            }
 
             //acquire dependencies
             invokeTask("dependency:copy-dependencies", "./lib");
 
+
+//            tag = Constants.PROJECT_LIST
+//            String dependencyCoordinates = "com.google.code.gson:gson:2.10.1";
+
             //map packages to coordinates
-            String packageScan = PackageUtil.getPackages(rootPath, artifactId + "-" + tag + ".jar", dependencyCoordinates);
+            String packageScan = PackageUtil.getPackages(rootPath, artifactId + "-" + version + ".jar",
+                    dependencyCoordinateWithoutVersion + ":" + version, Constants.PACKAGE_PREFIX);
 
             //javaagent maven test
             mavenTestWithJavaAgent(packageScan);
@@ -129,30 +132,40 @@ public class Invoker {
 
             //upload call graph to mongodb
             CallGraphUploader callGraphUploader = new CallGraphUploader();
-
             callGraphUploader.uploadAll(dependencyCoordinateWithoutVersion);
 
 //            constructStaticCallGraphs();
-            Main.main(getParameters(dependencyCoordinates));
+
+            //construct static call graph and upload to mongodb
+//            Main.main(getParameters(dependencyCoordinates));
 
             // analysis of call graph in mongo
-            mongoData(dependencyCoordinateWithoutVersion);
+            analysisResult.put(version, mongoData(dependencyCoordinateWithoutVersion));
 
-            System.out.println("analyse " + tag + " finished");
+            System.out.println("analyse " + projectName + " finished");
+        }
+        //analysis result to json
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            objectMapper.writeValue(new File(Constants.PROJECT_FOLDER + artifactId + "-" + version + "/" + projectName + ".json"), analysisResult);
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-//        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
-
-        return set;
+        //delete all files in project folder
+        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
+        return projectList;
     }
 
-    public void mongoData(String dependencyCoordinate) {
-        ServerAddress serverAddress = new ServerAddress(Constants.REDIS_ADDRESS, 27017);
-        List<ServerAddress> addrs = new ArrayList<ServerAddress>();
+
+    public HashMap<String, Object> mongoData(String dependencyCoordinate) {
+        ServerAddress serverAddress = new ServerAddress(Constants.REDIS_ADDRESS, Constants.MONGO_PORT);
+        List<ServerAddress> addrs = new ArrayList<>();
         addrs.add(serverAddress);
 
-        MongoCredential credential = MongoCredential.createScramSha1Credential("ljystu", "admin", "Ljystu110!".toCharArray());
-        List<MongoCredential> credentials = new ArrayList<MongoCredential>();
+        MongoCredential credential = MongoCredential.createScramSha1Credential(Constants.username, "admin", Constants.password.toCharArray());
+        List<MongoCredential> credentials = new ArrayList<>();
         credentials.add(credential);
 
         //通过连接认证获取MongoDB连接
@@ -163,6 +176,8 @@ public class Invoker {
 
         // 获取MongoDB集合
         MongoCollection<Document> collection = database.getCollection(dependencyCoordinate);
+
+        HashMap<String, Object> result = new HashMap<>();
 
         int staticCount = 0;
         int dynamicCount = 0;
@@ -222,6 +237,15 @@ public class Invoker {
         System.out.println("dynCalling = " + dynCalling);
         System.out.println("bothCount = " + bothCount);
 
+        result.put("staticCount", staticCount);
+        result.put("dynamicCount", dynamicCount);
+        result.put("internalDynCount", internalDynamicCall);
+        result.put("externalDynCount", externalDynamicCall);
+        result.put("dynCalled", dynCalled);
+        result.put("dynCalling", dynCalling);
+        result.put("bothCount", bothCount);
+
+
         for (Map.Entry<String, Integer> entry : dynamicCoordinates.entrySet()) {
             System.out.println(entry.getKey() + " : " + entry.getValue());
         }
@@ -229,19 +253,25 @@ public class Invoker {
         for (Map.Entry<String, Integer> entry : staticCoordinates.entrySet()) {
             System.out.println(entry.getKey() + " : " + entry.getValue());
         }
-
+        System.out.println("both");
+        for (Map.Entry<String, Integer> entry : bothCoordinates.entrySet()) {
+            System.out.println(entry.getKey() + " : " + entry.getValue());
+        }
+        result.put("dynamicCoordinates", dynamicCoordinates);
+        result.put("staticCoordinates", staticCoordinates);
+        result.put("bothCoordinates", bothCoordinates);
         // 关闭MongoClient
         mongoClient.close();
-
+        return result;
     }
 
-    private void constructStaticCallGraphs() {
-
-        for (String coordinate : PackageUtil.currentJars) {
-            Main.main(getParameters(coordinate));
-
-        }
-    }
+//    private void constructStaticCallGraphs() {
+//
+//        for (String coordinate : PackageUtil.currentJars) {
+//            Main.main(getParameters(coordinate));
+//
+//        }
+//    }
 
     private void mavenTestWithJavaAgent(String inclPackages) {
         //get path of all pom files
@@ -395,7 +425,7 @@ public class Invoker {
                     break;
                 }
                 describeOutput.add(line);
-                if (describeOutput.size() == 15) {
+                if (describeOutput.size() == 1) {
                     break;
                 }
             }

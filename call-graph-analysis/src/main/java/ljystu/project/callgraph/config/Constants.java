@@ -26,7 +26,7 @@ public class Constants {
     public static final String NEO4J_USERNAME = "neo4j";
     public static final String NEO4J_PASSWORD = "ljystuneo";
 
-    public static final String REDIS_ADDRESS = "34.140.10.226";
+    public static final String REDIS_ADDRESS = "34.175.14.212";
     public static final String PROJECT_LINK = "/archive/refs/heads/master.zip";
 
     public static final String PROJECT_LIST =
@@ -36,9 +36,12 @@ public class Constants {
 //            "/scratch/jingyuli/repos/";
             "/Users/ljystu/Desktop/projects/";
 
+    public static final int MONGO_PORT = 10899;
+    public static final String username = "ljystu";
 
-    public static final int MONGO_PORT = 27017;
-
+    public static final String password = "RmXrPQZ4GUsVpnDJUmg5";
 
     public static final String REDIS_PASSWORD = "ljystu";
+
+    public static String PACKAGE_PREFIX;
 }

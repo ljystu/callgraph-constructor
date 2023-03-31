@@ -1,7 +1,6 @@
 package com.example;
 
-import com.opencsv.CSVReader;
-import eu.fasten.analyzer.javacgopal.Main;
+
 import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
@@ -96,32 +95,14 @@ public class DependencyTest {
         return s.toString();
     }
 
-    public List<String> readFile() {
-        List<String> records = new ArrayList<>();
-        try (CSVReader csvReader = new CSVReader(new FileReader("/Users/ljystu/Desktop/pythonProject/dependencies.csv"));) {
-            String[] values = null;
-            while ((values = csvReader.readNext()) != null) {
-                String s = Arrays.asList(values).get(0);
-                if (s.equals("name")) {
-                    continue;
-                }
-                records.add(s);
-            }
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return records;
 
-    }
 
-    @Test
-    public void constructStaticCallGraphs() {
-        for (String coordinate : readFile()) {
-            Main.main(getParameters(coordinate));
-        }
-    }
+//    @Test
+//    public void constructStaticCallGraphs() {
+//        for (String coordinate : readFile()) {
+//            Main.main(getParameters(coordinate));
+//        }
+//    }
 
     private String[] getParameters(String coordinate) {
         return new String[]{"-a", coordinate, "-an", coordinate, "-g", "-i", "COORD", "-m"};

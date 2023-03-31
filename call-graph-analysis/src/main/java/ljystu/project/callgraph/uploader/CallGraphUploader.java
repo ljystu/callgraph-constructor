@@ -44,16 +44,19 @@ public class CallGraphUploader {
         upload("dynamic", packageToCoordMap, dependencyCoordinate);
 //        upload("static", packageToCoordMap);
 //        neo4JOp.close();
+
+        //prevent read timeout
+//        jedis.flushAll();
         jedis.close();
     }
 
     /**
      * Upload.
      *
-     * @param label the label
-     * @param map   the map
+     * @param label             the label
+     * @param packageToCoordMap the map
      */
-    private void upload(String label, Map<String, String> map, String dependencyCoordinate) {
+    private void upload(String label, Map<String, String> packageToCoordMap, String dependencyCoordinate) {
 
         HashSet<Node> nodes = new HashSet<>();
         HashSet<Edge> edges = new HashSet<>();
@@ -67,12 +70,15 @@ public class CallGraphUploader {
             } catch (Exception e) {
                 continue;
             }
-            if (edge == null) continue;
+            if (edge == null) {
+                continue;
+            }
 
             Node nodeFrom = edge.getFrom();
             Node nodeTo = edge.getTo();
 
-            getFullCoordinates(nodeFrom, nodeTo, map);
+            getFullCoordinates(nodeFrom, packageToCoordMap);
+            getFullCoordinates(nodeTo, packageToCoordMap);
 
             if (Objects.equals(nodeFrom.getCoordinate(), null)) {
                 nodeFrom.setCoordinate("not found");
@@ -89,7 +95,7 @@ public class CallGraphUploader {
                 nodes.add(nodeTo);
 
                 edges.add(newEdge);
-                jedis.sadd(dependencyCoordinate, JSON.toJSONString(edge));
+//                jedis.sadd(dependencyCoordinate, JSON.toJSONString(edge));
                 jedis.srem("dynamic", value);
             }
 
@@ -102,20 +108,13 @@ public class CallGraphUploader {
 
     }
 
+    private void getFullCoordinates(Node nodeFrom, Map<String, String> packageToCoordMap) {
 
-    private void getFullCoordinates(Node nodeFrom, Node nodeTo, Map<String, String> map) {
-
-        String nodeFromMavenCoord = map.get(nodeFrom.getPackageName());
+        String nodeFromMavenCoord = packageToCoordMap.get(nodeFrom.getPackageName());
         if (nodeFromMavenCoord == null) {
             nodeFromMavenCoord = jedis.get(nodeFrom.getPackageName());
         }
         nodeFrom.setCoordinate(nodeFromMavenCoord);
-
-        String nodeToMavenCoord = map.get(nodeTo.getPackageName());
-        if (nodeToMavenCoord == null) {
-            nodeToMavenCoord = jedis.get(nodeTo.getPackageName());
-        }
-        nodeTo.setCoordinate(nodeToMavenCoord);
 
     }
 

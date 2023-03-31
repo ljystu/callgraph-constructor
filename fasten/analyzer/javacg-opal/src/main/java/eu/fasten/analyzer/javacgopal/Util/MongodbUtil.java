@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,33 +29,6 @@ import java.util.regex.Pattern;
 public class MongodbUtil {
 
     private static MongoClient mongo = null;
-    private static Properties properties = null;
-    private static String host = null;
-    private static int port = 0;
-    private static int poolSize = 0;
-    private static int blockSize = 0;
-    private static int edgeCount = 0;
-    private static int collectionCount = 0;
-
-    // 初始化连接池，设置参数
-//    static {
-//        try {
-//            // 设置连接参数
-//            ServerAddress serverAddress = new ServerAddress(Constants.MONGO_ADDRESS, 27017);
-////                MongoOptions mongoOptions = new MongoOptions();
-////                mongoOptions.connectionsPerHost = poolSize; // 连接池大小
-////                mongoOptions.threadsAllowedToBlockForConnectionMultiplier = blockSize; // 等待队列长度
-//            // 创建连接对象
-//            MongoCredential credential = MongoCredential.createScramSha1Credential("ljystu", "admin", "Ljystu110!".toCharArray());
-//            List<MongoCredential> credentials = new ArrayList<MongoCredential>();
-//            credentials.add(credential);
-//            mongo = new MongoClient(serverAddress, credentials);
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-
     /**
      * Gets mongo.
      *
@@ -74,12 +46,9 @@ public class MongodbUtil {
      */
     public static void uploadEdges(HashSet<Edge> allEdges, String artifact) {
         if (mongo == null) {
-            ServerAddress serverAddress = new ServerAddress(Constants.MONGO_ADDRESS, 27017);
-//                MongoOptions mongoOptions = new MongoOptions();
-//                mongoOptions.connectionsPerHost = poolSize; // 连接池大小
-//                mongoOptions.threadsAllowedToBlockForConnectionMultiplier = blockSize; // 等待队列长度
+            ServerAddress serverAddress = new ServerAddress(Constants.MONGO_ADDRESS, Constants.MONGO_PORT);
             // 创建连接对象
-            MongoCredential credential = MongoCredential.createScramSha1Credential("ljystu", "admin", "Ljystu110!".toCharArray());
+            MongoCredential credential = MongoCredential.createScramSha1Credential(Constants.username, "admin", Constants.password.toCharArray());
             List<MongoCredential> credentials = new ArrayList<MongoCredential>();
             credentials.add(credential);
             mongo = new MongoClient(serverAddress, credentials);
@@ -93,8 +62,12 @@ public class MongodbUtil {
 
         MongoCollection<Document> collection = database.getCollection(artifact);
 
-        collection.createIndex(Indexes.compoundIndex(Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className"),
-                Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className")), new IndexOptions().unique(true));
+        collection.createIndex(Indexes.compoundIndex(
+                Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className")
+                , Indexes.ascending("startNode.methodName"), Indexes.ascending("startNode.params"), Indexes.ascending("startNode.returnType")
+                , Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className")
+                , Indexes.ascending("endNode.methodName"), Indexes.ascending("endNode.params"), Indexes.ascending("endNode.returnType")
+        ), new IndexOptions().unique(true));
 
         Pattern excludedPattern = null;
 //                Pattern.compile(readExcludedPackages());
@@ -123,10 +96,16 @@ public class MongodbUtil {
 //            }
             Document startNode = new Document("packageName", fromNode.getPackageName())
                     .append("className", fromNode.getClassName())
+                    .append("methodName", fromNode.getMethodName())
+                    .append("params", fromNode.getParams())
+                    .append("returnType", fromNode.getReturnType())
                     .append("coordinate", fromNode.getCoordinate());
 
             Document endNode = new Document("packageName", toNode.getPackageName())
                     .append("className", toNode.getClassName())
+                    .append("methodName", fromNode.getMethodName())
+                    .append("params", fromNode.getParams())
+                    .append("returnType", fromNode.getReturnType())
                     .append("coordinate", toNode.getCoordinate());
 
 
