@@ -78,16 +78,16 @@ public class PackageUtil {
 
         Set<String> inclPackages = extractPackagesFromJar(rootPath, packagePrefix);
 
-        return constructPackageScan(inclPackages).toString();
+        return constructPackageScan(inclPackages, packagePrefix, coord).toString();
     }
 
-    private static StringBuilder constructPackageScan(Set<String> definedPackages) {
+    private static StringBuilder constructPackageScan(Set<String> definedPackages, String packagePrefix, String coord) {
         StringBuilder packageScan = new StringBuilder();
         String argLine = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME + Constants.ARG_LINE_RIGHT;
         packageScan.append(argLine);
         Pattern excludedPattern = Pattern.compile(readExcludedPackages());
 
-        HashSet<String> packagePrefix = new HashSet<>();
+        HashSet<String> packagePrefixSet = new HashSet<>();
         for (String definedPackage : definedPackages) {
 //            Matcher packageMatcher = selfPackagePattern.matcher(definedPackage);
             if (
@@ -103,10 +103,10 @@ public class PackageUtil {
             } else {
                 prefix = split[0] + "." + split[1];
             }
-            if (packagePrefix.contains(prefix)) {
+            if (packagePrefixSet.contains(prefix)) {
                 continue;
             }
-            packagePrefix.add(prefix);
+            packagePrefixSet.add(prefix);
 
 
             packageScan.append(prefix).append(".*,");
@@ -115,6 +115,8 @@ public class PackageUtil {
 
         packageScan.setLength(packageScan.length() - 1);
         packageScan.append(";");
+        String artifactId = coord.split(":")[1];
+        packageScan.append("info=").append(packagePrefix).append("!").append(artifactId).append(";");
         return packageScan;
     }
 
@@ -281,7 +283,7 @@ public class PackageUtil {
 
 
     public static void uploadCoordToRedis() {
-        Jedis jedis = new Jedis(Constants.REDIS_ADDRESS);
+        Jedis jedis = new Jedis(Constants.SERVER_IP_ADDRESS);
         jedis.auth(Constants.REDIS_PASSWORD);
         for (Map.Entry<String, String> entry : packageToCoordMap.entrySet()) {
             jedis.set(entry.getKey(), entry.getValue());

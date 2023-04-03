@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
+import org.apache.maven.shared.invoker.InvocationResult;
 import org.bson.Document;
 
 import java.io.BufferedReader;
@@ -66,7 +67,7 @@ public class Invoker {
         List<String> tagNames = getOutput(switchTagCommand, rootPath);
 
         System.out.println("tagNames: " + projectName);
-//                tagNames);
+
 
         String stashCommand = "git stash";
         HashMap<String, HashMap<String, Object>> analysisResult = new HashMap<>();
@@ -77,7 +78,7 @@ public class Invoker {
 
             //stash all changes in current branch/tag/commit
 //            getOutput(stashCommand, rootPath);
-//
+////
 //            if (!switchTag(tag, rootPath)) {
 //                System.out.println("switch tag failed");
 //                continue;
@@ -116,38 +117,43 @@ public class Invoker {
             //acquire dependencies
             invokeTask("dependency:copy-dependencies", "./lib");
 
-
-//            tag = Constants.PROJECT_LIST
-//            String dependencyCoordinates = "com.google.code.gson:gson:2.10.1";
-
             //map packages to coordinates
             String packageScan = PackageUtil.getPackages(rootPath, artifactId + "-" + version + ".jar",
                     dependencyCoordinateWithoutVersion + ":" + version, Constants.PACKAGE_PREFIX);
 
-            //javaagent maven test
-            mavenTestWithJavaAgent(packageScan);
-
             //upload package:coordinate to redis
             PackageUtil.uploadCoordToRedis();
 
+            //javaagent maven test
+            HashMap<String, Object> mavenTestWithJavaAgent = mavenTestWithJavaAgent(packageScan);
+
             //upload call graph to mongodb
             CallGraphUploader callGraphUploader = new CallGraphUploader();
-            callGraphUploader.uploadAll(dependencyCoordinateWithoutVersion);
-
-//            constructStaticCallGraphs();
-
-            //construct static call graph and upload to mongodb
-//            Main.main(getParameters(dependencyCoordinates));
+            callGraphUploader.uploadAll(dependencyCoordinateWithoutVersion, artifactId);
 
             // analysis of call graph in mongo
             analysisResult.put(version, mongoData(dependencyCoordinateWithoutVersion));
-
+            analysisResult.put("test", mavenTestWithJavaAgent);
             System.out.println("analyse " + projectName + " finished");
+        }
+
+        File file = new File(Constants.PROJECT_FOLDER + artifactId + "-" + version + "/" + projectName + ".json");
+        if (!file.exists()) {
+            try {
+                File parentDir = file.getParentFile();
+                if (!parentDir.exists()) {
+                    parentDir.mkdirs();
+                }
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+
+            }
         }
         //analysis result to json
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            objectMapper.writeValue(new File(Constants.PROJECT_FOLDER + artifactId + "-" + version + "/" + projectName + ".json"), analysisResult);
+            objectMapper.writeValue(file, analysisResult);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -160,11 +166,11 @@ public class Invoker {
 
 
     public HashMap<String, Object> mongoData(String dependencyCoordinate) {
-        ServerAddress serverAddress = new ServerAddress(Constants.REDIS_ADDRESS, Constants.MONGO_PORT);
+        ServerAddress serverAddress = new ServerAddress(Constants.SERVER_IP_ADDRESS, Constants.MONGO_PORT);
         List<ServerAddress> addrs = new ArrayList<>();
         addrs.add(serverAddress);
 
-        MongoCredential credential = MongoCredential.createScramSha1Credential(Constants.username, "admin", Constants.password.toCharArray());
+        MongoCredential credential = MongoCredential.createScramSha1Credential(Constants.USERNAME, "admin", Constants.MONGO_PASSWORD.toCharArray());
         List<MongoCredential> credentials = new ArrayList<>();
         credentials.add(credential);
 
@@ -189,7 +195,7 @@ public class Invoker {
 
         HashMap<String, Integer> dynamicCoordinates = new HashMap<>();
         HashMap<String, Integer> staticCoordinates = new HashMap<>();
-        HashSet<myEdge> edges = new HashSet<>();
+
         HashSet<String> staticCoords = new HashSet<>();
         HashMap<String, Integer> bothCoordinates = new HashMap<>();
 
@@ -199,15 +205,15 @@ public class Invoker {
             String endCoordinate = edge.getEndNode().getCoordinate();
             String startCoordinate = edge.getStartNode().getCoordinate();
 
-            edges.add(edge);
-            if (edge.getType().equals("static")) {
+
+            if ("static".equals(edge.getType())) {
                 staticCount++;
                 if (startCoordinate.startsWith(dependencyCoordinate)) {
                     staticCoordinates.put(startCoordinate, staticCoordinates.getOrDefault(startCoordinate, 0) + 1);
                 }
                 staticCoords.add(startCoordinate);
 
-            } else if (edge.getType().equals("dynamic")) {
+            } else if ("dynamic".equals(edge.getType())) {
                 dynamicCount++;
                 if (startCoordinate.startsWith(dependencyCoordinate) && endCoordinate.startsWith(dependencyCoordinate)) {
                     internalDynamicCall++;
@@ -265,20 +271,13 @@ public class Invoker {
         return result;
     }
 
-//    private void constructStaticCallGraphs() {
-//
-//        for (String coordinate : PackageUtil.currentJars) {
-//            Main.main(getParameters(coordinate));
-//
-//        }
-//    }
 
-    private void mavenTestWithJavaAgent(String inclPackages) {
+    private HashMap<String, Object> mavenTestWithJavaAgent(String inclPackages) {
         //get path of all pom files
         List<String> pomFiles = PackageUtil.getPomFiles(rootPath);
         //maven test with javaagent
         addJavaagent(inclPackages, pomFiles);
-        invokeTask("test");
+        return invokeTask("test");
     }
 
     private String[] getParameters(String coordinate) {
@@ -343,21 +342,64 @@ public class Invoker {
      *
      * @param task the task
      */
-    public void invokeTask(String task) {
-
+    public HashMap<String, Object> invokeTask(String task) {
+        HashMap<String, Object> testResult = new HashMap<>();
         InvocationRequest request = getInvocationRequest(task);
         if (request == null) {
-            return;
+            return testResult;
         }
         Properties properties = new Properties();
 
         request.setProperties(properties);
+        InvocationResult result = null;
+        int totalTests = 0;
+        int totalFailures = 0;
         try {
-            mavenInvoker.execute(request);
+            result = mavenInvoker.execute(request);
+
+            if (result.getExitCode() == 0) {
+                // Maven执行成功
+                System.out.println("Maven executed successfully.");
+                File testReportDir = new File(rootPath, "target/surefire-reports");
+                if (testReportDir.exists() && testReportDir.isDirectory()) {
+                    File[] testReportFiles = testReportDir.listFiles(file -> file.getName().endsWith(".txt"));
+                    if (testReportFiles != null && testReportFiles.length > 0) {
+
+                        for (File testReportFile : testReportFiles) {
+                            try (Scanner scanner = new Scanner(testReportFile)) {
+
+                                while (scanner.hasNextLine()) {
+                                    String line = scanner.nextLine();
+                                    if (line.startsWith("Tests run: ")) {
+                                        // 解析测试总数和失败数
+                                        String[] parts = line.split(", ");
+                                        totalTests = Integer.parseInt(parts[0].substring("Tests run: ".length()));
+                                        totalFailures = Integer.parseInt(parts[1].substring("Failures: ".length()));
+                                        break;
+                                    }
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        System.out.printf(rootPath + ": total tests：%d，failed：%d%n", totalTests, totalFailures);
+                    }
+                }
+            } else {
+                // Maven执行失败
+                System.err.println("Maven execution failed with exit code: " + result.getExitCode());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        if (result != null) {
+            testResult.put("exitCode", result.getExitCode());
+            testResult.put("totalTests", totalTests);
+            testResult.put("totalFailures", totalFailures);
+        }
+
+        return testResult;
     }
 
     private InvocationRequest getInvocationRequest(String task) {
@@ -375,6 +417,9 @@ public class Invoker {
         request.setGoals(Collections.singletonList(task));
 
         request.setJavaHome(new File(Constants.JAVA_HOME));
+
+        request.setMavenOpts("-Xverify:none -XX:TieredStopAtLevel=1 -XX:-TieredCompilation");
+
         return request;
     }
 
@@ -390,9 +435,7 @@ public class Invoker {
 
             String switchCommand = "git checkout " + tagName.substring(1, tagName.length() - 1);
             Process switchProcess = Runtime.getRuntime().exec(switchCommand, null, new File(path));
-//        ProcessBuilder processBuilder = new ProcessBuilder(switchCommand);
-//        processBuilder.directory(new File(path));
-//        Process switchProcess = processBuilder.start();
+
             boolean switched = switchProcess.waitFor(5, TimeUnit.MINUTES);
             if (!switched) {
                 switchProcess.destroy();

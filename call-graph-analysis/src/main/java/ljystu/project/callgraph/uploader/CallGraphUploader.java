@@ -35,18 +35,19 @@ public class CallGraphUploader {
      */
     public CallGraphUploader() {
 //        this.neo4JOp = new Neo4jOp(Constants.NEO4J_PORT, Constants.NEO4J_USERNAME, Constants.NEO4J_PASSWORD);
-        this.jedis = new Jedis(Constants.REDIS_ADDRESS);
+        this.jedis = new Jedis(Constants.SERVER_IP_ADDRESS);
         this.jedis.auth(Constants.REDIS_PASSWORD);
     }
 
-    public void uploadAll(String dependencyCoordinate) {
+    public void uploadAll(String dependencyCoordinate, String artifactId) {
 
-        upload("dynamic", packageToCoordMap, dependencyCoordinate);
+        upload(artifactId, packageToCoordMap, dependencyCoordinate);
 //        upload("static", packageToCoordMap);
 //        neo4JOp.close();
 
         //prevent read timeout
 //        jedis.flushAll();
+        jedis.del(artifactId);
         jedis.close();
     }
 
@@ -90,13 +91,14 @@ public class CallGraphUploader {
             if (edge.getFrom().getCoordinate().startsWith(dependencyCoordinate) || edge.getTo().getCoordinate().startsWith(dependencyCoordinate)) {
                 Edge newEdge = new Edge(nodeFrom, nodeTo);
                 log.info("Edge upload: " + newEdge);
+                System.out.println("Edge upload: " + newEdge);
 
                 nodes.add(nodeFrom);
                 nodes.add(nodeTo);
 
                 edges.add(newEdge);
 //                jedis.sadd(dependencyCoordinate, JSON.toJSONString(edge));
-                jedis.srem("dynamic", value);
+//                jedis.srem("dynamic", value);
             }
 
         }

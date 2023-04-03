@@ -36,7 +36,7 @@ public class POMUtil {
 
         // Update the surefire-plugin and maven-compiler-plugin configurations
         updatePluginConfiguration(document, "maven-surefire-plugin", packageInfo);
-//        updatePluginConfiguration(document, "maven-failsafe-plugin", packageInfo);
+        updatePluginConfiguration(document, "maven-failsafe-plugin", packageInfo);
 
 
         // Write the modified POM file back to disk, preserving comments
@@ -53,9 +53,10 @@ public class POMUtil {
         // Find the plugin with the specified name
         Element plugin = null;
         try {
-            plugin = document.select("plugin").stream()
-                    .filter(p -> p.selectFirst("artifactId").text().equals(pluginName))
-                    .findFirst().orElse(null);
+//            plugin = document.select("plugin").stream()
+//                    .filter(p -> p.selectFirst("artifactId").text().equals(pluginName))
+//                    .findFirst().orElse(null);
+            plugin = document.selectFirst("build > plugins > plugin > artifactId:contains(" + pluginName + ") ~ configuration");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -70,6 +71,7 @@ public class POMUtil {
             artifactId.text(pluginName);
             plugin.appendChild(groupId);
             plugin.appendChild(artifactId);
+            plugin.appendChild(new Element("configuration"));
 
             // Append the new plugin to the build plugins list
             Element build = document.selectFirst("build");
@@ -107,15 +109,45 @@ public class POMUtil {
             }
             parallel.text("methods");
 
-            // Set the threadCount property for parallelism
-            Element threadCount = configuration.selectFirst("threadCount");
-            if (threadCount == null) {
-                threadCount = new Element("threadCount");
-                configuration.appendChild(threadCount);
+//             Set the threadCount property for parallelism
+//            Element threadCount = configuration.selectFirst("threadCount");
+//            if (threadCount == null) {
+//                threadCount = new Element("threadCount");
+//                configuration.appendChild(threadCount);
+//            }
+//            threadCount.text("5");
+            Element useUnlimitedThreads = configuration.selectFirst("useUnlimitedThreads");
+            if (useUnlimitedThreads == null) {
+                useUnlimitedThreads = new Element("useUnlimitedThreads");
+                configuration.appendChild(useUnlimitedThreads);
             }
-            threadCount.text("10");
-        } else {
+            useUnlimitedThreads.text("true");
 
+
+            //timeout in seconds
+            Element timeoutInSeconds = configuration.selectFirst("parallelTestsTimeoutInSeconds");
+            if (timeoutInSeconds == null) {
+                timeoutInSeconds = new Element("parallelTestsTimeoutInSeconds");
+                configuration.appendChild(timeoutInSeconds);
+            }
+            timeoutInSeconds.text("300");
+
+            Element timeoutForcedInSeconds = configuration.selectFirst("parallelTestsTimeoutForcedInSeconds");
+            if (timeoutForcedInSeconds == null) {
+                timeoutForcedInSeconds = new Element("parallelTestsTimeoutForcedInSeconds");
+                configuration.appendChild(timeoutForcedInSeconds);
+            }
+            timeoutForcedInSeconds.text("1800");
+
+            Element testFailureIgnore = configuration.selectFirst("testFailureIgnore");
+            if (testFailureIgnore == null) {
+                testFailureIgnore = new Element("testFailureIgnore");
+                configuration.appendChild(testFailureIgnore);
+            }
+            testFailureIgnore.text("true");
+
+
+        } else {
             Element skipElement = configuration.selectFirst("skip");
             if (skipElement == null) {
                 skipElement = new Element("skip");

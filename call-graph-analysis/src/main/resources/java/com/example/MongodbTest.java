@@ -101,7 +101,7 @@ public class MongodbTest {
 
     @Test
     public void mongoData() {
-        ServerAddress serverAddress = new ServerAddress(Constants.REDIS_ADDRESS, 27017);
+        ServerAddress serverAddress = new ServerAddress(Constants.SERVER_IP_ADDRESS, 27017);
         List<ServerAddress> addrs = new ArrayList<ServerAddress>();
         addrs.add(serverAddress);
 

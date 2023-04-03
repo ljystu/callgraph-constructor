@@ -1,5 +1,7 @@
 package ljystu.project.callgraph.entity;
 
+import java.util.Objects;
+
 public class myEdge {
     String id;
     Node startNode;
@@ -15,6 +17,11 @@ public class myEdge {
         if (o == null || getClass() != o.getClass()) return false;
         myEdge edge = (myEdge) o;
         return startNode.equals(edge.startNode) && endNode.equals(edge.endNode);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(startNode, endNode);
     }
 
     public String getType() {

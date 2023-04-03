@@ -36,7 +36,7 @@ public class MongodbUtil {
         try {
 //            properties.load(MongodbUtil.class.getClassLoader().getResourceAsStream("mongo.properties"));
             host =
-                    Constants.REDIS_ADDRESS;
+                    Constants.SERVER_IP_ADDRESS;
 //                    properties.getProperty("host");
             port = Constants.MONGO_PORT;
 //                    Integer.parseInt(properties.getProperty("port"));
@@ -50,7 +50,7 @@ public class MongodbUtil {
         try {
             // 设置连接参数
             ServerAddress serverAddress = new ServerAddress(host, port);
-            MongoCredential credential = MongoCredential.createScramSha1Credential(Constants.username, "admin", Constants.password.toCharArray());
+            MongoCredential credential = MongoCredential.createScramSha1Credential(Constants.USERNAME, "admin", Constants.MONGO_PASSWORD.toCharArray());
             List<MongoCredential> credentials = new ArrayList<MongoCredential>();
             credentials.add(credential);
             mongo = new MongoClient(serverAddress, credentials);
