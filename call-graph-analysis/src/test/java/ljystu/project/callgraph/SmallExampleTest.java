@@ -1,7 +1,6 @@
 package ljystu.project.callgraph;
 
 import org.junit.Test;
-import org.neo4j.driver.Record;
 import org.neo4j.driver.*;
 
 import static org.neo4j.driver.Values.parameters;

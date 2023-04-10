@@ -17,6 +17,8 @@ import java.util.zip.ZipInputStream;
 
 /**
  * The type Project downloader.
+ *
+ * @author ljystu
  */
 @Slf4j
 public class ProjectUtil {
@@ -52,6 +54,7 @@ public class ProjectUtil {
      * @return the string
      */
 // 下载项目并解压
+    @Deprecated
     public static String downloadAndUnzip(Project project) {
         // 下载项目的zip文件
         URL url = null;
@@ -78,7 +81,7 @@ public class ProjectUtil {
             String cloneCommand = "git clone " + project.getRepoUrl() + " " + project.getName();
             Process cloneProcess = Runtime.getRuntime().exec(cloneCommand, null, new File(Constants.PROJECT_FOLDER));
             cloneProcess.waitFor();
-            System.out.println("Clone done");
+            log.info("Clone done");
 
             String cdCommand = "cd " + path;
             Process cdProcess = Runtime.getRuntime().exec(cdCommand);
@@ -97,14 +100,14 @@ public class ProjectUtil {
                 return path;
             }
 
-            System.out.println("Latest tag: " + describeOutput);
+            log.info("Latest tag: " + describeOutput);
 
             String switchCommand = "git checkout " + describeOutput.substring(1, describeOutput.length() - 1);
             Process switchProcess = Runtime.getRuntime().exec(switchCommand, null, new File(path));
             BufferedReader checkInput = new BufferedReader(new InputStreamReader(switchProcess.getInputStream()));
             String line;
             while ((line = checkInput.readLine()) != null) {
-                System.out.println(line);
+                log.info(line);
             }
             switchProcess.waitFor();
 
@@ -172,7 +175,6 @@ public class ProjectUtil {
                 deleteFile(file);
             }
         }
-
         dirFile.delete();
     }
 

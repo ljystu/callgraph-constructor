@@ -16,6 +16,8 @@ import java.util.regex.Pattern;
 
 /**
  * The type Package utils.
+ *
+ * @author ljystu
  */
 @Slf4j
 public class PackageUtil {
@@ -26,8 +28,6 @@ public class PackageUtil {
     List<String> paths = new ArrayList<>();
 
     static long tenMegabytes = 10485760L;
-
-    public static HashMap<String, Integer> packageAugment = new HashMap<>();
 
     /**
      * The constant jarToCoordMap.
@@ -126,8 +126,6 @@ public class PackageUtil {
         currentJars.clear();
         JarReadUtil.findTypeFiles(new File(rootPath), jarFiles, ".jar");
 
-//        jarToCoordMap.clear();
-//        jarToPackageMap.clear();
         Set<String> inclPkgs = new HashSet<>();
         for (File jar : jarFiles) {
             try {
@@ -169,8 +167,7 @@ public class PackageUtil {
         currentJars.add(coord);
 
         for (String importPackage : packagesInJar) {
-            //TODO 如果packagename相同，后面的coordinate会覆盖当前类的coordinate 需要进一步修改逻辑或添加
-            //可能需要用类名进一步筛选？
+
             if (importPackage.startsWith(packagePrefix)) {
                 packageToCoordMap.put(importPackage, coord);
                 continue;
@@ -222,7 +219,9 @@ public class PackageUtil {
 
         Set<String> dependencies = new HashSet<>();
         for (String line : lines) {
-            if (line == null) continue;
+            if (line == null) {
+                continue;
+            }
             Matcher matcher = pattern.matcher(line);
             if (matcher.find()) {
                 String info = matcher.group(1);
@@ -246,7 +245,9 @@ public class PackageUtil {
         HashMap<String, String> coordinateMap = new HashMap<>();
         for (String dependency : dependencies) {
             String[] split = dependency.split(":");
-            if (split.length != 4) continue;
+            if (split.length != 4) {
+                continue;
+            }
             String artifactId = split[1];
 //            if (artifactId.contains("_")) {
 //                artifactId = artifactId.substring(0, artifactId.indexOf("_"));
@@ -272,7 +273,9 @@ public class PackageUtil {
         String result = null;
 
         String[] env = new String[]{"JAVA_HOME=" + Constants.JAVA_HOME};
-        if (dir == null) return result;
+        if (dir == null) {
+            return result;
+        }
         try (InputStream inputStream = Runtime.getRuntime().exec(cmd, env, new File(dir)).getInputStream(); Scanner s = new Scanner(inputStream).useDelimiter("\\A")) {
             result = s.hasNext() ? s.next() : null;
         } catch (IOException e) {

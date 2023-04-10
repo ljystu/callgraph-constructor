@@ -12,7 +12,7 @@ public class Constants {
 
     public static String JAVA_HOME;
 
-    public static String EXCLUSION_FILE;
+    public static String EXCLUSION_FILE = "/Users/ljystu/Desktop/neo4j/call-graph-analysis/src/main/resources/exclusions.txt";
     public static final String NEO4J_PORT = "bolt://localhost:7687";
     public static final String NEO4J_USERNAME = "neo4j";
     public static final String NEO4J_PASSWORD = "ljystuneo";

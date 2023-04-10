@@ -47,7 +47,7 @@ public class CallGraphUploader {
 
         //prevent read timeout
 //        jedis.flushAll();
-        jedis.del(artifactId);
+//        jedis.del(artifactId);
         jedis.close();
     }
 
@@ -59,7 +59,7 @@ public class CallGraphUploader {
      */
     private void upload(String label, Map<String, String> packageToCoordMap, String dependencyCoordinate) {
 
-        HashSet<Node> nodes = new HashSet<>();
+//        HashSet<Node> nodes = new HashSet<>();
         HashSet<Edge> edges = new HashSet<>();
 
         // 遍历所有键，获取对应的值并删除
@@ -88,17 +88,16 @@ public class CallGraphUploader {
                 nodeTo.setCoordinate("not found");
             }
 
-            if (edge.getFrom().getCoordinate().startsWith(dependencyCoordinate) || edge.getTo().getCoordinate().startsWith(dependencyCoordinate)) {
+            if (edge.getFrom().getPackageName().startsWith(Constants.PACKAGE_PREFIX) ||
+                    edge.getTo().getPackageName().startsWith(Constants.PACKAGE_PREFIX)) {
                 Edge newEdge = new Edge(nodeFrom, nodeTo);
                 log.info("Edge upload: " + newEdge);
-                System.out.println("Edge upload: " + newEdge);
+//                System.out.println("Edge upload: " + newEdge);
 
-                nodes.add(nodeFrom);
-                nodes.add(nodeTo);
+//                nodes.add(nodeFrom);
+//                nodes.add(nodeTo);
 
                 edges.add(newEdge);
-//                jedis.sadd(dependencyCoordinate, JSON.toJSONString(edge));
-//                jedis.srem("dynamic", value);
             }
 
         }

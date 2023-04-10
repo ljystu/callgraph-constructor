@@ -53,9 +53,6 @@ public class POMUtil {
         // Find the plugin with the specified name
         Element plugin = null;
         try {
-//            plugin = document.select("plugin").stream()
-//                    .filter(p -> p.selectFirst("artifactId").text().equals(pluginName))
-//                    .findFirst().orElse(null);
             plugin = document.selectFirst("build > plugins > plugin > artifactId:contains(" + pluginName + ") ~ configuration");
         } catch (Exception e) {
             e.printStackTrace();
@@ -93,7 +90,12 @@ public class POMUtil {
             plugin.appendChild(configuration);
         }
 
-        if (pluginName.equals("maven-surefire-plugin")) {
+        editPluginConfiguration(pluginName, packageInfo, configuration);
+
+    }
+
+    private static void editPluginConfiguration(String pluginName, String packageInfo, Element configuration) {
+        if ("maven-surefire-plugin".equals(pluginName)) {
             Element argLine = configuration.selectFirst("argLine");
             if (argLine == null) {
                 argLine = new Element("argLine");
@@ -110,12 +112,6 @@ public class POMUtil {
             parallel.text("methods");
 
 //             Set the threadCount property for parallelism
-//            Element threadCount = configuration.selectFirst("threadCount");
-//            if (threadCount == null) {
-//                threadCount = new Element("threadCount");
-//                configuration.appendChild(threadCount);
-//            }
-//            threadCount.text("5");
             Element useUnlimitedThreads = configuration.selectFirst("useUnlimitedThreads");
             if (useUnlimitedThreads == null) {
                 useUnlimitedThreads = new Element("useUnlimitedThreads");
@@ -130,15 +126,35 @@ public class POMUtil {
                 timeoutInSeconds = new Element("parallelTestsTimeoutInSeconds");
                 configuration.appendChild(timeoutInSeconds);
             }
-            timeoutInSeconds.text("300");
+            timeoutInSeconds.text("600");
 
-            Element timeoutForcedInSeconds = configuration.selectFirst("parallelTestsTimeoutForcedInSeconds");
+//            Element timeoutForcedInSeconds = configuration.selectFirst("parallelTestsTimeoutForcedInSeconds");
+//            if (timeoutForcedInSeconds == null) {
+//                timeoutForcedInSeconds = new Element("parallelTestsTimeoutForcedInSeconds");
+//                configuration.appendChild(timeoutForcedInSeconds);
+//            }
+//            timeoutForcedInSeconds.text("1800");
+
+            Element timeoutForcedInSeconds = configuration.selectFirst("forkedProcessTimeoutInSeconds");
             if (timeoutForcedInSeconds == null) {
-                timeoutForcedInSeconds = new Element("parallelTestsTimeoutForcedInSeconds");
+                timeoutForcedInSeconds = new Element("forkedProcessTimeoutInSeconds");
                 configuration.appendChild(timeoutForcedInSeconds);
             }
-            timeoutForcedInSeconds.text("1800");
+            timeoutForcedInSeconds.text("600");
 
+            Element reuseForks = configuration.selectFirst("reuseForks");
+            if (reuseForks == null) {
+                reuseForks = new Element("reuseForks");
+                configuration.appendChild(reuseForks);
+            }
+            reuseForks.text("false");
+//            Element forkCounts = configuration.selectFirst("forkCount");
+//            if (forkCounts == null) {
+//                forkCounts = new Element("forkCount");
+//                configuration.appendChild(forkCounts);
+//            }
+//            forkCounts.text("1");
+//
             Element testFailureIgnore = configuration.selectFirst("testFailureIgnore");
             if (testFailureIgnore == null) {
                 testFailureIgnore = new Element("testFailureIgnore");
@@ -156,118 +172,7 @@ public class POMUtil {
             skipElement.text("true");
 
         }
-
     }
 
-    //    public static void editPOM(String pomFile, String packageInfo) {
-//
-//        MavenXpp3Reader reader = new MavenXpp3Reader();
-//        Model model = null;
-//        try {
-//            model = reader.read(new FileReader(pomFile));
-//        } catch (Exception e) {
-//            log.error("pomFile not found");
-//            return;
-//        }
-//
-//        Build build = model.getBuild();
-//        if (build == null) {
-//            build = new Build();
-//            model.setBuild(build);
-//        }
-//
-//        // get plugins
-//        List<Plugin> plugins = build.getPlugins();
-////        PluginManagement pluginManagement = build.getPluginManagement();
-////
-////        if (pluginManagement == null) {
-////            pluginManagement = new PluginManagement();
-////        }
-////        List<Plugin> plugins = pluginManagement.getPlugins();
-//
-//        Plugin surefirePlugin = new Plugin();
-//        Plugin compilerPlugin = new Plugin();
-//
-//        boolean sureFireExists = false;
-//        boolean compilerExists = false;
-//
-//        for (Plugin plugin : plugins) {
-//            if (plugin.getArtifactId().equals("maven-surefire-plugin")) {
-//                surefirePlugin = plugin;
-//                sureFireExists = true;
-//            }
-//            if (plugin.getArtifactId().equals("maven-compiler-plugin")) {
-//                compilerPlugin = plugin;
-//                compilerExists = true;
-//
-//            }
-//        }
-//
-//        //
-//        updateSurefire("maven-surefire-plugin", packageInfo, plugins, surefirePlugin, sureFireExists);
-////        updateSurefire("maven-compiler-plugin", packageInfo, plugins, compilerPlugin, compilerExists);
-//        // write back to pom
-//        MavenXpp3Writer writer = new MavenXpp3Writer();
-//        try {
-//            writer.write(new FileWriter(pomFile), model);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            log.error(pomFile + "update failed");
-//        }
-//    }
-//
-//    private static void updateSurefire(String name, String packageInfo, List<Plugin> plugins, Plugin plugin, boolean exists) {
-//        if (!exists) {
-//            plugin.setGroupId("org.apache.maven.plugins");
-//            plugin.setArtifactId(name);
-//        }
-//
-//        Xpp3Dom configuration = (Xpp3Dom) plugin.getConfiguration();
-//        if (configuration == null) {
-//            configuration = new Xpp3Dom("configuration");
-//            plugin.setConfiguration(configuration);
-//        }
-//
-//        if (name.equals("maven-surefire-plugin")) {
-//
-//            Xpp3Dom configArgLine = configuration.getChild("argLine");
-//            if (configArgLine == null) {
-//                configArgLine = new Xpp3Dom("argLine");
-//                configuration.addChild(configArgLine);
-//            }
-//            if (configArgLine.getValue() != null) {
-//                if (!configArgLine.getValue().contains(packageInfo)) {
-//                    configArgLine.setValue(configArgLine.getValue() + " " + packageInfo);
-//                }
-//            } else {
-//                configArgLine.setValue(packageInfo);
-//            }
-//        } else {
-//            Xpp3Dom releaseArgLine = configuration.getChild("release");
-//            if (releaseArgLine == null) {
-//                releaseArgLine = new Xpp3Dom("release");
-//                configuration.addChild(releaseArgLine);
-//            }
-//            releaseArgLine.setValue("11");
-//
-//            Xpp3Dom sourceArgLine = configuration.getChild("source");
-//            if (sourceArgLine == null) {
-//                sourceArgLine = new Xpp3Dom("source");
-//                configuration.addChild(sourceArgLine);
-//            }
-//            sourceArgLine.setValue("1.6");
-//
-//            Xpp3Dom targetArgLine = configuration.getChild("target");
-//            if (targetArgLine == null) {
-//                targetArgLine = new Xpp3Dom("target");
-//                configuration.addChild(targetArgLine);
-//            }
-//            targetArgLine.setValue("1.6");
-//
-//        }
-//
-//        if (!exists) {
-//            plugins.add(plugin);
-//        }
-//    }
+
 }

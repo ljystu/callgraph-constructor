@@ -21,6 +21,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+/**
+ * @author ljystu
+ */
 public class MongodbUtil {
 
     private static MongoClient mongo = null;
@@ -121,8 +124,6 @@ public class MongodbUtil {
             System.out.println("duplicate key skipped");
         }
 
-        // 关闭MongoDB客户端连接
-//        mongo.close();
     }
 
     private static List<WriteModel<Document>> getAllDocuments(MongoCollection<Document> collection, HashSet<Edge> allEdges, Pattern excludedPattern) {
@@ -147,12 +148,19 @@ public class MongodbUtil {
                     .append("returnType", fromNode.getReturnType())
                     .append("coordinate", toNode.getCoordinate());
 
-//            Document mongoEdge = new Document("startNode", startNode)
-//                    .append("endNode", endNode).append("type", "dynamic");
 
-            Bson filter = Filters.and(Filters.eq("startNode", startNode),
-                    Filters.eq("endNode", endNode)
-                    , Filters.eq("type", "static"));
+            Bson filter = Filters.and(
+                    Filters.eq("startNode.packageName", startNode.get("packageName")),
+                    Filters.eq("endNode.packageName", endNode.get("packageName")),
+                    Filters.eq("startNode.className", startNode.get("className")),
+                    Filters.eq("endNode.className", endNode.get("className")),
+                    Filters.eq("startNode.methodName", startNode.get("methodName")),
+                    Filters.eq("endNode.methodName", endNode.get("methodName")),
+//                    Filters.eq("startNode.params", startNode.get("params")),
+//                    Filters.eq("endNode.params", endNode.get("params")),
+//                    Filters.eq("startNode.returnType", startNode.get("returnType")),
+//                    Filters.eq("endNode.returnType", endNode.get("returnType")),
+                    Filters.ne("type", "dynamic"));
 
             Document existingDocument = collection.find(filter).first();
 

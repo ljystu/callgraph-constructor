@@ -35,10 +35,6 @@ public class JarReadUtil {
             JarEntry entry = entries.nextElement();
             String name = entry.getName();
             if (name.endsWith(".class")) {
-                // remove the ".class" suffix
-//                    name = name.substring(0, name.length() - 6);
-                // replace "/" with "."
-
                 // get the package name
                 int index = name.lastIndexOf('/');
                 name = name.replace('/', '.');
@@ -108,9 +104,8 @@ public class JarReadUtil {
      * @param tempDir     the temp dir
      * @return import info
      */
+    @Deprecated
     public static Set<String> getAllPackages(String jarFilePath, String tempDir) {
-
-//        upZipJars(jarFilePath, tempDir);
 
         Set<String> classes = JarReadUtil.getClasses(tempDir);
 
@@ -119,6 +114,7 @@ public class JarReadUtil {
         return getImportedPackages(jarFilePath, classes);
     }
 
+    @Deprecated
     private static void upZipJars(String jarFilePath, String tempDir) {
         try (ZipFile zipFile = new ZipFile(jarFilePath)) {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
@@ -156,7 +152,6 @@ public class JarReadUtil {
      */
     private static Set<String> getImportedPackages(String jarFile, Set<String> classes) {
         Set<String> importedPackages = new HashSet<>();
-//        HashSet<String> selfPackageNames = new HashSet<>();
 
         ClassPool pool = ClassPool.getDefault();
         ClassPath classPath = null;
@@ -168,27 +163,17 @@ public class JarReadUtil {
         }
 
         for (String clazz : classes) {
-//            Class cls = URLClassLoader.newInstance(new URL[]{url}).loadClass(clazz);
-
             try (DataInputStream dis = new DataInputStream(new FileInputStream(new File(clazz)))) {
                 ClassFile classFile = new ClassFile(dis);
                 String name = classFile.getName();
 
                 CtClass cc = pool.get(name);
-
-//                getPackageNamesOfParentClasses(cc.getRefClasses(), importedPackages, pool);
-
                 String packageName = cc.getPackageName();
                 if (packageName == null) {
                     continue;
                 }
                 importedPackages.add(packageName);
-//                if (packageName.lastIndexOf(".") == -1) {
-//                    selfPackageNames.add(packageName);
-//                } else {
-//                    String substring = packageName + ".*|";
-//                    selfPackageNames.add(substring);
-//                }
+
                 cc.detach();
             } catch (IOException | NotFoundException e) {
                 log.error(e.toString());
@@ -200,17 +185,10 @@ public class JarReadUtil {
             pool.removeClassPath(classPath);
         }
 
-
-//        for (String pkg : selfPackageNames) {
-//            if (pkg == null) continue;
-//            selfPackages.append(pkg);
-//        }
-//        if (selfPackages.length() > 0) {
-//            selfPackages.setLength(selfPackages.length() - 1);
-//        }
         return importedPackages;
     }
 
+    @Deprecated
     private static void getPackageNamesOfParentClasses(Collection<String> refClasses, Set<String> importedPackages, ClassPool pool) {
         for (String refClass : refClasses) {
             CtClass importedClass;

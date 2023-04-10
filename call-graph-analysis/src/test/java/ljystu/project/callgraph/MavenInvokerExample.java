@@ -1,12 +1,12 @@
 package ljystu.project.callgraph;
 
+import org.apache.maven.shared.invoker.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Scanner;
-
-import org.apache.maven.shared.invoker.*;
 
 public class MavenInvokerExample {
     public static void main(String[] args) throws IOException, MavenInvocationException {

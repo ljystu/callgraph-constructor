@@ -38,14 +38,18 @@ public class GraphUtil {
                     StringBuilder str = new StringBuilder();
                     if (param.length != 1) {
                         for (int i = 1; i < param.length - 1; i++) {
-                            str.append(param[i].substring(1)).append(",");
+                            String paramType = param[i].substring(1);
+                            paramType = typeTransform(paramType);
+                            str.append(paramType).append(",");
                         }
                         str.append(param[param.length - 1], 1, param[param.length - 1].length() - 1);
                     }
 
 
                     graphNode.setParams(str.toString());
-                    graphNode.setReturnType(signature.substring(signature.indexOf(")") + 2));
+                    String returnType = signature.substring(signature.indexOf(")") + 2);
+                    returnType = typeTransform(returnType);
+                    graphNode.setReturnType(returnType);
 
                     nodeHashMap.put(key, graphNode);
                 }
@@ -54,6 +58,61 @@ public class GraphUtil {
 
         }
         return nodeHashMap;
+    }
+
+    public static String typeTransform(String type) {
+        if (type.equals("java.lang.BooleanType[]")) {
+            type = "boolean[]";
+        }
+        if (type.equals("java.lang.IntegerType[]")) {
+            type = "int[]";
+        }
+        if (type.equals("java.lang.LongType[]")) {
+            type = "long[]";
+        }
+        if (type.equals("java.lang.FloatType[]")) {
+            type = "float[]";
+        }
+        if (type.equals("java.lang.DoubleType[]")) {
+            type = "double[]";
+        }
+        if (type.equals("java.lang.ByteType[]")) {
+            type = "byte[]";
+        }
+        if (type.equals("java.lang.ShortType[]")) {
+            type = "short[]";
+        }
+        if (type.equals("java.lang.CharacterType[]")) {
+            type = "char[]";
+        }
+        if (type.equals("java.lang.BooleanType")) {
+            type = "boolean";
+        }
+        if (type.equals("java.lang.VoidType")) {
+            type = "void";
+        }
+        if (type.equals("java.lang.IntegerType")) {
+            type = "int";
+        }
+        if (type.equals("java.lang.LongType")) {
+            type = "long";
+        }
+        if (type.equals("java.lang.FloatType")) {
+            type = "float";
+        }
+        if (type.equals("java.lang.DoubleType")) {
+            type = "double";
+        }
+        if (type.equals("java.lang.ByteType")) {
+            type = "byte";
+        }
+        if (type.equals("java.lang.ShortType")) {
+            type = "short";
+        }
+        if (type.equals("java.lang.CharacterType")) {
+            type = "char";
+        }
+        return type;
     }
 
     public static HashSet<Edge> getAllEdges(PartialJavaCallGraph result, HashMap<Integer, GraphNode> nodes, String artifact) {

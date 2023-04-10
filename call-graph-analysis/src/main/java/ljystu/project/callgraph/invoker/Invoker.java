@@ -7,12 +7,15 @@ import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import eu.fasten.core.data.opal.MavenArtifactDownloader;
+import eu.fasten.core.data.opal.MavenCoordinate;
+import eu.fasten.core.data.opal.exceptions.MissingArtifactException;
+import eu.fasten.core.maven.utils.MavenUtilities;
 import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.myEdge;
 import ljystu.project.callgraph.uploader.CallGraphUploader;
 import ljystu.project.callgraph.utils.POMUtil;
 import ljystu.project.callgraph.utils.PackageUtil;
-import ljystu.project.callgraph.utils.ProjectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
@@ -24,6 +27,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -72,50 +78,54 @@ public class Invoker {
         String stashCommand = "git stash";
         HashMap<String, HashMap<String, Object>> analysisResult = new HashMap<>();
 
-        String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
+//        String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
         //traverse all tags
         for (String tag : tagNames) {
 
             //stash all changes in current branch/tag/commit
-//            getOutput(stashCommand, rootPath);
-////
-//            if (!switchTag(tag, rootPath)) {
-//                System.out.println("switch tag failed");
-//                continue;
-//            }
-//            System.out.println("analyze tag: " + tag + " start");
+            getOutput(stashCommand, rootPath);
 //
-////            //get specific tag name from git command output
-//            if (tag.charAt(tag.length() - 1) == '\'') {
-//                tag = tag.substring(0, tag.length() - 1);
-//            }
-//
-//            //version
-//            tag = tag.substring(tag.indexOf(tagPrefix) + tagPrefix.length(), tag.length() - tagSuffix.length() + 1);
-//
-//            String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
-//            File jar = null;
-//            String dependencyCoordinates = dependencyCoordinateWithoutVersion + ":" + tag;
-//
-//            try {
-//                //download jar
-//                jar = new MavenArtifactDownloader(MavenCoordinate.fromString(dependencyCoordinates, "jar")).downloadArtifact(MavenUtilities.MAVEN_CENTRAL_REPO);
-//                //copy jar to lib
-//                Path targetDirectory = Paths.get(rootPath);
-//                Files.copy(jar.toPath(), targetDirectory.resolve(artifactId + "-" + tag + ".jar"));
-//
-//                System.out.println("File copied successfully!");
-//            } catch (MissingArtifactException | IOException e) {
-//                log.info("Artifact not found: " + dependencyCoordinateWithoutVersion + ":" + tag);
-//                continue;
-//            } finally {
-//                if (jar != null) {
-//                    jar.delete();
-//                }
-//            }
+            if (!switchTag(tag, rootPath)) {
+                System.out.println("switch tag failed");
+                continue;
+            }
+//        }
+            System.out.println("analyze tag: " + tag + " start");
+
+//            //get specific tag name from git command output
+            if (tag.charAt(tag.length() - 1) == '\'') {
+                tag = tag.substring(0, tag.length() - 1);
+            }
+
+            //version
+            tag = tag.substring(tag.indexOf(tagPrefix) + tagPrefix.length(), tag.length() - tagSuffix.length() + 1);
+
+            version = tag;
+            String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
+            File jar = null;
+            String dependencyCoordinates = dependencyCoordinateWithoutVersion + ":" + tag;
+
+            try {
+                //download jar
+                jar = new MavenArtifactDownloader(MavenCoordinate.fromString(dependencyCoordinates, "jar")).downloadArtifact(MavenUtilities.MAVEN_CENTRAL_REPO);
+                //copy jar to lib
+                Path targetDirectory = Paths.get(rootPath);
+                Files.copy(jar.toPath(), targetDirectory.resolve(artifactId + "-" + tag + ".jar"));
+
+                System.out.println("File copied successfully!");
+            } catch (MissingArtifactException | IOException e) {
+                log.info("Artifact not found: " + dependencyCoordinateWithoutVersion + ":" + tag);
+                continue;
+            } finally {
+                if (jar != null) {
+                    jar.delete();
+                }
+            }
 
             //acquire dependencies
             invokeTask("dependency:copy-dependencies", "./lib");
+            artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
+
 
             //map packages to coordinates
             String packageScan = PackageUtil.getPackages(rootPath, artifactId + "-" + version + ".jar",
@@ -124,6 +134,8 @@ public class Invoker {
             //upload package:coordinate to redis
             PackageUtil.uploadCoordToRedis();
 
+            packageScan = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME;
+            packageScan += "=" + Constants.PACKAGE_PREFIX + "!" + artifactId;
             //javaagent maven test
             HashMap<String, Object> mavenTestWithJavaAgent = mavenTestWithJavaAgent(packageScan);
 
@@ -136,8 +148,18 @@ public class Invoker {
             analysisResult.put("test", mavenTestWithJavaAgent);
             System.out.println("analyse " + projectName + " finished");
         }
+        String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
 
         File file = new File(Constants.PROJECT_FOLDER + artifactId + "-" + version + "/" + projectName + ".json");
+        outputToJson(analysisResult, file);
+
+        //delete all files in project folder
+//        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
+        return projectList;
+    }
+
+    public static void outputToJson(HashMap<String, HashMap<String, Object>> analysisResult, File file) {
+        System.out.println("output to json: " + file.getAbsolutePath());
         if (!file.exists()) {
             try {
                 File parentDir = file.getParentFile();
@@ -158,10 +180,6 @@ public class Invoker {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        //delete all files in project folder
-        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
-        return projectList;
     }
 
 
@@ -196,7 +214,7 @@ public class Invoker {
         HashMap<String, Integer> dynamicCoordinates = new HashMap<>();
         HashMap<String, Integer> staticCoordinates = new HashMap<>();
 
-        HashSet<String> staticCoords = new HashSet<>();
+//        HashSet<String> staticCoords = new HashSet<>();
         HashMap<String, Integer> bothCoordinates = new HashMap<>();
 
         for (Document document : collection.find()) {
@@ -211,7 +229,7 @@ public class Invoker {
                 if (startCoordinate.startsWith(dependencyCoordinate)) {
                     staticCoordinates.put(startCoordinate, staticCoordinates.getOrDefault(startCoordinate, 0) + 1);
                 }
-                staticCoords.add(startCoordinate);
+//                staticCoords.add(startCoordinate);
 
             } else if ("dynamic".equals(edge.getType())) {
                 dynamicCount++;
@@ -277,6 +295,7 @@ public class Invoker {
         List<String> pomFiles = PackageUtil.getPomFiles(rootPath);
         //maven test with javaagent
         addJavaagent(inclPackages, pomFiles);
+
         return invokeTask("test");
     }
 
@@ -292,11 +311,12 @@ public class Invoker {
      * @param pomFilePaths all pom files in the project
      * @param task         the task
      */
+    @Deprecated
     public void invokeMavenTask(String inclPackages, String path, List<String> pomFilePaths, String task) {
 
         // 设置Maven的安装目录
 
-        if (task == "test") {
+        if (Objects.equals(task, "test")) {
             addJavaagent(inclPackages, pomFilePaths);
             invokeTask(path, "test");
         }
@@ -309,6 +329,7 @@ public class Invoker {
         for (String pomFilePath : pomFilePaths) {
             POMUtil.editPOM(pomFilePath, inclPackages);
         }
+
     }
 
     /**
@@ -443,7 +464,7 @@ public class Invoker {
             }
             System.out.println("switched to " + tagName);
             switchProcess.destroy();
-        } catch (Exception e) {
+        } catch (InterruptedException | IOException e) {
             e.printStackTrace();
             return false;
         }

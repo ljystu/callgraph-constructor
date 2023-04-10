@@ -12,7 +12,6 @@ public class Project {
         this.repoUrl = repoUrl;
     }
 
-
     public String getName() {
         return name;
     }

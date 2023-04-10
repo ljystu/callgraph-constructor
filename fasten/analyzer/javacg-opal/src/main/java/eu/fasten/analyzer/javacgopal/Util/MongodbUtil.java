@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 public class MongodbUtil {
 
     private static MongoClient mongo = null;
+
     /**
      * Gets mongo.
      *
@@ -62,12 +63,12 @@ public class MongodbUtil {
 
         MongoCollection<Document> collection = database.getCollection(artifact);
 
-        collection.createIndex(Indexes.compoundIndex(
-                Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className")
-                , Indexes.ascending("startNode.methodName"), Indexes.ascending("startNode.params"), Indexes.ascending("startNode.returnType")
-                , Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className")
-                , Indexes.ascending("endNode.methodName"), Indexes.ascending("endNode.params"), Indexes.ascending("endNode.returnType")
-        ), new IndexOptions().unique(true));
+//        collection.createIndex(Indexes.compoundIndex(
+//                Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className")
+//                , Indexes.ascending("startNode.methodName"), Indexes.ascending("startNode.params"), Indexes.ascending("startNode.returnType")
+//                , Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className")
+//                , Indexes.ascending("endNode.methodName"), Indexes.ascending("endNode.params"), Indexes.ascending("endNode.returnType")
+//        ), new IndexOptions().unique(true));
 
         Pattern excludedPattern = null;
 //                Pattern.compile(readExcludedPackages());
@@ -94,28 +95,39 @@ public class MongodbUtil {
 //            if (isExcluded(toNode.getPackageName(), excludedPattern)) {
 //                continue;
 //            }
+
             Document startNode = new Document("packageName", fromNode.getPackageName())
                     .append("className", fromNode.getClassName())
-                    .append("methodName", fromNode.getMethodName())
-                    .append("params", fromNode.getParams())
-                    .append("returnType", fromNode.getReturnType())
-                    .append("coordinate", fromNode.getCoordinate());
+                    .append("methodName", fromNode.getMethodName());
 
             Document endNode = new Document("packageName", toNode.getPackageName())
                     .append("className", toNode.getClassName())
-                    .append("methodName", fromNode.getMethodName())
-                    .append("params", fromNode.getParams())
-                    .append("returnType", fromNode.getReturnType())
-                    .append("coordinate", toNode.getCoordinate());
+                    .append("methodName", toNode.getMethodName());
 
+            endNode.append("params", toNode.getParams())
+                    .append("returnType", toNode.getReturnType())
+                    .append("coordinate", toNode.getCoordinate());
+            startNode.append("params", fromNode.getParams())
+                    .append("returnType", fromNode.getReturnType())
+                    .append("coordinate", fromNode.getCoordinate());
 
             String type = "static";
 
-            Bson filter = Filters.and(Filters.eq("startNode", startNode),
-                    Filters.eq("endNode", endNode)
-                    , Filters.eq("type", "dynamic"));
+            Bson filter = Filters.and(
+                    Filters.eq("startNode.packageName", startNode.get("packageName")),
+                    Filters.eq("endNode.packageName", endNode.get("packageName")),
+                    Filters.eq("startNode.className", startNode.get("className")),
+                    Filters.eq("endNode.className", endNode.get("className")),
+                    Filters.eq("startNode.methodName", startNode.get("methodName")),
+                    Filters.eq("endNode.methodName", endNode.get("methodName")),
+//                    Filters.eq("startNode.params", startNode.get("params")),
+//                    Filters.eq("endNode.params", endNode.get("params")),
+//                    Filters.eq("startNode.returnType", startNode.get("returnType")),
+//                    Filters.eq("endNode.returnType", endNode.get("returnType")),
+                    Filters.ne("type", "static"));
 
             Document existingDocument = collection.find(filter).first();
+
 
             if (existingDocument != null) {
                 // 已经存在具有相同startNode和endNode，但具有不同type的文档，更新type为both
@@ -123,6 +135,7 @@ public class MongodbUtil {
                 bulkWrites.add(new UpdateOneModel<>(filter, update));
             } else {
                 // 插入新文档
+
                 Document newDocument = new Document("startNode", startNode)
                         .append("endNode", endNode)
                         .append("type", type);

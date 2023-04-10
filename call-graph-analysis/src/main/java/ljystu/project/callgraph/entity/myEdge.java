@@ -13,8 +13,12 @@ public class myEdge {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         myEdge edge = (myEdge) o;
         return startNode.equals(edge.startNode) && endNode.equals(edge.endNode);
     }

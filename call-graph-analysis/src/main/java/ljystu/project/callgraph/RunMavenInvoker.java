@@ -10,6 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * @author ljystu
+ */
 public class RunMavenInvoker {
     @CommandLine.Option(names = {"-a",
             "--artifact"}, paramLabel = "ARTIFACT")
@@ -42,6 +45,7 @@ public class RunMavenInvoker {
                 continue;
             }
             Invoker invoker = new Invoker(folderName);
+            System.out.println("Analyzing project " + p.getName());
             invoker.analyseProject(p.getName(), projectCount, dependencyCoordinateWithoutVersion, tagPrefix, tagSuffix, version);
 
         }
