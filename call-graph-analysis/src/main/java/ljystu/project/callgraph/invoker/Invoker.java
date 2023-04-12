@@ -16,6 +16,7 @@ import ljystu.project.callgraph.entity.myEdge;
 import ljystu.project.callgraph.uploader.CallGraphUploader;
 import ljystu.project.callgraph.utils.POMUtil;
 import ljystu.project.callgraph.utils.PackageUtil;
+import ljystu.project.callgraph.utils.ProjectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
@@ -78,8 +79,8 @@ public class Invoker {
         String stashCommand = "git stash";
         HashMap<String, HashMap<String, Object>> analysisResult = new HashMap<>();
 
-//        String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
-        //traverse all tags
+        String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
+//        traverse all tags
         for (String tag : tagNames) {
 
             //stash all changes in current branch/tag/commit
@@ -101,7 +102,7 @@ public class Invoker {
             tag = tag.substring(tag.indexOf(tagPrefix) + tagPrefix.length(), tag.length() - tagSuffix.length() + 1);
 
             version = tag;
-            String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
+
             File jar = null;
             String dependencyCoordinates = dependencyCoordinateWithoutVersion + ":" + tag;
 
@@ -134,8 +135,8 @@ public class Invoker {
             //upload package:coordinate to redis
             PackageUtil.uploadCoordToRedis();
 
-            packageScan = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME;
-            packageScan += "=" + Constants.PACKAGE_PREFIX + "!" + artifactId;
+//            packageScan = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME;
+//            packageScan += "=" + Constants.PACKAGE_PREFIX + "!" + artifactId;
             //javaagent maven test
             HashMap<String, Object> mavenTestWithJavaAgent = mavenTestWithJavaAgent(packageScan);
 
@@ -148,13 +149,13 @@ public class Invoker {
             analysisResult.put("test", mavenTestWithJavaAgent);
             System.out.println("analyse " + projectName + " finished");
         }
-        String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
+
 
         File file = new File(Constants.PROJECT_FOLDER + artifactId + "-" + version + "/" + projectName + ".json");
         outputToJson(analysisResult, file);
 
         //delete all files in project folder
-//        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
+        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
         return projectList;
     }
 
@@ -183,7 +184,7 @@ public class Invoker {
     }
 
 
-    public HashMap<String, Object> mongoData(String dependencyCoordinate) {
+    public static HashMap<String, Object> mongoData(String dependencyCoordinate) {
         ServerAddress serverAddress = new ServerAddress(Constants.SERVER_IP_ADDRESS, Constants.MONGO_PORT);
         List<ServerAddress> addrs = new ArrayList<>();
         addrs.add(serverAddress);
@@ -232,6 +233,10 @@ public class Invoker {
 //                staticCoords.add(startCoordinate);
 
             } else if ("dynamic".equals(edge.getType())) {
+                if (edge.getStartNode().getMethodName().toLowerCase().contains("test") || edge.getEndNode().getMethodName().toLowerCase().contains("test")
+                        || edge.getStartNode().getClassName().toLowerCase().contains("test") || edge.getEndNode().getClassName().toLowerCase().contains("test")) {
+                    continue;
+                }
                 dynamicCount++;
                 if (startCoordinate.startsWith(dependencyCoordinate) && endCoordinate.startsWith(dependencyCoordinate)) {
                     internalDynamicCall++;

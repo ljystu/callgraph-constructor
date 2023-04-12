@@ -1,16 +1,20 @@
 package eu.fasten.analyzer.javacgopal.Util;
 
+import eu.fasten.analyzer.javacgopal.Constants;
 import eu.fasten.analyzer.javacgopal.entity.Edge;
 import eu.fasten.analyzer.javacgopal.entity.GraphNode;
 import eu.fasten.core.data.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntIntPair;
+import redis.clients.jedis.Jedis;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
 public class GraphUtil {
+    static Jedis jedis = new Jedis(Constants.MONGO_ADDRESS);
+
     public static HashMap<Integer, GraphNode> getNodes(PartialJavaCallGraph result) {
         HashMap<Integer, GraphNode> nodeHashMap = new HashMap<>();
         for (Map.Entry<JavaScope, Map<String, JavaType>> map : result.getClassHierarchy().entrySet()) {
@@ -21,7 +25,9 @@ public class GraphUtil {
 
                 for (Map.Entry<Integer, JavaNode> entry : methods.entrySet()) {
                     int key = entry.getKey();
-                    if (nodeHashMap.containsKey(key)) continue;
+                    if (nodeHashMap.containsKey(key)) {
+                        continue;
+                    }
                     FastenURI uri = entry.getValue().getUri();
                     String rawEntity = uri.getRawEntity();
                     GraphNode graphNode = new GraphNode();
@@ -91,7 +97,7 @@ public class GraphUtil {
         if (type.equals("java.lang.VoidType")) {
             type = "void";
         }
-        if (type.equals("java.lang.IntegerType")) {
+        if ("java.lang.IntegerType".equals(type)) {
             type = "int";
         }
         if (type.equals("java.lang.LongType")) {
@@ -117,12 +123,16 @@ public class GraphUtil {
 
     public static HashSet<Edge> getAllEdges(PartialJavaCallGraph result, HashMap<Integer, GraphNode> nodes, String artifact) {
         HashSet<Edge> set = new HashSet<>();
+        jedis.auth("ljystu");
         for (Map.Entry<IntIntPair, Map<Object, Object>> map : result.getGraph().getCallSites().entrySet()) {
             IntIntPair key = map.getKey();
+
             GraphNode nodeFrom = nodes.get(key.leftInt());
-            nodeFrom.setCoordinate(artifact);
+            nodeFrom.setCoordinate(jedis.get(nodeFrom.getPackageName()) == null ? "not found" : jedis.get(nodeFrom.getPackageName()));
+
             GraphNode nodeTo = nodes.get(key.rightInt());
-            nodeTo.setCoordinate(artifact);
+            nodeTo.setCoordinate(jedis.get(nodeTo.getPackageName()) == null ? "not found" : jedis.get(nodeTo.getPackageName()));
+
             Edge edge = new Edge(nodeFrom, nodeTo);
             set.add(edge);
         }

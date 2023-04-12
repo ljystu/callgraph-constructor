@@ -26,12 +26,13 @@ public class GraphNode implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         GraphNode graphNode = (GraphNode) o;
-        return Objects.equals(packageName, graphNode.packageName) && Objects.equals(className, graphNode.className) && Objects.equals(coordinate, graphNode.coordinate);
+        return Objects.equals(packageName, graphNode.packageName) && Objects.equals(className, graphNode.className)
+                && Objects.equals(methodName, graphNode.methodName) && Objects.equals(params, graphNode.params) && Objects.equals(returnType, graphNode.returnType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(packageName, className, coordinate);
+        return Objects.hash(packageName, className, methodName, params, returnType);
     }
 
     public GraphNode() {

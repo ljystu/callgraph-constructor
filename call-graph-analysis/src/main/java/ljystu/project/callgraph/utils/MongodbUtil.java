@@ -206,10 +206,4 @@ public class MongodbUtil {
     }
 
 
-    public static HashSet<String> findAllCoords() {
-        HashSet<String> set = new HashSet<>();
-        MongoCollection<Document> collection = mongo.getDatabase("mydatabase").getCollection("mycollection");
-        collection.distinct("startNode.coordinate", String.class).into(set);
-        return set;
-    }
 }

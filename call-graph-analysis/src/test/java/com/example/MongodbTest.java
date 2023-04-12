@@ -14,11 +14,20 @@ import ljystu.project.callgraph.uploader.Neo4jOp;
 import ljystu.project.callgraph.utils.MongodbUtil;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
 
 public class MongodbTest {
+
+
+    private static MongoClient mongo = null;
+    @Before
+    public void init() {
+//        mongo = MongodbUtil.getMongoClient();
+    }
+
 
     public static void main(String[] args) {
         // 创建MongoDB客户端连接
@@ -93,109 +102,16 @@ public class MongodbTest {
     @Test
     public void uploadTest() {
         Neo4jOp neo4jOp = new Neo4jOp("bolt://localhost:7687", "neo4j", "ljystuneo");
-        HashSet<String> allCoords = MongodbUtil.findAllCoords();
+        HashSet<String> allCoords =findAllCoords();
         for (String coord : allCoords) {
             neo4jOp.uploadFromMongo(coord);
         }
     }
-
-    @Test
-    public void mongoData() {
-        ServerAddress serverAddress = new ServerAddress(Constants.SERVER_IP_ADDRESS, 27017);
-        List<ServerAddress> addrs = new ArrayList<ServerAddress>();
-        addrs.add(serverAddress);
-
-        MongoCredential credential = MongoCredential.createScramSha1Credential("ljystu", "admin", "Ljystu110!".toCharArray());
-        List<MongoCredential> credentials = new ArrayList<MongoCredential>();
-        credentials.add(credential);
-
-        //通过连接认证获取MongoDB连接
-        MongoClient mongoClient = new MongoClient(addrs, credentials);
-
-
-        // 获取MongoDB数据库
-        MongoDatabase database = mongoClient.getDatabase("mydatabase");
-
-        // 获取MongoDB集合
-        MongoCollection<Document> collection = database.getCollection("com.google.code.gson:gson");
-
-        int staticCount = 0;
-        int dynamicCount = 0;
-        int bothCount = 0;
-        int internalDynamicCall = 0;
-        int externalDynamicCall = 0;
-        int dynCalled = 0;
-        int dynCalling = 0;
-        HashMap<String, Integer> dynamicCoordinates = new HashMap<>();
-        HashMap<String, Integer> staticCoordinates = new HashMap<>();
-        HashSet<myEdge> edges = new HashSet<>();
-        HashSet<String> staticCoords = new HashSet<>();
-        HashMap<String, Integer> bothCoordinates = new HashMap<>();
-        for (Document document : collection.find()) {
-            myEdge edge = JSON.parseObject(document.toJson(), myEdge.class);
-//            System.out.println(edge);
-            String endCoordinate = edge.getEndNode().getCoordinate();
-            String startCoordinate = edge.getStartNode().getCoordinate();
-
-            edges.add(edge);
-            if (edge.getType().equals("static")) {
-                staticCount++;
-                if (startCoordinate.startsWith("com.google.code.gson:gson:"))
-                    staticCoordinates.put(startCoordinate, staticCoordinates.getOrDefault(startCoordinate, 0) + 1);
-//                if (!endCoordinate.equals(startCoordinate)) {
-//                    if (endCoordinate.startsWith("com.google.code.gson:gson"))
-//                        staticCoordinates.put(endCoordinate, staticCoordinates.getOrDefault(endCoordinate, 0) + 1);
-//                }
-                staticCoords.add(startCoordinate);
-//                staticCoords.add(endCoordinate);
-            } else if (edge.getType().equals("dynamic")) {
-                dynamicCount++;
-                if (startCoordinate.startsWith("com.google.code.gson:gson:") && endCoordinate.startsWith("com.google.code.gson:gson:")) {
-                    internalDynamicCall++;
-                    dynamicCoordinates.put(startCoordinate, dynamicCoordinates.getOrDefault(startCoordinate, 0) + 1);
-                } else {
-                    externalDynamicCall++;
-                    if (startCoordinate.startsWith("com.google.code.gson:gson:")) {
-                        dynCalling++;
-                    } else {
-                        dynCalled++;
-                    }
-
-                }
-//                if (!endCoordinate.equals(startCoordinate))
-//                    if (endCoordinate.startsWith("com.google.code.gson:gson"))
-//                        dynamicCoordinates.put(endCoordinate, dynamicCoordinates.getOrDefault(endCoordinate, 0) + 1);
-
-            } else {
-                bothCount++;
-                if (startCoordinate.startsWith("com.google.code.gson:gson:"))
-                    bothCoordinates.put(startCoordinate, bothCoordinates.getOrDefault(startCoordinate, 0) + 1);
-//                if (!endCoordinate.equals(startCoordinate))
-//                    if (endCoordinate.startsWith("com.google.code.gson:gson"))
-//
-            }
-        }
-        System.out.println("staticCount = " + staticCount);
-        System.out.println("dynamicCount = " + dynamicCount);
-        System.out.println("internalDynCount = " + internalDynamicCall);
-        System.out.println("externalDynCount = " + externalDynamicCall);
-        System.out.println("dynCalled = " + dynCalled);
-        System.out.println("dynCalling = " + dynCalling);
-        System.out.println("bothCount = " + bothCount);
-
-        for (Map.Entry<String, Integer> entry : dynamicCoordinates.entrySet()) {
-            System.out.println(entry.getKey() + " : " + entry.getValue());
-        }
-        System.out.println("static");
-        for (Map.Entry<String, Integer> entry : staticCoordinates.entrySet()) {
-            System.out.println(entry.getKey() + " : " + entry.getValue());
-        }
-//        for (String coord : staticCoords) {
-//            System.out.println(coord);
-//        }
-        // 关闭MongoClient
-        mongoClient.close();
-
+    public static HashSet<String> findAllCoords() {
+        HashSet<String> set = new HashSet<>();
+        MongoCollection<Document> collection = mongo.getDatabase("mydatabase").getCollection("mycollection");
+        collection.distinct("startNode.coordinate", String.class).into(set);
+        return set;
     }
 
     @Test

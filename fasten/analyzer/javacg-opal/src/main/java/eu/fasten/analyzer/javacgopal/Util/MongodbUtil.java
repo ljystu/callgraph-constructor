@@ -50,7 +50,7 @@ public class MongodbUtil {
             ServerAddress serverAddress = new ServerAddress(Constants.MONGO_ADDRESS, Constants.MONGO_PORT);
             // 创建连接对象
             MongoCredential credential = MongoCredential.createScramSha1Credential(Constants.username, "admin", Constants.password.toCharArray());
-            List<MongoCredential> credentials = new ArrayList<MongoCredential>();
+            List<MongoCredential> credentials = new ArrayList<>();
             credentials.add(credential);
             mongo = new MongoClient(serverAddress, credentials);
         }

@@ -21,12 +21,14 @@ public class Node {
             return false;
         }
         Node node = (Node) o;
-        return Objects.equals(packageName, node.packageName) && Objects.equals(className, node.className);
+        return Objects.equals(packageName, node.packageName) && Objects.equals(className, node.className)
+                && Objects.equals(methodName, node.methodName) && Objects.equals(params, node.params) &&
+                Objects.equals(returnType, node.returnType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(packageName, className, coordinate);
+        return Objects.hash(packageName, className, methodName, params, returnType);
     }
 
     @Override

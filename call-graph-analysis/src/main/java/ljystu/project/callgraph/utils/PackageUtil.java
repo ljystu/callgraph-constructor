@@ -83,7 +83,8 @@ public class PackageUtil {
 
     private static StringBuilder constructPackageScan(Set<String> definedPackages, String packagePrefix, String coord) {
         StringBuilder packageScan = new StringBuilder();
-        String argLine = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME + Constants.ARG_LINE_RIGHT;
+        String argLine = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME + "=";
+//                + Constants.ARG_LINE_RIGHT;
         packageScan.append(argLine);
         Pattern excludedPattern = Pattern.compile(readExcludedPackages());
 
@@ -109,14 +110,18 @@ public class PackageUtil {
             packagePrefixSet.add(prefix);
 
 
-            packageScan.append(prefix).append(".*,");
+            packageScan.append(prefix).append(",");
+//                    .append(".*,");
 
         }
 
-        packageScan.setLength(packageScan.length() - 1);
-        packageScan.append(";");
+//        packageScan.setLength(packageScan.length() - 1);
+//        packageScan.append(";");
         String artifactId = coord.split(":")[1];
-        packageScan.append("info=").append(packagePrefix).append("!").append(artifactId).append(";");
+        packageScan.
+//                append("info=").
+        append(packagePrefix).append("!").append(artifactId);
+//                .append(";");
         return packageScan;
     }
 
