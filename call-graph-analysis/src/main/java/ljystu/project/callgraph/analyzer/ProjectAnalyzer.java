@@ -1,9 +1,7 @@
 package ljystu.project.callgraph.analyzer;
 
 import ljystu.project.callgraph.config.Constants;
-import ljystu.project.callgraph.uploader.CallGraphUploader;
 import ljystu.project.callgraph.utils.PackageUtil;
-import ljystu.project.callgraph.utils.ProjectUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
@@ -13,7 +11,6 @@ import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static ljystu.project.callgraph.analyzer.OutputGenerator.mongoData;
 import static ljystu.project.callgraph.analyzer.OutputGenerator.outputToJson;
 
 /**
@@ -121,21 +118,20 @@ public class ProjectAnalyzer {
         HashMap<String, Object> mavenTestWithJavaAgent = mavenTestInvoker.mavenTestWithJavaAgent(packageScan);
 
         //upload call graph to mongodb
-        CallGraphUploader callGraphUploader = new CallGraphUploader();
-        callGraphUploader.uploadAll(dependencyCoordinateWithoutVersion, artifactId);
+//        CallGraphUploader callGraphUploader = new CallGraphUploader();
+//        callGraphUploader.uploadAll(dependencyCoordinateWithoutVersion, artifactId);
 
         // analysis of call graph in mongo
-        analysisResult.put(version, mongoData(dependencyCoordinateWithoutVersion));
+//        analysisResult.put(version, mongoData(dependencyCoordinateWithoutVersion));
         analysisResult.put("test", mavenTestWithJavaAgent);
         System.out.println("analyse " + projectName + " finished");
 //        }
-
 
         File file = new File(Constants.PROJECT_FOLDER + artifactId + "-" + version + "/" + projectName + ".json");
         outputToJson(analysisResult, file);
 
         //delete all files in project folder
-        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
+//        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
         return projectList;
     }
 

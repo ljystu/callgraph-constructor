@@ -147,7 +147,7 @@ public class POMUtil {
                 reuseForks = new Element("reuseForks");
                 configuration.appendChild(reuseForks);
             }
-            reuseForks.text("false");
+            reuseForks.text("true");
 //            Element forkCounts = configuration.selectFirst("forkCount");
 //            if (forkCounts == null) {
 //                forkCounts = new Element("forkCount");
