@@ -7,6 +7,8 @@ public class Constants {
     public static final String ARG_LINE_LEFT = "-noverify -javaagent:";
     public static final String ARG_LINE_RIGHT = "=incl=";
     public static final String DATABASE = "neo4j";
+    public static String VERSION;
+
 
     public static String MAVEN_HOME;
     public static String JAVAAGENT_HOME;

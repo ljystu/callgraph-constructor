@@ -82,8 +82,9 @@ public class MavenTestInvoker {
         if (outputDir.length() != 0) {
             properties.setProperty("outputDirectory", outputDir);
         }
-        request.setMavenOpts("-Drat.numUnapprovedLicenses=1000");
+        request.setMavenOpts("-Drat.numUnapprovedLicenses=1000 -Dmaven.test.failure.ignore=true");
         request.setProperties(properties);
+
         try {
             mavenInvoker.execute(request);
         } catch (Exception e) {

@@ -1,5 +1,9 @@
 package ljystu.project.callgraph.analyzer;
 
+import eu.fasten.core.data.opal.MavenArtifactDownloader;
+import eu.fasten.core.data.opal.MavenCoordinate;
+import eu.fasten.core.data.opal.exceptions.MissingArtifactException;
+import eu.fasten.core.maven.utils.MavenUtilities;
 import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.uploader.CallGraphUploader;
 import ljystu.project.callgraph.utils.PackageUtil;
@@ -10,6 +14,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -58,16 +65,17 @@ public class ProjectAnalyzer {
         String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
 //        traverse all tags
 //        for (String tag : tagNames) {
-//
-//
-//            //stash all changes in current branch/tag/commit
-//            getOutput(stashCommand, rootPath);
-////
-//            if (!switchTag(tag, rootPath)) {
-//                System.out.println("switch tag failed");
-//                continue;
-//            }
-////        }
+        String tag = tagPrefix + Constants.VERSION;
+
+        //stash all changes in current branch/tag/commit
+        getOutput(stashCommand, rootPath);
+
+        if (!switchTag(tag, rootPath)) {
+            System.out.println("switch tag failed");
+
+        }
+//        }
+
 //            System.out.println("analyze tag: " + tag + " start");
 //
 ////            //get specific tag name from git command output
@@ -77,31 +85,29 @@ public class ProjectAnalyzer {
 //
 //            //version
 //            tag = tag.substring(tag.indexOf(tagPrefix) + tagPrefix.length(), tag.length() - tagSuffix.length() + 1);
-//
-//            version = tag;
-//            if( !version.equals("2.10")){
+
+        version = tag;
+
+
+        File jar = null;
+        String dependencyCoordinates = dependencyCoordinateWithoutVersion + ":" + tag;
+
+        try {
+            //download jar
+            jar = new MavenArtifactDownloader(MavenCoordinate.fromString(dependencyCoordinates, "jar")).downloadArtifact(MavenUtilities.MAVEN_CENTRAL_REPO);
+            //copy jar to lib
+            Path targetDirectory = Paths.get(rootPath);
+            Files.copy(jar.toPath(), targetDirectory.resolve(artifactId + "-" + tag + ".jar"));
+
+            System.out.println("File copied successfully!");
+        } catch (MissingArtifactException | IOException e) {
+            log.info("Artifact not found: " + dependencyCoordinateWithoutVersion + ":" + tag);
 //                continue;
-//            }
-//
-//            File jar = null;
-//            String dependencyCoordinates = dependencyCoordinateWithoutVersion + ":" + tag;
-//
-//            try {
-//                //download jar
-//                jar = new MavenArtifactDownloader(MavenCoordinate.fromString(dependencyCoordinates, "jar")).downloadArtifact(MavenUtilities.MAVEN_CENTRAL_REPO);
-//                //copy jar to lib
-//                Path targetDirectory = Paths.get(rootPath);
-//                Files.copy(jar.toPath(), targetDirectory.resolve(artifactId + "-" + tag + ".jar"));
-//
-//                System.out.println("File copied successfully!");
-//            } catch (MissingArtifactException | IOException e) {
-//                log.info("Artifact not found: " + dependencyCoordinateWithoutVersion + ":" + tag);
-//                continue;
-//            } finally {
-//                if (jar != null) {
-//                    jar.delete();
-//                }
-//            }
+        } finally {
+            if (jar != null) {
+                jar.delete();
+            }
+        }
 
         //acquire dependencies
         mavenTestInvoker.invokeTask("dependency:copy-dependencies", "./lib");
@@ -153,7 +159,7 @@ public class ProjectAnalyzer {
 
             System.out.println("tag: " + tagName);
 
-            String switchCommand = "git checkout " + tagName.substring(1, tagName.length() - 1);
+            String switchCommand = "git checkout " + tagName;
             Process switchProcess = Runtime.getRuntime().exec(switchCommand, null, new File(path));
 
             boolean switched = switchProcess.waitFor(5, TimeUnit.MINUTES);
@@ -188,7 +194,7 @@ public class ProjectAnalyzer {
                     break;
                 }
                 describeOutput.add(line);
-                if (describeOutput.size() == 2) {
+                if (describeOutput.size() == 1) {
                     break;
                 }
             }

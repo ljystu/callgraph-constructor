@@ -31,6 +31,7 @@ public class RunMavenInvoker {
         String tagPrefix = args[7];
         String tagSuffix = args[8];
         Constants.PACKAGE_PREFIX = args[9];
+        Constants.VERSION = args[10];
 
         List<Project> projects = ProjectUtil.readProjects(filename);
 
