@@ -70,10 +70,10 @@ public class ProjectAnalyzer {
         //stash all changes in current branch/tag/commit
         getOutput(stashCommand, rootPath);
 
-        if (!switchTag(tag, rootPath)) {
-            System.out.println("switch tag failed");
-
-        }
+//        if (!switchTag(tag, rootPath)) {
+//            System.out.println("switch tag failed");
+//
+//        }
 //        }
 
 //            System.out.println("analyze tag: " + tag + " start");
