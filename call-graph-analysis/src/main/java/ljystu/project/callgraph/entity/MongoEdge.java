@@ -2,13 +2,16 @@ package ljystu.project.callgraph.entity;
 
 import java.util.Objects;
 
-public class myEdge {
+/**
+ * @author ljystu
+ */
+public class MongoEdge {
     String id;
     Node startNode;
     Node endNode;
     String type;
 
-    public myEdge() {
+    public MongoEdge() {
     }
 
     @Override
@@ -19,7 +22,7 @@ public class myEdge {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        myEdge edge = (myEdge) o;
+        MongoEdge edge = (MongoEdge) o;
         return startNode.equals(edge.startNode) && endNode.equals(edge.endNode);
     }
 
@@ -62,7 +65,7 @@ public class myEdge {
 
     @Override
     public String toString() {
-        return "myEdge{" +
+        return "MongoEdge{" +
                 "id='" + id + '\'' +
                 ", startNode=" + startNode +
                 ", endNode=" + endNode +

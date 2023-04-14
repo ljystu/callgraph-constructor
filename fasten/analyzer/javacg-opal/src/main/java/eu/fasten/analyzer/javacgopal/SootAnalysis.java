@@ -28,9 +28,12 @@ public class SootAnalysis {
 
     public static void main(String[] args) {
         jedis.auth("ljystu");
+        String prefix = "com.google.gson";
+        String dependencyCoordinate = "com.google.code.gson:gson:2.10.1";
 
-        String jarPath = "/Users/ljystu/Downloads/commons-io-2.11.0.jar";
-        String outputPath = "/Users/ljystu/Desktop/projects/sootoutput.json";
+        String jarPath = "/Users/ljystu/Downloads/gson-2.10.1.jar";
+
+        String outputPath = "/Users/ljystu/Desktop/projects/soot-" + dependencyCoordinate + ".json";
         setupSoot(jarPath);
 
         // Run a Soot analysis, such as the Call Graph construction
@@ -39,8 +42,7 @@ public class SootAnalysis {
         // Get the Call Graph
         CallGraph callGraph = Scene.v().getCallGraph();
 
-        String prefix = "org.apache.commons.io";
-        String dependencyCoordinate = "commons-io:commons-io:2.11.0";
+
         callGraphToMongo(callGraph, prefix, dependencyCoordinate);
         // Convert the Call Graph to JSON
         String json = callGraphToJson(callGraph, prefix);
@@ -133,10 +135,13 @@ public class SootAnalysis {
                 String srcTypeTransform = GraphUtil.typeTransform(tgt.getReturnType().toString());
                 String tgtTypeTransform = GraphUtil.typeTransform(tgt.getReturnType().toString());
 
+                String srcCoordinate = jedis.get(src.getDeclaringClass().getPackageName());
                 GraphNode fromNode = new GraphNode(src.getDeclaringClass().getPackageName(), src.getDeclaringClass().getName(), src.getName(), tgtParams.toString(), srcTypeTransform,
-                        jedis.get(src.getDeclaringClass().getPackageName()) == null ? "not found" : jedis.get(src.getDeclaringClass().getPackageName()));
+                        srcCoordinate == null ? "not found" : srcCoordinate);
+
+                String tgtCoordinate = jedis.get(tgt.getDeclaringClass().getPackageName());
                 GraphNode toNode = new GraphNode(tgt.getDeclaringClass().getPackageName(), tgt.getDeclaringClass().getName(), tgt.getName(), tgtParams.toString(), tgtTypeTransform,
-                        jedis.get(tgt.getDeclaringClass().getPackageName()) == null ? "not found" : jedis.get(tgt.getDeclaringClass().getPackageName()));
+                        tgtCoordinate == null ? "not found" : tgtCoordinate);
 
                 edges.add(new eu.fasten.analyzer.javacgopal.entity.Edge(fromNode, toNode));
             }

@@ -1,12 +1,13 @@
 package ljystu.project.callgraph.config;
 
+/**
+ * @author ljystu
+ */
 public class Constants {
     public static final String ARG_LINE_LEFT = "-noverify -javaagent:";
     public static final String ARG_LINE_RIGHT = "=incl=";
-
     public static final String DATABASE = "neo4j";
 
-    //TODO paths should be parameters read into the main function
     public static String MAVEN_HOME;
     public static String JAVAAGENT_HOME;
 

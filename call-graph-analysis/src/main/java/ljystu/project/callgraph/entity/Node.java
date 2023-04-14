@@ -3,6 +3,9 @@ package ljystu.project.callgraph.entity;
 
 import java.util.Objects;
 
+/**
+ * @author ljystu
+ */
 public class Node {
     private String packageName;
     private String className;

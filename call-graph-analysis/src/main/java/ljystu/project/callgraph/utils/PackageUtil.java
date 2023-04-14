@@ -22,11 +22,6 @@ import java.util.regex.Pattern;
 @Slf4j
 public class PackageUtil {
 
-    /**
-     * The Paths.
-     */
-    List<String> paths = new ArrayList<>();
-
     static long tenMegabytes = 10485760L;
 
     /**
@@ -42,7 +37,7 @@ public class PackageUtil {
      */
     public static Map<String, String> packageToCoordMap = new HashMap<>();
 
-    public static Set<String> currentJars = new HashSet<>();
+//    public static Set<String> currentJars = new HashSet<>();
 
     /**
      * Gets pom files.
@@ -72,7 +67,7 @@ public class PackageUtil {
         packageToCoordMap.clear();
         jarToPackageMap.clear();
         jarToCoordMap.clear();
-        currentJars.clear();
+//        currentJars.clear();
 
         getJarToCoordMap(rootPath, jarName, coord);
 
@@ -128,10 +123,10 @@ public class PackageUtil {
     private static Set<String> extractPackagesFromJar(String rootPath, String packagePrefix) {
         // find jar files
         List<File> jarFiles = new ArrayList<>();
-        currentJars.clear();
+//        currentJars.clear();
         JarReadUtil.findTypeFiles(new File(rootPath), jarFiles, ".jar");
 
-        Set<String> inclPkgs = new HashSet<>();
+        Set<String> inclPackages = new HashSet<>();
         for (File jar : jarFiles) {
             try {
                 String coord = jarToCoordMap.get(jar.getName());
@@ -145,11 +140,11 @@ public class PackageUtil {
                 }
 
                 if (jarToPackageMap.containsKey(jar.getName())) {
-                    inclPkgs.addAll(jarToPackageMap.get(jar.getName()));
+                    inclPackages.addAll(jarToPackageMap.get(jar.getName()));
                     continue;
                 }
 
-                extractPackagesToMap(inclPkgs, jar, coord, packagePrefix);
+                extractPackagesToMap(inclPackages, jar, coord, packagePrefix);
 
                 ProjectUtil.deleteFile(jar);
 
@@ -160,7 +155,7 @@ public class PackageUtil {
         for (File jarFile : jarFiles) {
             ProjectUtil.deleteFile(jarFile);
         }
-        return inclPkgs;
+        return inclPackages;
     }
 
     private static void extractPackagesToMap(Set<String> inclPackages, File jar, String coord, String packagePrefix) throws IOException {
@@ -169,7 +164,7 @@ public class PackageUtil {
         // jar to package
         jarToPackageMap.put(jar.getName(), packagesInJar);
 
-        currentJars.add(coord);
+//        currentJars.add(coord);
 
         for (String importPackage : packagesInJar) {
 

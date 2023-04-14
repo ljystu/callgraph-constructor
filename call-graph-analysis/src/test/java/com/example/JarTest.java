@@ -20,7 +20,7 @@ public class JarTest {
     @Test
     public void linkTest() {
         String jar = "hamcrest-core-1.3.jar";
-//        Invoker invoker = new Invoker();
+//        ProjectAnalyzer analyzer = new ProjectAnalyzer();
         String rootPath = "junit4-main";
         HashSet<String> dependencies = new HashSet<>();
 //        PackageUtil.getJarToCoordMap(rootPath,jarName,  coord);

@@ -1,8 +1,8 @@
 package ljystu.project.callgraph;
 
+import ljystu.project.callgraph.analyzer.ProjectAnalyzer;
 import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Project;
-import ljystu.project.callgraph.invoker.Invoker;
 import ljystu.project.callgraph.utils.ProjectUtil;
 import picocli.CommandLine;
 
@@ -44,9 +44,9 @@ public class RunMavenInvoker {
             if (Objects.equals(folderName, "")) {
                 continue;
             }
-            Invoker invoker = new Invoker(folderName);
+            ProjectAnalyzer projectAnalyzer = new ProjectAnalyzer(folderName);
             System.out.println("Analyzing project " + p.getName());
-            invoker.analyseProject(p.getName(), projectCount, dependencyCoordinateWithoutVersion, tagPrefix, tagSuffix, version);
+            projectAnalyzer.analyseProject(p.getName(), projectCount, dependencyCoordinateWithoutVersion, tagPrefix, tagSuffix, version);
 
         }
 

@@ -131,6 +131,8 @@ public class MongodbUtil {
         for (Edge edge : allEdges) {
             Node fromNode = edge.getFrom();
             Node toNode = edge.getTo();
+
+            //deprecated
 //            if (isExcluded(toNode.getPackageName(), excludedPattern)) {
 //                continue;
 //            }
@@ -156,6 +158,7 @@ public class MongodbUtil {
                     Filters.eq("endNode.className", endNode.get("className")),
                     Filters.eq("startNode.methodName", startNode.get("methodName")),
                     Filters.eq("endNode.methodName", endNode.get("methodName")),
+                    //due to the inconsistency of the params and return type, we do not consider them
 //                    Filters.eq("startNode.params", startNode.get("params")),
 //                    Filters.eq("endNode.params", endNode.get("params")),
 //                    Filters.eq("startNode.returnType", startNode.get("returnType")),

@@ -16,6 +16,8 @@ import static ljystu.project.callgraph.utils.PackageUtil.packageToCoordMap;
 
 /**
  * The type Redis op.
+ *
+ * @author ljystu
  */
 @Slf4j
 public class CallGraphUploader {
@@ -105,7 +107,7 @@ public class CallGraphUploader {
 //        List<Node> nodesList = new ArrayList<>(nodes);
 //        neo4JOp.uploadAllToNeo4j(nodesList, edges, label);
         MongodbUtil.uploadEdges(edges, dependencyCoordinate);
-//        jedis.del(label);
+
 
     }
 

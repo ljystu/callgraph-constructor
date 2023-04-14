@@ -4,6 +4,7 @@ import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.*;
@@ -103,7 +104,6 @@ public class MongodbUtil {
             Document endNode = new Document("packageName", toNode.getPackageName())
                     .append("className", toNode.getClassName())
                     .append("methodName", toNode.getMethodName());
-
             endNode.append("params", toNode.getParams())
                     .append("returnType", toNode.getReturnType())
                     .append("coordinate", toNode.getCoordinate());
@@ -126,16 +126,24 @@ public class MongodbUtil {
 //                    Filters.eq("endNode.returnType", endNode.get("returnType")),
                     Filters.ne("type", "static"));
 
-            Document existingDocument = collection.find(filter).first();
+            FindIterable<Document> foundDocuments = collection.find(filter);
+//            Document existingDocument = foundDocuments;
 
-
-            if (existingDocument != null) {
+            boolean found = false;
+            for (Document existingDocument : foundDocuments) {
                 // 已经存在具有相同startNode和endNode，但具有不同type的文档，更新type为both
                 Bson update = new Document("$set", new Document("type", "both"));
                 bulkWrites.add(new UpdateOneModel<>(filter, update));
-            } else {
-                // 插入新文档
-
+                found = true;
+            }
+//
+//            if (existingDocument != null) {
+//                // 已经存在具有相同startNode和endNode，但具有不同type的文档，更新type为both
+//                Bson update = new Document("$set", new Document("type", "both"));
+//                bulkWrites.add(new UpdateOneModel<>(filter, update));
+//            } else {
+            // 插入新文档
+            if (!found) {
                 Document newDocument = new Document("startNode", startNode)
                         .append("endNode", endNode)
                         .append("type", type);

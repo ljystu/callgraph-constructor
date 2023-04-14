@@ -1,5 +1,8 @@
 package ljystu.project.callgraph.entity;
 
+/**
+ * @author ljystu
+ */
 public class Project {
     String name;
     String repoUrl;
