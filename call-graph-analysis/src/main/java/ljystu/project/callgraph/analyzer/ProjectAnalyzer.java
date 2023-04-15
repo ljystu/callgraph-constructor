@@ -5,7 +5,6 @@ import eu.fasten.core.data.opal.MavenCoordinate;
 import eu.fasten.core.data.opal.exceptions.MissingArtifactException;
 import eu.fasten.core.maven.utils.MavenUtilities;
 import ljystu.project.callgraph.config.Constants;
-import ljystu.project.callgraph.uploader.CallGraphUploader;
 import ljystu.project.callgraph.utils.PackageUtil;
 import ljystu.project.callgraph.utils.ProjectUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +19,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static ljystu.project.callgraph.analyzer.OutputGenerator.mongoData;
 import static ljystu.project.callgraph.analyzer.OutputGenerator.outputToJson;
 
 /**
@@ -70,13 +68,13 @@ public class ProjectAnalyzer {
         //stash all changes in current branch/tag/commit
         getOutput(stashCommand, rootPath);
 
-//        if (!switchTag(tag, rootPath)) {
-//            System.out.println("switch tag failed");
-//
-//        }
+        if (!switchTag(tag, rootPath)) {
+            System.out.println("switch tag failed");
+
+        }
 //        }
 
-//            System.out.println("analyze tag: " + tag + " start");
+//            System.out.println("analy ze tag: " + tag + " start");
 //
 ////            //get specific tag name from git command output
 //            if (tag.charAt(tag.length() - 1) == '\'') {
@@ -85,10 +83,10 @@ public class ProjectAnalyzer {
 //
 //            //version
 //            tag = tag.substring(tag.indexOf(tagPrefix) + tagPrefix.length(), tag.length() - tagSuffix.length() + 1);
-
+        tag = Constants.VERSION;
         version = tag;
 
-
+//
         File jar = null;
         String dependencyCoordinates = dependencyCoordinateWithoutVersion + ":" + tag;
 
@@ -127,11 +125,11 @@ public class ProjectAnalyzer {
         HashMap<String, Object> mavenTestWithJavaAgent = mavenTestInvoker.mavenTestWithJavaAgent(packageScan);
 
         //upload call graph to mongodb
-        CallGraphUploader callGraphUploader = new CallGraphUploader();
-        callGraphUploader.uploadAll(dependencyCoordinateWithoutVersion, artifactId);
+//        CallGraphUploader callGraphUploader = new CallGraphUploader();
+//        callGraphUploader.uploadAll(dependencyCoordinateWithoutVersion, artifactId);
 
         // analysis of call graph in mongo
-        analysisResult.put(version, mongoData(dependencyCoordinateWithoutVersion));
+//        analysisResult.put(version, mongoData(dependencyCoordinateWithoutVersion));
         analysisResult.put("test", mavenTestWithJavaAgent);
         System.out.println("analyse " + projectName + " finished");
 //        }

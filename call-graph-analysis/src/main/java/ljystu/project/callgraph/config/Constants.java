@@ -20,7 +20,7 @@ public class Constants {
     public static final String NEO4J_USERNAME = "neo4j";
     public static final String NEO4J_PASSWORD = "ljystuneo";
 
-    public static final String SERVER_IP_ADDRESS = "34.175.14.212";
+    public static final String SERVER_IP_ADDRESS = "34.30.61.85";
     public static final String PROJECT_LINK = "/archive/refs/heads/master.zip";
 
     public static String PROJECT_FOLDER;
