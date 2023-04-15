@@ -6,7 +6,6 @@ import eu.fasten.core.data.opal.exceptions.MissingArtifactException;
 import eu.fasten.core.maven.utils.MavenUtilities;
 import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.utils.PackageUtil;
-import ljystu.project.callgraph.utils.ProjectUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
@@ -122,6 +121,8 @@ public class ProjectAnalyzer {
 //            packageScan = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME;
 //            packageScan += "=" + Constants.PACKAGE_PREFIX + "!" + artifactId;
         //javaagent maven test
+
+
         HashMap<String, Object> mavenTestWithJavaAgent = mavenTestInvoker.mavenTestWithJavaAgent(packageScan);
 
         //upload call graph to mongodb
@@ -139,7 +140,7 @@ public class ProjectAnalyzer {
         outputToJson(analysisResult, file);
 
         //delete all files in project folder
-        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
+//        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
         return projectList;
     }
 
