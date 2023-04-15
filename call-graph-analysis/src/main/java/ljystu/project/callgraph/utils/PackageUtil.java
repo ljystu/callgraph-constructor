@@ -81,8 +81,8 @@ public class PackageUtil {
         String argLine = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME + "=";
 //                + Constants.ARG_LINE_RIGHT;
         packageScan.append(argLine);
-        Pattern excludedPattern = Pattern.compile(readExcludedPackages());
-
+        Pattern excludedPattern = Pattern.compile("^((org\\.junit)|(org\\.junit\\.jupiter)|(org\\.testng)|(org\\.mockito)|(org\\.powermock)|(org\\.easymock)|(org\\.hamcrest)|(org\\.assertj\\.core\\.api)|(io\\.cucumber)|(org\\.spockframework)).*");
+//                readExcludedPackages());
         HashSet<String> packagePrefixSet = new HashSet<>();
         for (String definedPackage : definedPackages) {
 //            Matcher packageMatcher = selfPackagePattern.matcher(definedPackage);
@@ -146,15 +146,15 @@ public class PackageUtil {
 
                 extractPackagesToMap(inclPackages, jar, coord, packagePrefix);
 
-                ProjectUtil.deleteFile(jar);
+//                ProjectUtil.deleteFile(jar);
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        for (File jarFile : jarFiles) {
-            ProjectUtil.deleteFile(jarFile);
-        }
+//        for (File jarFile : jarFiles) {
+//            ProjectUtil.deleteFile(jarFile);
+//        }
         return inclPackages;
     }
 
