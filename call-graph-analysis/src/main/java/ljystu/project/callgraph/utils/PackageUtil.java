@@ -81,7 +81,7 @@ public class PackageUtil {
         String argLine = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME + "=";
 //                + Constants.ARG_LINE_RIGHT;
         packageScan.append(argLine);
-        Pattern excludedPattern = Pattern.compile("^((org\\.junit)|(org\\.junit\\.jupiter)|(org\\.testng)|(org\\.mockito)|(org\\.powermock)|(org\\.easymock)|(org\\.hamcrest)|(org\\.assertj\\.core\\.api)|(io\\.cucumber)|(org\\.spockframework)).*");
+        Pattern excludedPattern = Pattern.compile("^((org\\.junit)|(junit)|(org\\.testng)|(org\\.mockito)|(org\\.powermock)|(org\\.easymock)|(org\\.hamcrest)|(org\\.assertj\\.core\\.api)|(io\\.cucumber)|(org\\.spockframework)).*");
 //                readExcludedPackages());
         HashSet<String> packagePrefixSet = new HashSet<>();
         for (String definedPackage : definedPackages) {

@@ -95,15 +95,14 @@ public class MongodbUtil {
      *
      * @param allEdges the all edges
      */
-    public static void uploadEdges(HashSet<Edge> allEdges, String artifact) {
+    public static void uploadEdges(HashSet<Edge> allEdges, String dependencyWithoutVersion) {
         if (allEdges.isEmpty()) {
             return;
         }
 
-//        artifact = artifact.substring(0, artifact.lastIndexOf(":"));
         MongoDatabase database = mongo.getDatabase("mydatabase");
 
-        MongoCollection<Document> collection = database.getCollection(artifact);
+        MongoCollection<Document> collection = database.getCollection(dependencyWithoutVersion);
 
         collection.createIndex(Indexes.compoundIndex(
                 Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className")

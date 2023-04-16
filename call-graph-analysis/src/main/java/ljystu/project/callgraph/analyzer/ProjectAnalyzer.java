@@ -5,6 +5,7 @@ import eu.fasten.core.data.opal.MavenCoordinate;
 import eu.fasten.core.data.opal.exceptions.MissingArtifactException;
 import eu.fasten.core.maven.utils.MavenUtilities;
 import ljystu.project.callgraph.config.Constants;
+import ljystu.project.callgraph.uploader.CallGraphUploader;
 import ljystu.project.callgraph.utils.PackageUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,9 +51,9 @@ public class ProjectAnalyzer {
     public List<String> analyseProject(String projectName, Map<String, Integer> projectCount, String dependencyCoordinateWithoutVersion, String tagPrefix, String tagSuffix, String version) {
 
         //switch tag(maybe need to use commits when there is no tag for smaller projects)
-        String switchTagCommand = "git for-each-ref refs/tags --sort=-creatordate --format '%(refname:short)' | head ";
+//        String switchTagCommand = "git for-each-ref refs/tags --sort=-creatordate --format '%(refname:short)' | head ";
         List<String> projectList = new ArrayList<>();
-        List<String> tagNames = getOutput(switchTagCommand, rootPath);
+//        List<String> tagNames = getOutput(switchTagCommand, rootPath);
 
         System.out.println("project name: " + projectName);
 
@@ -65,12 +66,12 @@ public class ProjectAnalyzer {
         String tag = tagPrefix + Constants.VERSION;
 
         //stash all changes in current branch/tag/commit
-        getOutput(stashCommand, rootPath);
-
-        if (!switchTag(tag, rootPath)) {
-            System.out.println("switch tag failed");
-
-        }
+//        getOutput(stashCommand, rootPath);
+//
+//        if (!switchTag(tag, rootPath)) {
+//            System.out.println("switch tag failed");
+//
+//        }
 //        }
 
 //            System.out.println("analy ze tag: " + tag + " start");
@@ -126,8 +127,8 @@ public class ProjectAnalyzer {
         HashMap<String, Object> mavenTestWithJavaAgent = mavenTestInvoker.mavenTestWithJavaAgent(packageScan);
 
         //upload call graph to mongodb
-//        CallGraphUploader callGraphUploader = new CallGraphUploader();
-//        callGraphUploader.uploadAll(dependencyCoordinateWithoutVersion, artifactId);
+        CallGraphUploader callGraphUploader = new CallGraphUploader();
+        callGraphUploader.uploadAll(dependencyCoordinateWithoutVersion, artifactId);
 
         // analysis of call graph in mongo
 //        analysisResult.put(version, mongoData(dependencyCoordinateWithoutVersion));

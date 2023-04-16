@@ -28,10 +28,10 @@ public class SootAnalysis {
 
     public static void main(String[] args) {
         jedis.auth("ljystu");
-        String prefix = "com.google.gson";
-        String dependencyCoordinate = "com.google.code.gson:gson:2.10.1";
+        String prefix = "org.apache.commons.io";
+        String dependencyCoordinate = "apache.commons.io-2.10.1";
 
-        String jarPath = "/Users/ljystu/Downloads/gson-2.10.1.jar";
+        String jarPath = "/Users/ljystu/Downloads/commons-io-2.11.0.jar";
 
         String outputPath = "/Users/ljystu/Desktop/projects/soot-" + dependencyCoordinate + ".json";
         setupSoot(jarPath);

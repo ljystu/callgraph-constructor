@@ -78,6 +78,9 @@ public class ProjectUtil {
 
         String path = Constants.PROJECT_FOLDER + project.getName();
         try {
+            if (Files.exists(Paths.get(path))) {
+                return path;
+            }
             String cloneCommand = "git clone " + project.getRepoUrl() + " " + project.getName();
             Process cloneProcess = Runtime.getRuntime().exec(cloneCommand, null, new File(Constants.PROJECT_FOLDER));
             cloneProcess.waitFor();

@@ -121,12 +121,12 @@ public class POMUtil {
 
 
             //timeout in seconds
-            Element timeoutInSeconds = configuration.selectFirst("parallelTestsTimeoutInSeconds");
-            if (timeoutInSeconds == null) {
-                timeoutInSeconds = new Element("parallelTestsTimeoutInSeconds");
-                configuration.appendChild(timeoutInSeconds);
-            }
-            timeoutInSeconds.text("600");
+//            Element timeoutInSeconds = configuration.selectFirst("parallelTestsTimeoutInSeconds");
+//            if (timeoutInSeconds == null) {
+//                timeoutInSeconds = new Element("parallelTestsTimeoutInSeconds");
+//                configuration.appendChild(timeoutInSeconds);
+//            }
+//            timeoutInSeconds.text("600");
 
 //            Element timeoutForcedInSeconds = configuration.selectFirst("parallelTestsTimeoutForcedInSeconds");
 //            if (timeoutForcedInSeconds == null) {
@@ -135,12 +135,12 @@ public class POMUtil {
 //            }
 //            timeoutForcedInSeconds.text("1800");
 
-            Element timeoutForcedInSeconds = configuration.selectFirst("forkedProcessTimeoutInSeconds");
-            if (timeoutForcedInSeconds == null) {
-                timeoutForcedInSeconds = new Element("forkedProcessTimeoutInSeconds");
-                configuration.appendChild(timeoutForcedInSeconds);
-            }
-            timeoutForcedInSeconds.text("600");
+//            Element timeoutForcedInSeconds = configuration.selectFirst("forkedProcessTimeoutInSeconds");
+//            if (timeoutForcedInSeconds == null) {
+//                timeoutForcedInSeconds = new Element("forkedProcessTimeoutInSeconds");
+//                configuration.appendChild(timeoutForcedInSeconds);
+//            }
+//            timeoutForcedInSeconds.text("600");
 
             Element reuseForks = configuration.selectFirst("reuseForks");
             if (reuseForks == null) {
