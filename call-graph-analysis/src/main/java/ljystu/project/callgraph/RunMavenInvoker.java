@@ -41,7 +41,8 @@ public class RunMavenInvoker {
         // do not pass version here only GroupId:ArtifactId
 
         for (Project p : projects) {
-            String folderName = ProjectUtil.gitDownload(p);
+            String folderName = Constants.PROJECT_FOLDER + p.getName();
+//                    ProjectUtil.gitDownload(p);
             if (Objects.equals(folderName, "")) {
                 continue;
             }

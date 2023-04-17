@@ -28,10 +28,10 @@ public class SootAnalysis {
 
     public static void main(String[] args) {
         jedis.auth("ljystu");
-        String prefix = "org.apache.commons.io";
-        String dependencyCoordinate = "commons-io:commons-io:2.11.0";
+        String prefix = "org.yaml.snakeyaml";
+        String dependencyCoordinate = "org.yaml:snakeyaml:1.30";
 
-        String jarPath = "/Users/ljystu/Downloads/commons-io-2.11.0.jar";
+        String jarPath = "/Users/ljystu/Downloads/snakeyaml-1.30.jar";
 
         String outputPath = "/Users/ljystu/Desktop/projects/soot-" + dependencyCoordinate + ".json";
         setupSoot(jarPath);
@@ -52,7 +52,7 @@ public class SootAnalysis {
         } catch (IOException e) {
             e.printStackTrace();
         }
-//        jedis.close();
+        jedis.close();
     }
 
     private static void setupSoot(String jarPath) {
@@ -105,8 +105,8 @@ public class SootAnalysis {
 
     private static void callGraphToMongo(CallGraph callGraph, String prefix, String dependencyCoordinate) {
         HashSet<eu.fasten.analyzer.javacgopal.entity.Edge> edges = new HashSet<>();
-        Set<String> keys = jedis.keys("*");
-        HashMap<String, String> redisMap = new HashMap<>();
+
+        Map<String, String> redisMap = jedis.hgetAll("keys");
         for (Iterator<Edge> it = callGraph.iterator(); it.hasNext(); ) {
             Edge edge = it.next();
             SootMethod src = edge.src();
@@ -137,9 +137,7 @@ public class SootAnalysis {
 
                 String srcPackage = src.getDeclaringClass().getPackageName();
 
-                if (keys.contains(srcPackage) && !redisMap.containsKey(srcPackage)) {
-                    redisMap.put(srcPackage, jedis.get(srcPackage));
-                } else {
+                if (redisMap.containsKey(srcPackage)) {
                     redisMap.put(srcPackage, "not found");
                 }
                 GraphNode fromNode = new GraphNode(srcPackage, src.getDeclaringClass().getName(), src.getName(), tgtParams.toString(), srcTypeTransform,
@@ -148,14 +146,12 @@ public class SootAnalysis {
 
                 String tgtPackage = tgt.getDeclaringClass().getPackageName();
 
-                if (keys.contains(tgtPackage) && !redisMap.containsKey(tgtPackage)) {
-                    redisMap.put(tgtPackage, jedis.get(tgtPackage));
-                } else {
+                if (!redisMap.containsKey(tgtPackage)) {
                     redisMap.put(tgtPackage, "not found");
                 }
 
-                GraphNode toNode = new GraphNode(tgt.getDeclaringClass().getPackageName(), tgt.getDeclaringClass().getName(), tgt.getName(), tgtParams.toString(), tgtTypeTransform,
-                        redisMap.get(tgtPackage));
+                GraphNode toNode = new GraphNode(tgtPackage, tgt.getDeclaringClass().getName(), tgt.getName(),
+                        tgtParams.toString(), tgtTypeTransform, redisMap.get(tgtPackage));
 
                 edges.add(new eu.fasten.analyzer.javacgopal.entity.Edge(fromNode, toNode));
             }
