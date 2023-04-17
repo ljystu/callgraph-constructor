@@ -288,9 +288,10 @@ public class PackageUtil {
     public static void uploadCoordToRedis() {
         Jedis jedis = new Jedis(Constants.SERVER_IP_ADDRESS);
         jedis.auth(Constants.REDIS_PASSWORD);
-        for (Map.Entry<String, String> entry : packageToCoordMap.entrySet()) {
-            jedis.set(entry.getKey(), entry.getValue());
-        }
+//        for (Map.Entry<String, String> entry : packageToCoordMap.entrySet()) {
+//            jedis.set(entry.getKey(), entry.getValue());
+//        }
+        jedis.hmset("keys", packageToCoordMap);
         jedis.close();
     }
 }

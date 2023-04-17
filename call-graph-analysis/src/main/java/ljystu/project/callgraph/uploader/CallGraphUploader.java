@@ -155,6 +155,8 @@ public class CallGraphUploader {
     private void uploadFromFile(String label, Map<String, String> packageToCoordMap, String dependencyCoordinate) {
 
         HashSet<Edge> edges = new HashSet<>();
+        Map<String, String> redisMap = jedisPool.getResource().hgetAll("keys");
+        packageToCoordMap.putAll(redisMap);
 
         try (BufferedReader reader = new BufferedReader(new FileReader(label + ".log"))) {
             String line;
