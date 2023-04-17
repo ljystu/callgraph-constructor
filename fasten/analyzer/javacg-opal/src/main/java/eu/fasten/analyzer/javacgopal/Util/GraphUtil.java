@@ -11,6 +11,7 @@ import redis.clients.jedis.Jedis;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class GraphUtil {
     static Jedis jedis = new Jedis(Constants.MONGO_ADDRESS);
@@ -124,14 +125,28 @@ public class GraphUtil {
     public static HashSet<Edge> getAllEdges(PartialJavaCallGraph result, HashMap<Integer, GraphNode> nodes, String artifact) {
         HashSet<Edge> set = new HashSet<>();
         jedis.auth("ljystu");
+        Set<String> keys = jedis.keys("*");
+        HashMap<String, String> redisMap = new HashMap<>();
         for (Map.Entry<IntIntPair, Map<Object, Object>> map : result.getGraph().getCallSites().entrySet()) {
             IntIntPair key = map.getKey();
 
             GraphNode nodeFrom = nodes.get(key.leftInt());
-            nodeFrom.setCoordinate(jedis.get(nodeFrom.getPackageName()) == null ? "not found" : jedis.get(nodeFrom.getPackageName()));
+
+            if (keys.contains(nodeFrom.getPackageName()) && !redisMap.containsKey(nodeFrom.getPackageName())) {
+                redisMap.put(nodeFrom.getPackageName(), jedis.get(nodeFrom.getPackageName()));
+            } else {
+                redisMap.put(nodeFrom.getPackageName(), "not found");
+            }
+            nodeFrom.setCoordinate(redisMap.get(nodeFrom.getPackageName()));
 
             GraphNode nodeTo = nodes.get(key.rightInt());
-            nodeTo.setCoordinate(jedis.get(nodeTo.getPackageName()) == null ? "not found" : jedis.get(nodeTo.getPackageName()));
+            if (keys.contains(nodeTo.getPackageName()) && !redisMap.containsKey(nodeTo.getPackageName())) {
+                redisMap.put(nodeTo.getPackageName(), jedis.get(nodeTo.getPackageName()));
+            } else {
+                redisMap.put(nodeTo.getPackageName(), "not found");
+            }
+
+            nodeTo.setCoordinate(redisMap.get(nodeTo.getPackageName()));
 
             Edge edge = new Edge(nodeFrom, nodeTo);
             set.add(edge);

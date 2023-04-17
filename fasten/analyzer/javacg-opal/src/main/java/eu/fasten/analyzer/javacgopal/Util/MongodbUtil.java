@@ -4,7 +4,6 @@ import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.*;
@@ -126,24 +125,16 @@ public class MongodbUtil {
 //                    Filters.eq("endNode.returnType", endNode.get("returnType")),
                     Filters.ne("type", "static"));
 
-            FindIterable<Document> foundDocuments = collection.find(filter);
-//            Document existingDocument = foundDocuments;
-
-            boolean found = false;
-            for (Document existingDocument : foundDocuments) {
+//            FindIterable<Document> foundDocuments =
+            Document existingDocument = collection.find(filter).first();
+//
+            if (existingDocument != null) {
                 // 已经存在具有相同startNode和endNode，但具有不同type的文档，更新type为both
                 Bson update = new Document("$set", new Document("type", "both"));
                 bulkWrites.add(new UpdateOneModel<>(filter, update));
-                found = true;
-            }
-//
-//            if (existingDocument != null) {
-//                // 已经存在具有相同startNode和endNode，但具有不同type的文档，更新type为both
-//                Bson update = new Document("$set", new Document("type", "both"));
-//                bulkWrites.add(new UpdateOneModel<>(filter, update));
-//            } else {
-            // 插入新文档
-            if (!found) {
+            } else {
+                // 插入新文档
+
                 Document newDocument = new Document("startNode", startNode)
                         .append("endNode", endNode)
                         .append("type", type);
