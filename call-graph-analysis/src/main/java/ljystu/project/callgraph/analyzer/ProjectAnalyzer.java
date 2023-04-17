@@ -19,6 +19,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static ljystu.project.callgraph.analyzer.OutputGenerator.mongoData;
 import static ljystu.project.callgraph.analyzer.OutputGenerator.outputToJson;
 
 /**
@@ -119,11 +120,7 @@ public class ProjectAnalyzer {
         //upload package:coordinate to redis
         PackageUtil.uploadCoordToRedis();
 
-//            packageScan = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME;
-//            packageScan += "=" + Constants.PACKAGE_PREFIX + "!" + artifactId;
         //javaagent maven test
-
-
         HashMap<String, Object> mavenTestWithJavaAgent = mavenTestInvoker.mavenTestWithJavaAgent(packageScan);
 
         //upload call graph to mongodb
@@ -131,7 +128,7 @@ public class ProjectAnalyzer {
         callGraphUploader.uploadAll(dependencyCoordinateWithoutVersion, artifactId);
 
         // analysis of call graph in mongo
-//        analysisResult.put(version, mongoData(dependencyCoordinateWithoutVersion));
+        analysisResult.put(version, mongoData(dependencyCoordinateWithoutVersion));
         analysisResult.put("test", mavenTestWithJavaAgent);
         System.out.println("analyse " + projectName + " finished");
 //        }
