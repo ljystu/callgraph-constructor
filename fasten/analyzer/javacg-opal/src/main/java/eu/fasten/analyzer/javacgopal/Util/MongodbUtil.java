@@ -4,6 +4,7 @@ import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.*;
@@ -16,9 +17,7 @@ import org.bson.conversions.Bson;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -72,8 +71,9 @@ public class MongodbUtil {
 
         Pattern excludedPattern = null;
 //                Pattern.compile(readExcludedPackages());
+        Map<String, Document> existingDocumentsMap = queryExistingDocuments(collection);
 
-        List<WriteModel<Document>> bulkWrites = getAllDocuments(allEdges, excludedPattern, collection);
+        List<WriteModel<Document>> bulkWrites = new ArrayList<>(getAllDocuments(allEdges, excludedPattern, collection, existingDocumentsMap));
 
         BulkWriteOptions options = new BulkWriteOptions().ordered(false);
 
@@ -87,8 +87,8 @@ public class MongodbUtil {
 //        mongo.close();
     }
 
-    private static List<WriteModel<Document>> getAllDocuments(HashSet<Edge> allEdges, Pattern excludedPattern, MongoCollection<Document> collection) {
-        List<WriteModel<Document>> bulkWrites = new ArrayList<>();
+    private static HashSet<WriteModel<Document>> getAllDocuments(HashSet<Edge> allEdges, Pattern excludedPattern, MongoCollection<Document> collection, Map<String, Document> existingDocumentsMap) {
+        HashSet<WriteModel<Document>> bulkWrites = new HashSet<>();
         for (Edge edge : allEdges) {
             GraphNode fromNode = edge.getFrom();
             GraphNode toNode = edge.getTo();
@@ -110,40 +110,78 @@ public class MongodbUtil {
                     .append("returnType", fromNode.getReturnType())
                     .append("coordinate", fromNode.getCoordinate());
 
-            String type = "static";
 
-            Bson filter = Filters.and(
-                    Filters.eq("startNode.packageName", startNode.get("packageName")),
-                    Filters.eq("endNode.packageName", endNode.get("packageName")),
-                    Filters.eq("startNode.className", startNode.get("className")),
-                    Filters.eq("endNode.className", endNode.get("className")),
-                    Filters.eq("startNode.methodName", startNode.get("methodName")),
-                    Filters.eq("endNode.methodName", endNode.get("methodName")),
-//                    Filters.eq("startNode.params", startNode.get("params")),
-//                    Filters.eq("endNode.params", endNode.get("params")),
-//                    Filters.eq("startNode.returnType", startNode.get("returnType")),
-//                    Filters.eq("endNode.returnType", endNode.get("returnType")),
-                    Filters.ne("type", "static"));
-
-//            FindIterable<Document> foundDocuments =
-            Document existingDocument = collection.find(filter).first();
+//            Bson filter = Filters.and(
+//                    Filters.eq("startNode.packageName", startNode.get("packageName")),
+//                    Filters.eq("endNode.packageName", endNode.get("packageName")),
+//                    Filters.eq("startNode.className", startNode.get("className")),
+//                    Filters.eq("endNode.className", endNode.get("className")),
+//                    Filters.eq("startNode.methodName", startNode.get("methodName")),
+//                    Filters.eq("endNode.methodName", endNode.get("methodName")),
+////                    Filters.eq("startNode.params", startNode.get("params")),
+////                    Filters.eq("endNode.params", endNode.get("params")),
+////                    Filters.eq("startNode.returnType", startNode.get("returnType")),
+////                    Filters.eq("endNode.returnType", endNode.get("returnType")),
+//                    Filters.ne("type", "static"));
 //
+//            filters.add(filter);
+
+            Document existingDocument = existingDocumentsMap.get(generateKey(startNode, endNode));
+
+            String type = "static";
             if (existingDocument != null) {
                 // 已经存在具有相同startNode和endNode，但具有不同type的文档，更新type为both
+                Bson filter = Filters.eq("_id", existingDocument.getObjectId("_id"));
+
                 Bson update = new Document("$set", new Document("type", "both"));
                 bulkWrites.add(new UpdateOneModel<>(filter, update));
+
             } else {
                 // 插入新文档
-
                 Document newDocument = new Document("startNode", startNode)
                         .append("endNode", endNode)
                         .append("type", type);
 
                 bulkWrites.add(new InsertOneModel<>(newDocument));
             }
-
         }
+
         return bulkWrites;
+    }
+
+    private static String generateKey(Document startNode, Document endNode) {
+        return startNode.get("packageName") + "-" +
+                startNode.get("className") + "-" +
+                startNode.get("methodName") + "-" +
+                endNode.get("packageName") + "-" +
+                endNode.get("className") + "-" +
+                endNode.get("methodName");
+    }
+
+    private static Map<String, Document> queryExistingDocuments(MongoCollection<Document> collection) {
+        int pageSize = 1000;
+        int currentPage = 0;
+        Bson filter = Filters.ne("type", "static");
+        Map<String, Document> existingDocumentsMap = new HashMap<>();
+
+        long totalCount = collection.countDocuments(filter);
+
+        while (currentPage * pageSize < totalCount) {
+            FindIterable<Document> existingDocuments = collection.find(filter)
+                    .skip(currentPage * pageSize)
+                    .limit(pageSize);
+
+            for (Document existingDocument : existingDocuments) {
+                Document startNode = existingDocument.get("startNode", Document.class);
+                Document endNode = existingDocument.get("endNode", Document.class);
+                String key = generateKey(startNode, endNode);
+                existingDocumentsMap.put(key, existingDocument);
+            }
+
+            currentPage++;
+        }
+
+        return existingDocumentsMap;
     }
 
     private static boolean isExcluded(String definedPackage, Pattern importPattern) {

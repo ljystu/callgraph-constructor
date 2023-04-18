@@ -33,6 +33,7 @@ public class SootAnalysis {
         String dependencyCoordinate = args[1];
         String jarPath = args[2];
 
+        System.out.println("analyzing " + dependencyCoordinate + " ..." + args[2]);
         String outputPath = "/Users/ljystu/Desktop/projects/soot-" + dependencyCoordinate + ".json";
         setupSoot(jarPath);
 
@@ -42,16 +43,19 @@ public class SootAnalysis {
         // Get the Call Graph
         CallGraph callGraph = Scene.v().getCallGraph();
 
-        callGraphToMongo(callGraph, prefix, dependencyCoordinate);
         // Convert the Call Graph to JSON
         String json = callGraphToJson(callGraph, prefix);
 
-        // Write the JSON to a file
         try (FileWriter file = new FileWriter(outputPath)) {
             file.write(json);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        callGraphToMongo(callGraph, prefix, dependencyCoordinate);
+
+        // Write the JSON to a file
+
         jedis.close();
     }
 
@@ -137,7 +141,7 @@ public class SootAnalysis {
 
                 String srcPackage = src.getDeclaringClass().getPackageName();
 
-                if (redisMap.containsKey(srcPackage)) {
+                if (!redisMap.containsKey(srcPackage)) {
                     redisMap.put(srcPackage, "not found");
                 }
                 GraphNode fromNode = new GraphNode(srcPackage, src.getDeclaringClass().getName(), src.getName(), tgtParams.toString(), srcTypeTransform,
