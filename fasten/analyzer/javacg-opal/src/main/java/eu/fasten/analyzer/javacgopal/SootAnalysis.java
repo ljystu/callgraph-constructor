@@ -28,10 +28,10 @@ public class SootAnalysis {
 
     public static void main(String[] args) {
         jedis.auth("ljystu");
-        String prefix = "org.yaml.snakeyaml";
-        String dependencyCoordinate = "org.yaml:snakeyaml:1.30";
 
-        String jarPath = "/Users/ljystu/Downloads/snakeyaml-1.30.jar";
+        String prefix = args[0];
+        String dependencyCoordinate = args[1];
+        String jarPath = args[2];
 
         String outputPath = "/Users/ljystu/Desktop/projects/soot-" + dependencyCoordinate + ".json";
         setupSoot(jarPath);
