@@ -1,6 +1,7 @@
 package ljystu.project.callgraph.utils;
 
 import com.mongodb.*;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.*;
@@ -13,10 +14,7 @@ import org.bson.conversions.Bson;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -113,7 +111,9 @@ public class MongodbUtil {
 
         Pattern excludedPattern = Pattern.compile(readExcludedPackages());
 
-        List<WriteModel<Document>> bulkWrites = getAllDocuments(collection, allEdges, excludedPattern);
+        Map<String, Document> existingDocumentsMap = queryExistingDocuments(collection);
+
+        List<WriteModel<Document>> bulkWrites = new ArrayList<>(getAllDocuments(allEdges, excludedPattern, collection, existingDocumentsMap));
 
         BulkWriteOptions options = new BulkWriteOptions().ordered(false);
 
@@ -125,52 +125,55 @@ public class MongodbUtil {
 
     }
 
-    private static List<WriteModel<Document>> getAllDocuments(MongoCollection<Document> collection, HashSet<Edge> allEdges, Pattern excludedPattern) {
-        List<WriteModel<Document>> bulkWrites = new ArrayList<>();
+    private static HashSet<WriteModel<Document>> getAllDocuments(HashSet<Edge> allEdges, Pattern excludedPattern, MongoCollection<Document> collection, Map<String, Document> existingDocumentsMap) {
+        HashSet<WriteModel<Document>> bulkWrites = new HashSet<>();
         for (Edge edge : allEdges) {
             Node fromNode = edge.getFrom();
             Node toNode = edge.getTo();
-
-            //deprecated
 //            if (isExcluded(toNode.getPackageName(), excludedPattern)) {
 //                continue;
 //            }
+
             Document startNode = new Document("packageName", fromNode.getPackageName())
                     .append("className", fromNode.getClassName())
-                    .append("methodName", fromNode.getMethodName())
-                    .append("params", fromNode.getParams())
-                    .append("returnType", fromNode.getReturnType())
-                    .append("coordinate", fromNode.getCoordinate());
+                    .append("methodName", fromNode.getMethodName());
 
             Document endNode = new Document("packageName", toNode.getPackageName())
                     .append("className", toNode.getClassName())
-                    .append("methodName", fromNode.getMethodName())
-                    .append("params", fromNode.getParams())
-                    .append("returnType", fromNode.getReturnType())
+                    .append("methodName", toNode.getMethodName());
+            endNode.append("params", toNode.getParams())
+                    .append("returnType", toNode.getReturnType())
                     .append("coordinate", toNode.getCoordinate());
+            startNode.append("params", fromNode.getParams())
+                    .append("returnType", fromNode.getReturnType())
+                    .append("coordinate", fromNode.getCoordinate());
 
 
-            Bson filter = Filters.and(
-                    Filters.eq("startNode.packageName", startNode.get("packageName")),
-                    Filters.eq("endNode.packageName", endNode.get("packageName")),
-                    Filters.eq("startNode.className", startNode.get("className")),
-                    Filters.eq("endNode.className", endNode.get("className")),
-                    Filters.eq("startNode.methodName", startNode.get("methodName")),
-                    Filters.eq("endNode.methodName", endNode.get("methodName")),
-                    //due to the inconsistency of the params and return type, we do not consider them
-//                    Filters.eq("startNode.params", startNode.get("params")),
-//                    Filters.eq("endNode.params", endNode.get("params")),
-//                    Filters.eq("startNode.returnType", startNode.get("returnType")),
-//                    Filters.eq("endNode.returnType", endNode.get("returnType")),
-                    Filters.ne("type", "dynamic"));
+//            Bson filter = Filters.and(
+//                    Filters.eq("startNode.packageName", startNode.get("packageName")),
+//                    Filters.eq("endNode.packageName", endNode.get("packageName")),
+//                    Filters.eq("startNode.className", startNode.get("className")),
+//                    Filters.eq("endNode.className", endNode.get("className")),
+//                    Filters.eq("startNode.methodName", startNode.get("methodName")),
+//                    Filters.eq("endNode.methodName", endNode.get("methodName")),
+////                    Filters.eq("startNode.params", startNode.get("params")),
+////                    Filters.eq("endNode.params", endNode.get("params")),
+////                    Filters.eq("startNode.returnType", startNode.get("returnType")),
+////                    Filters.eq("endNode.returnType", endNode.get("returnType")),
+//                    Filters.ne("type", "static"));
+//
+//            filters.add(filter);
 
-            Document existingDocument = collection.find(filter).first();
+            Document existingDocument = existingDocumentsMap.get(generateKey(startNode, endNode));
 
-            String type = "dynamic";
+            String type = "static";
             if (existingDocument != null) {
                 // 已经存在具有相同startNode和endNode，但具有不同type的文档，更新type为both
+                Bson filter = Filters.eq("_id", existingDocument.getObjectId("_id"));
+
                 Bson update = new Document("$set", new Document("type", "both"));
                 bulkWrites.add(new UpdateOneModel<>(filter, update));
+
             } else {
                 // 插入新文档
                 Document newDocument = new Document("startNode", startNode)
@@ -179,9 +182,44 @@ public class MongodbUtil {
 
                 bulkWrites.add(new InsertOneModel<>(newDocument));
             }
-
         }
+
         return bulkWrites;
+    }
+
+    private static String generateKey(Document startNode, Document endNode) {
+        return startNode.get("packageName") + "-" +
+                startNode.get("className") + "-" +
+                startNode.get("methodName") + "-" +
+                endNode.get("packageName") + "-" +
+                endNode.get("className") + "-" +
+                endNode.get("methodName");
+    }
+
+    private static Map<String, Document> queryExistingDocuments(MongoCollection<Document> collection) {
+        int pageSize = 1000;
+        int currentPage = 0;
+        Bson filter = Filters.ne("type", "static");
+        Map<String, Document> existingDocumentsMap = new HashMap<>();
+
+        long totalCount = collection.countDocuments(filter);
+
+        while (currentPage * pageSize < totalCount) {
+            FindIterable<Document> existingDocuments = collection.find(filter)
+                    .skip(currentPage * pageSize)
+                    .limit(pageSize);
+
+            for (Document existingDocument : existingDocuments) {
+                Document startNode = existingDocument.get("startNode", Document.class);
+                Document endNode = existingDocument.get("endNode", Document.class);
+                String key = generateKey(startNode, endNode);
+                existingDocumentsMap.put(key, existingDocument);
+            }
+
+            currentPage++;
+        }
+
+        return existingDocumentsMap;
     }
 
     private static boolean isExcluded(String definedPackage, Pattern importPattern) {
