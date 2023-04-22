@@ -8,6 +8,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntIntPair;
 import redis.clients.jedis.Jedis;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -123,8 +126,9 @@ public class GraphUtil {
 
     public static HashSet<Edge> getAllEdges(PartialJavaCallGraph result, HashMap<Integer, GraphNode> nodes, String artifact) {
         HashSet<Edge> set = new HashSet<>();
-        jedis.auth("ljystu");
-        Map<String, String> redisMap = jedis.hgetAll("keys");
+//        jedis.auth("ljystu");
+        Map<String, String> redisMap = readFromFile();
+//                jedis.hgetAll("keys");
         for (Map.Entry<IntIntPair, Map<Object, Object>> map : result.getGraph().getCallSites().entrySet()) {
             IntIntPair key = map.getKey();
 
@@ -148,5 +152,21 @@ public class GraphUtil {
         }
         jedis.close();
         return set;
+    }
+
+
+    public static Map<String, String> readFromFile() {
+        Map<String, String> map = new HashMap<>();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("/Users/ljystu/Desktop/projects/redisKeys.txt"));
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] split = line.split(" ");
+                map.put(split[0], split[1]);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return map;
     }
 }

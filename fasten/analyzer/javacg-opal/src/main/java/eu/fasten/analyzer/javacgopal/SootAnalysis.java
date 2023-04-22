@@ -6,6 +6,8 @@ import eu.fasten.analyzer.javacgopal.Util.GraphUtil;
 import eu.fasten.analyzer.javacgopal.Util.MongodbUtil;
 import eu.fasten.analyzer.javacgopal.entity.GraphNode;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.ScanParams;
+import redis.clients.jedis.ScanResult;
 import soot.PackManager;
 import soot.Scene;
 import soot.SootMethod;
@@ -14,8 +16,9 @@ import soot.jimple.toolkits.callgraph.CallGraph;
 import soot.jimple.toolkits.callgraph.Edge;
 import soot.options.Options;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
@@ -24,10 +27,10 @@ import java.util.*;
  */
 public class SootAnalysis {
 
-    static Jedis jedis = new Jedis(Constants.MONGO_ADDRESS);
+    static Jedis jedis = new Jedis("localhost");
 
     public static void main(String[] args) {
-        jedis.auth("ljystu");
+//        jedis.auth("ljystu");
 
         String prefix = args[0];
         String dependencyCoordinate = args[1];
@@ -44,13 +47,13 @@ public class SootAnalysis {
         CallGraph callGraph = Scene.v().getCallGraph();
 
         // Convert the Call Graph to JSON
-        String json = callGraphToJson(callGraph, prefix);
-
-        try (FileWriter file = new FileWriter(outputPath)) {
-            file.write(json);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        String json = callGraphToJson(callGraph, prefix);
+//
+//        try (FileWriter file = new FileWriter(outputPath)) {
+//            file.write(json);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         callGraphToMongo(callGraph, prefix, dependencyCoordinate);
 
@@ -110,7 +113,10 @@ public class SootAnalysis {
     private static void callGraphToMongo(CallGraph callGraph, String prefix, String dependencyCoordinate) {
         HashSet<eu.fasten.analyzer.javacgopal.entity.Edge> edges = new HashSet<>();
 
-        Map<String, String> redisMap = jedis.hgetAll("keys");
+        Map<String, String> redisMap = readFromFile();
+//                new HashMap<>();
+////                getRedisMap();
+//                jedis.hgetAll("keys");
         for (Iterator<Edge> it = callGraph.iterator(); it.hasNext(); ) {
             Edge edge = it.next();
             SootMethod src = edge.src();
@@ -142,19 +148,36 @@ public class SootAnalysis {
                 String srcPackage = src.getDeclaringClass().getPackageName();
 
                 if (!redisMap.containsKey(srcPackage)) {
+//                    String srcCoordinate = jedis.hget("keys", srcPackage);
+//                    if (srcCoordinate == null) {
+//                        srcCoordinate = "not found";
+//                    }
+//                    redisMap.put(srcPackage, srcCoordinate);
                     redisMap.put(srcPackage, "not found");
                 }
-                GraphNode fromNode = new GraphNode(srcPackage, src.getDeclaringClass().getName(), src.getName(), tgtParams.toString(), srcTypeTransform,
+                String srcClassName = src.getDeclaringClass().getName();
+                if (srcClassName.contains(".")) {
+                    srcClassName = srcClassName.substring(srcClassName.lastIndexOf(".") + 1);
+                }
+                GraphNode fromNode = new GraphNode(srcPackage, srcClassName, src.getName(), tgtParams.toString(), srcTypeTransform,
                         redisMap.get(srcPackage));
 
 
                 String tgtPackage = tgt.getDeclaringClass().getPackageName();
 
                 if (!redisMap.containsKey(tgtPackage)) {
+//                    String tgtCoordinate = jedis.hget("keys", tgtPackage);
+//                    if (tgtCoordinate == null) {
+//                        tgtCoordinate = "not found";
+//                    }
+//                    redisMap.put(tgtPackage, tgtCoordinate);
                     redisMap.put(tgtPackage, "not found");
                 }
-
-                GraphNode toNode = new GraphNode(tgtPackage, tgt.getDeclaringClass().getName(), tgt.getName(),
+                String tgtClassName = tgt.getDeclaringClass().getName();
+                if (tgtClassName.contains(".")) {
+                    tgtClassName = tgtClassName.substring(tgtClassName.lastIndexOf(".") + 1);
+                }
+                GraphNode toNode = new GraphNode(tgtPackage, tgtClassName, tgt.getName(),
                         tgtParams.toString(), tgtTypeTransform, redisMap.get(tgtPackage));
 
                 edges.add(new eu.fasten.analyzer.javacgopal.entity.Edge(fromNode, toNode));
@@ -163,5 +186,35 @@ public class SootAnalysis {
 
         MongodbUtil.uploadEdges(edges, dependencyCoordinate);
 
+    }
+
+    public static Map<String, String> getRedisMap() {
+        Map<String, String> map = new HashMap<>();
+        ScanParams params = new ScanParams().match("*");
+        String cursor = "0";
+        do {
+            ScanResult<Map.Entry<String, String>> scanResult = jedis.hscan("keys", cursor, params);
+            List<Map.Entry<String, String>> entries = scanResult.getResult();
+            for (Map.Entry<String, String> entry : entries) {
+                map.put(entry.getKey(), entry.getValue());
+            }
+            cursor = scanResult.getStringCursor();
+        } while (!"0".equals(cursor));
+        return map;
+    }
+
+    public static Map<String, String> readFromFile() {
+        Map<String, String> map = new HashMap<>();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("/Users/ljystu/Desktop/projects/redisKeys.txt"));
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] split = line.split(" ");
+                map.put(split[0], split[1]);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return map;
     }
 }
