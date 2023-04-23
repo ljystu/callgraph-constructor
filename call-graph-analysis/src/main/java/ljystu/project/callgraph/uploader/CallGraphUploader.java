@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import static ljystu.project.callgraph.utils.PackageUtil.packageToCoordMap;
 
@@ -205,6 +206,11 @@ public class CallGraphUploader {
     }
 
     private void getFullCoordinates(Node nodeFrom, Map<String, String> packageToCoordMap) {
+        Pattern pattern = Pattern.compile("^(java|javax|jdk|sun|com\\.sun|org\\.w3c|org\\.xml|org\\.ietf|org\\.omg|org\\.jcp).*");
+        if (pattern.matcher(nodeFrom.getPackageName()).matches()) {
+            nodeFrom.setCoordinate("java_rt");
+            return;
+        }
 
         String nodeFromMavenCoord = packageToCoordMap.get(nodeFrom.getPackageName());
 //        if (nodeFromMavenCoord == null) {

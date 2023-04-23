@@ -166,7 +166,7 @@ public class MongodbUtil {
 
             Document existingDocument = existingDocumentsMap.get(generateKey(startNode, endNode));
 
-            String type = "static";
+            String type = "dynamic";
             if (existingDocument != null) {
                 // 已经存在具有相同startNode和endNode，但具有不同type的文档，更新type为both
                 Bson filter = Filters.eq("_id", existingDocument.getObjectId("_id"));
@@ -199,7 +199,7 @@ public class MongodbUtil {
     private static Map<String, Document> queryExistingDocuments(MongoCollection<Document> collection) {
         int pageSize = 1000;
         int currentPage = 0;
-        Bson filter = Filters.ne("type", "static");
+        Bson filter = Filters.ne("type", "dynamic");
         Map<String, Document> existingDocumentsMap = new HashMap<>();
 
         long totalCount = collection.countDocuments(filter);
