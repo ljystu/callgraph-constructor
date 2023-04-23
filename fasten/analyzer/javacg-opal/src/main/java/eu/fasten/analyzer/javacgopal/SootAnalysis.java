@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author ljystu
@@ -122,6 +123,10 @@ public class SootAnalysis {
             SootMethod src = edge.src();
             SootMethod tgt = edge.tgt();
 
+            Pattern pattern = Pattern.compile("^(java|javax|jdk|sun|com\\.sun|org\\.w3c|org\\.xml|org\\.ietf|org\\.omg|org\\.jcp).*");
+            if (pattern.matcher(src.getDeclaringClass().getPackageName()).matches() || pattern.matcher(tgt.getDeclaringClass().getPackageName()).matches()) {
+                continue;
+            }
             if (src.getDeclaringClass().getPackageName().startsWith(prefix) || tgt.getDeclaringClass().getPackageName().startsWith(prefix)) {
                 StringBuilder srcParams = new StringBuilder();
                 for (Type type : src.getParameterTypes()) {
