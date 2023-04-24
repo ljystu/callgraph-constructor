@@ -10,10 +10,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.Map;
@@ -169,7 +166,7 @@ public class CallGraphUploader {
                 } catch (Exception e) {
                     continue;
                 }
-                if (edge == null) {
+                if (edge == null || edges.contains(edge)) {
                     continue;
                 }
 
@@ -194,7 +191,8 @@ public class CallGraphUploader {
                 }
 
             }
-
+            System.out.println("edges size: " + edges.size());
+            clearFile(label + ".log");
             MongodbUtil.uploadEdges(edges, dependencyCoordinate);
 
 
@@ -202,6 +200,16 @@ public class CallGraphUploader {
             throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static void clearFile(String filename) {
+        try {
+            FileWriter fw = new FileWriter(filename, false);
+            fw.write("");
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
