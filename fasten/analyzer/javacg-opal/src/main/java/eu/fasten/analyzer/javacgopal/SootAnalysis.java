@@ -191,7 +191,7 @@ public class SootAnalysis {
             }
         }
 
-        MongodbUtil.uploadEdges(edges, "hahahahhaha");
+        MongodbUtil.uploadEdges(edges, dependencyCoordinate);
 
     }
 
