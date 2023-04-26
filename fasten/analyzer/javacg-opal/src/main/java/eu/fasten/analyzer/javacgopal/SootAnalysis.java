@@ -28,10 +28,10 @@ import java.util.regex.Pattern;
  */
 public class SootAnalysis {
 
-    static Jedis jedis = new Jedis("localhost");
+    static Jedis jedis = new Jedis(Constants.MONGO_ADDRESS);
 
     public static void main(String[] args) {
-//        jedis.auth("ljystu");
+        jedis.auth("ljystu");
 
         String prefix = args[0];
         String dependencyCoordinate = args[1];
@@ -114,10 +114,12 @@ public class SootAnalysis {
     private static void callGraphToMongo(CallGraph callGraph, String prefix, String dependencyCoordinate) {
         HashSet<eu.fasten.analyzer.javacgopal.entity.Edge> edges = new HashSet<>();
 
-        Map<String, String> redisMap = readFromFile();
+        String dependencyWithoutVersion = dependencyCoordinate.substring(0, dependencyCoordinate.lastIndexOf(":"));
+        Map<String, String> redisMap =
+//                readFromFile();
 //                new HashMap<>();
 ////                getRedisMap();
-//                jedis.hgetAll("keys");
+                jedis.hgetAll(dependencyWithoutVersion);
         for (Iterator<Edge> it = callGraph.iterator(); it.hasNext(); ) {
             Edge edge = it.next();
             SootMethod src = edge.src();
@@ -189,7 +191,7 @@ public class SootAnalysis {
             }
         }
 
-        MongodbUtil.uploadEdges(edges, dependencyCoordinate);
+        MongodbUtil.uploadEdges(edges, "hahahahhaha");
 
     }
 

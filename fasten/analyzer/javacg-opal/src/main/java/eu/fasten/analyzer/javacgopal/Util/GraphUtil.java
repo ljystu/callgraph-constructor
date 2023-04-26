@@ -42,18 +42,19 @@ public class GraphUtil {
                     graphNode.setMethodName(signature.substring(0, signature.indexOf("(")));
                     signature = signature.replace("/", ".");
 
-                    String substring = signature.substring(signature.indexOf("("), signature.indexOf(")") + 1);
+                    String substring = signature.substring(signature.indexOf("(") + 1, signature.indexOf(")"));
                     String[] param = substring.split(",");
                     StringBuilder str = new StringBuilder();
-                    if (param.length != 1) {
-                        for (int i = 1; i < param.length - 1; i++) {
+                    if (param.length > 0) {
+                        for (int i = 0; i < param.length; i++) {
+                            if (param[i].length() == 0) break;
                             String paramType = param[i].substring(1);
                             paramType = typeTransform(paramType);
                             str.append(paramType).append(",");
                         }
-                        str.append(param[param.length - 1], 1, param[param.length - 1].length() - 1);
+                        if (str.length() > 0)
+                            str.setLength(str.length() - 1);
                     }
-
 
                     graphNode.setParams(str.toString());
                     String returnType = signature.substring(signature.indexOf(")") + 2);
@@ -70,65 +71,98 @@ public class GraphUtil {
     }
 
     public static String typeTransform(String type) {
-        if (type.equals("java.lang.BooleanType[]")) {
-            type = "boolean[]";
+        if (type.startsWith("[")) {
+            int arrayDimension = 0;
+            while (type.startsWith("[")) {
+                arrayDimension++;
+                type = type.substring(1);
+            }
+
+            String fullQualifiedType;
+            switch (type) {
+                case "B":
+                    fullQualifiedType = "byte";
+                    break;
+                case "C":
+                    fullQualifiedType = "char";
+                    break;
+                case "D":
+                    fullQualifiedType = "double";
+                    break;
+                case "F":
+                    fullQualifiedType = "float";
+                    break;
+                case "I":
+                    fullQualifiedType = "int";
+                    break;
+                case "J":
+                    fullQualifiedType = "long";
+                    break;
+                case "S":
+                    fullQualifiedType = "short";
+                    break;
+                case "Z":
+                    fullQualifiedType = "boolean";
+                    break;
+                default:
+                    fullQualifiedType = type.substring(1, type.length() - 1); // Remove 'L' and ';'
+            }
+
+            for (int i = 0; i < arrayDimension; i++) {
+                fullQualifiedType += "[]";
+            }
+            return fullQualifiedType;
         }
-        if (type.equals("java.lang.IntegerType[]")) {
-            type = "int[]";
+
+        switch (type) {
+            case "java.lang.BooleanType":
+                return "boolean";
+            case "java.lang.VoidType":
+                return "void";
+            case "java.lang.IntegerType":
+                return "int";
+            case "java.lang.LongType":
+                return "long";
+            case "java.lang.FloatType":
+                return "float";
+            case "java.lang.DoubleType":
+                return "double";
+            case "java.lang.ByteType":
+                return "byte";
+            case "java.lang.ShortType":
+                return "short";
+            case "java.lang.CharacterType":
+                return "char";
+            case "java.lang.BooleanType[]":
+                return "boolean[]";
+            case "java.lang.VoidType[]":
+                return "void[]";
+            case "java.lang.IntegerType[]":
+                return "int[]";
+            case "java.lang.LongType[]":
+                return "long[]";
+            case "java.lang.FloatType[]":
+                return "float[]";
+            case "java.lang.DoubleType[]":
+                return "double[]";
+            case "java.lang.ByteType[]":
+                return "byte[]";
+            case "java.lang.ShortType[]":
+                return "short[]";
+            case "java.lang.CharacterType[]":
+                return "char[]";
+            default:
+                return type;
         }
-        if (type.equals("java.lang.LongType[]")) {
-            type = "long[]";
-        }
-        if (type.equals("java.lang.FloatType[]")) {
-            type = "float[]";
-        }
-        if (type.equals("java.lang.DoubleType[]")) {
-            type = "double[]";
-        }
-        if (type.equals("java.lang.ByteType[]")) {
-            type = "byte[]";
-        }
-        if (type.equals("java.lang.ShortType[]")) {
-            type = "short[]";
-        }
-        if (type.equals("java.lang.CharacterType[]")) {
-            type = "char[]";
-        }
-        if (type.equals("java.lang.BooleanType")) {
-            type = "boolean";
-        }
-        if (type.equals("java.lang.VoidType")) {
-            type = "void";
-        }
-        if ("java.lang.IntegerType".equals(type)) {
-            type = "int";
-        }
-        if (type.equals("java.lang.LongType")) {
-            type = "long";
-        }
-        if (type.equals("java.lang.FloatType")) {
-            type = "float";
-        }
-        if (type.equals("java.lang.DoubleType")) {
-            type = "double";
-        }
-        if (type.equals("java.lang.ByteType")) {
-            type = "byte";
-        }
-        if (type.equals("java.lang.ShortType")) {
-            type = "short";
-        }
-        if (type.equals("java.lang.CharacterType")) {
-            type = "char";
-        }
-        return type;
     }
 
     public static HashSet<Edge> getAllEdges(PartialJavaCallGraph result, HashMap<Integer, GraphNode> nodes, String artifact) {
         HashSet<Edge> set = new HashSet<>();
-//        jedis.auth("ljystu");
-        Map<String, String> redisMap = readFromFile();
-//                jedis.hgetAll("keys");
+        jedis.auth("ljystu");
+        String dependencyWithoutVersion = artifact.substring(0, artifact.lastIndexOf(":"));
+        Map<String, String> redisMap =
+//                readFromFile();
+                jedis.hgetAll(dependencyWithoutVersion);
         for (Map.Entry<IntIntPair, Map<Object, Object>> map : result.getGraph().getCallSites().entrySet()) {
             IntIntPair key = map.getKey();
 

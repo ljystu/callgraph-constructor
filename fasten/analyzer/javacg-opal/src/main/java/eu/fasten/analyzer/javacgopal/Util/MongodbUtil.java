@@ -57,7 +57,7 @@ public class MongodbUtil {
             return;
         }
 
-        artifact = artifact.substring(0, artifact.lastIndexOf(":"));
+//        artifact = artifact.substring(0, artifact.lastIndexOf(":"));
         MongoDatabase database = mongo.getDatabase("mydatabase");
 
         MongoCollection<Document> collection = database.getCollection(artifact);
