@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class GraphUtil {
     static Jedis jedis = new Jedis(Constants.MONGO_ADDRESS);
@@ -168,12 +169,18 @@ public class GraphUtil {
 
             GraphNode nodeFrom = nodes.get(key.leftInt());
 
+            GraphNode nodeTo = nodes.get(key.rightInt());
+
+            Pattern pattern = Pattern.compile("^(java|javax|jdk|sun|com\\.sun|org\\.w3c|org\\.xml|org\\.ietf|org\\.omg|org\\.jcp).*");
+            if (pattern.matcher(nodeFrom.getPackageName()).matches() || pattern.matcher(nodeTo.getPackageName()).matches()) {
+                continue;
+            }
+
             if (!redisMap.containsKey(nodeFrom.getPackageName())) {
                 redisMap.put(nodeFrom.getPackageName(), "not found");
             }
             nodeFrom.setCoordinate(redisMap.get(nodeFrom.getPackageName()));
 
-            GraphNode nodeTo = nodes.get(key.rightInt());
 
             if (!redisMap.containsKey(nodeTo.getPackageName())) {
                 redisMap.put(nodeTo.getPackageName(), "not found");

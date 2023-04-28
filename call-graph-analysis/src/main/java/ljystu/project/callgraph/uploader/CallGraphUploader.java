@@ -173,6 +173,9 @@ public class CallGraphUploader {
                 Node nodeFrom = edge.getFrom();
                 Node nodeTo = edge.getTo();
 
+                nodeTypeTransform(nodeFrom);
+                nodeTypeTransform(nodeTo);
+
                 getFullCoordinates(nodeFrom, packageToCoordMap);
                 getFullCoordinates(nodeTo, packageToCoordMap);
 
@@ -192,7 +195,7 @@ public class CallGraphUploader {
 
             }
             System.out.println("edges size: " + edges.size());
-            clearFile(label + ".log");
+//            clearFile(label + ".log");
             MongodbUtil.uploadEdges(edges, dependencyCoordinate);
 
 
@@ -221,12 +224,114 @@ public class CallGraphUploader {
         }
 
         String nodeFromMavenCoord = packageToCoordMap.get(nodeFrom.getPackageName());
-//        if (nodeFromMavenCoord == null) {
-//            nodeFromMavenCoord = jedisPool.getResource().get(nodeFrom.getPackageName());
-////                    jedis.get(nodeFrom.getPackageName());
-//        }
+
         nodeFrom.setCoordinate(nodeFromMavenCoord);
 
     }
 
+
+    public static void nodeTypeTransform(Node node) {
+        String[] param = node.getParams().split(",");
+        StringBuilder str = new StringBuilder();
+        if (param.length > 0) {
+            for (int i = 0; i < param.length; i++) {
+                if (param[i].length() == 0) break;
+                String paramType = param[i];
+//                        .substring(1);
+                paramType = typeTransform(paramType);
+                str.append(paramType).append(",");
+            }
+            if (str.length() > 0)
+                str.setLength(str.length() - 1);
+        }
+        node.setParams(str.toString());
+        node.setReturnType(typeTransform(node.getReturnType()));
+    }
+
+    public static String typeTransform(String type) {
+        if (type.startsWith("[")) {
+            int arrayDimension = 0;
+            while (type.startsWith("[")) {
+                arrayDimension++;
+                type = type.substring(1);
+            }
+
+            String fullQualifiedType;
+            switch (type) {
+                case "B":
+                    fullQualifiedType = "byte";
+                    break;
+                case "C":
+                    fullQualifiedType = "char";
+                    break;
+                case "D":
+                    fullQualifiedType = "double";
+                    break;
+                case "F":
+                    fullQualifiedType = "float";
+                    break;
+                case "I":
+                    fullQualifiedType = "int";
+                    break;
+                case "J":
+                    fullQualifiedType = "long";
+                    break;
+                case "S":
+                    fullQualifiedType = "short";
+                    break;
+                case "Z":
+                    fullQualifiedType = "boolean";
+                    break;
+                default:
+                    // Remove 'L' and ';'
+                    fullQualifiedType = type.substring(1, type.length() - 1);
+            }
+
+            for (int i = 0; i < arrayDimension; i++) {
+                fullQualifiedType += "[]";
+            }
+            return fullQualifiedType;
+        }
+
+        switch (type) {
+            case "java.lang.BooleanType":
+                return "boolean";
+            case "java.lang.VoidType":
+                return "void";
+            case "java.lang.IntegerType":
+                return "int";
+            case "java.lang.LongType":
+                return "long";
+            case "java.lang.FloatType":
+                return "float";
+            case "java.lang.DoubleType":
+                return "double";
+            case "java.lang.ByteType":
+                return "byte";
+            case "java.lang.ShortType":
+                return "short";
+            case "java.lang.CharacterType":
+                return "char";
+            case "java.lang.BooleanType[]":
+                return "boolean[]";
+            case "java.lang.VoidType[]":
+                return "void[]";
+            case "java.lang.IntegerType[]":
+                return "int[]";
+            case "java.lang.LongType[]":
+                return "long[]";
+            case "java.lang.FloatType[]":
+                return "float[]";
+            case "java.lang.DoubleType[]":
+                return "double[]";
+            case "java.lang.ByteType[]":
+                return "byte[]";
+            case "java.lang.ShortType[]":
+                return "short[]";
+            case "java.lang.CharacterType[]":
+                return "char[]";
+            default:
+                return type;
+        }
+    }
 }

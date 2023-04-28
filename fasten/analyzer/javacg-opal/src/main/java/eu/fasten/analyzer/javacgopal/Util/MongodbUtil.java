@@ -153,9 +153,13 @@ public class MongodbUtil {
         return startNode.get("packageName") + "-" +
                 startNode.get("className") + "-" +
                 startNode.get("methodName") + "-" +
+                startNode.get("params") + "-" +
+                startNode.get("returnType") + "-" +
                 endNode.get("packageName") + "-" +
                 endNode.get("className") + "-" +
-                endNode.get("methodName");
+                endNode.get("methodName") + "-" +
+                endNode.get("params") + "-" +
+                endNode.get("returnType");
     }
 
     private static Map<String, Document> queryExistingDocuments(MongoCollection<Document> collection) {

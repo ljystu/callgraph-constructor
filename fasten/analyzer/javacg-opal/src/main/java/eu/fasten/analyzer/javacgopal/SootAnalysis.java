@@ -115,84 +115,54 @@ public class SootAnalysis {
         HashSet<eu.fasten.analyzer.javacgopal.entity.Edge> edges = new HashSet<>();
 
         String dependencyWithoutVersion = dependencyCoordinate.substring(0, dependencyCoordinate.lastIndexOf(":"));
-        Map<String, String> redisMap =
+        Map<String, String> packageToCoordinateMap =
 //                readFromFile();
 //                new HashMap<>();
 ////                getRedisMap();
                 jedis.hgetAll(dependencyWithoutVersion);
         for (Iterator<Edge> it = callGraph.iterator(); it.hasNext(); ) {
             Edge edge = it.next();
-            SootMethod src = edge.src();
-            SootMethod tgt = edge.tgt();
+            SootMethod srcMethod = edge.src();
+            SootMethod tgtMethod = edge.tgt();
 
             Pattern pattern = Pattern.compile("^(java|javax|jdk|sun|com\\.sun|org\\.w3c|org\\.xml|org\\.ietf|org\\.omg|org\\.jcp).*");
-            if (pattern.matcher(src.getDeclaringClass().getPackageName()).matches() || pattern.matcher(tgt.getDeclaringClass().getPackageName()).matches()) {
+            if (pattern.matcher(srcMethod.getDeclaringClass().getPackageName()).matches() || pattern.matcher(tgtMethod.getDeclaringClass().getPackageName()).matches()) {
                 continue;
             }
-            if (src.getDeclaringClass().getPackageName().startsWith(prefix) || tgt.getDeclaringClass().getPackageName().startsWith(prefix)) {
-                StringBuilder srcParams = new StringBuilder();
-                for (Type type : src.getParameterTypes()) {
-                    String typeTransform = GraphUtil.typeTransform(type.toString());
-                    srcParams.append(typeTransform).append(",");
-                }
-
-                if (srcParams.length() > 0) {
-                    srcParams.deleteCharAt(srcParams.length() - 1);
-                }
-
-                StringBuilder tgtParams = new StringBuilder();
-                for (Type type : src.getParameterTypes()) {
-                    String typeTransform = GraphUtil.typeTransform(type.toString());
-                    tgtParams.append(typeTransform).append(",");
-                }
-                if (tgtParams.length() > 0) {
-                    tgtParams.deleteCharAt(tgtParams.length() - 1);
-                }
-
-                String srcTypeTransform = GraphUtil.typeTransform(tgt.getReturnType().toString());
-                String tgtTypeTransform = GraphUtil.typeTransform(tgt.getReturnType().toString());
-
-                String srcPackage = src.getDeclaringClass().getPackageName();
-
-                if (!redisMap.containsKey(srcPackage)) {
-//                    String srcCoordinate = jedis.hget("keys", srcPackage);
-//                    if (srcCoordinate == null) {
-//                        srcCoordinate = "not found";
-//                    }
-//                    redisMap.put(srcPackage, srcCoordinate);
-                    redisMap.put(srcPackage, "not found");
-                }
-                String srcClassName = src.getDeclaringClass().getName();
-                if (srcClassName.contains(".")) {
-                    srcClassName = srcClassName.substring(srcClassName.lastIndexOf(".") + 1);
-                }
-                GraphNode fromNode = new GraphNode(srcPackage, srcClassName, src.getName(), tgtParams.toString(), srcTypeTransform,
-                        redisMap.get(srcPackage));
-
-
-                String tgtPackage = tgt.getDeclaringClass().getPackageName();
-
-                if (!redisMap.containsKey(tgtPackage)) {
-//                    String tgtCoordinate = jedis.hget("keys", tgtPackage);
-//                    if (tgtCoordinate == null) {
-//                        tgtCoordinate = "not found";
-//                    }
-//                    redisMap.put(tgtPackage, tgtCoordinate);
-                    redisMap.put(tgtPackage, "not found");
-                }
-                String tgtClassName = tgt.getDeclaringClass().getName();
-                if (tgtClassName.contains(".")) {
-                    tgtClassName = tgtClassName.substring(tgtClassName.lastIndexOf(".") + 1);
-                }
-                GraphNode toNode = new GraphNode(tgtPackage, tgtClassName, tgt.getName(),
-                        tgtParams.toString(), tgtTypeTransform, redisMap.get(tgtPackage));
-
-                edges.add(new eu.fasten.analyzer.javacgopal.entity.Edge(fromNode, toNode));
+            if (srcMethod.getDeclaringClass().getPackageName().startsWith(prefix) || tgtMethod.getDeclaringClass().getPackageName().startsWith(prefix)) {
+                edges.add(new eu.fasten.analyzer.javacgopal.entity.Edge(buildNode(packageToCoordinateMap, srcMethod), buildNode(packageToCoordinateMap, tgtMethod)));
             }
         }
 
         MongodbUtil.uploadEdges(edges, dependencyCoordinate);
 
+    }
+
+    private static GraphNode buildNode(Map<String, String> redisMap, SootMethod method) {
+        //params
+        StringBuilder tgtParams = new StringBuilder();
+        for (Type type : method.getParameterTypes()) {
+            String typeTransform = GraphUtil.typeTransform(type.toString());
+            tgtParams.append(typeTransform).append(",");
+        }
+        if (tgtParams.length() > 0) {
+            tgtParams.deleteCharAt(tgtParams.length() - 1);
+        }
+
+        String tgtTypeTransform = GraphUtil.typeTransform(method.getReturnType().toString());
+
+        String tgtPackage = method.getDeclaringClass().getPackageName();
+
+        //coordinate
+        if (!redisMap.containsKey(tgtPackage)) {
+            redisMap.put(tgtPackage, "not found");
+        }
+        String tgtClassName = method.getDeclaringClass().getName();
+        if (tgtClassName.contains(".")) {
+            tgtClassName = tgtClassName.substring(tgtClassName.lastIndexOf(".") + 1);
+        }
+        return new GraphNode(tgtPackage, tgtClassName, method.getName(),
+                tgtParams.toString(), tgtTypeTransform, redisMap.get(tgtPackage));
     }
 
     public static Map<String, String> getRedisMap() {
