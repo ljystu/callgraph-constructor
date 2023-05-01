@@ -195,7 +195,7 @@ public class CallGraphUploader {
 
             }
             System.out.println("edges size: " + edges.size());
-//            clearFile(label + ".log");
+            clearFile(label + ".log");
             MongodbUtil.uploadEdges(edges, dependencyCoordinate);
 
 

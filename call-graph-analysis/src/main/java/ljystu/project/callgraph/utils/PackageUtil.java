@@ -152,9 +152,9 @@ public class PackageUtil {
                 e.printStackTrace();
             }
         }
-//        for (File jarFile : jarFiles) {
-//            ProjectUtil.deleteFile(jarFile);
-//        }
+        for (File jarFile : jarFiles) {
+            ProjectUtil.deleteFile(jarFile);
+        }
         return inclPackages;
     }
 
