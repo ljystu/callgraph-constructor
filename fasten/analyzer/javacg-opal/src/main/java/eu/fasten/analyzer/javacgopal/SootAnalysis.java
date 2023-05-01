@@ -115,11 +115,17 @@ public class SootAnalysis {
         HashSet<eu.fasten.analyzer.javacgopal.entity.Edge> edges = new HashSet<>();
 
         String dependencyWithoutVersion = dependencyCoordinate.substring(0, dependencyCoordinate.lastIndexOf(":"));
+
         Map<String, String> packageToCoordinateMap =
 //                readFromFile();
 //                new HashMap<>();
 ////                getRedisMap();
-                jedis.hgetAll(dependencyWithoutVersion);
+                jedis.hgetAll(dependencyCoordinate);
+        for (Map.Entry<String, String> map : packageToCoordinateMap.entrySet()) {
+            if (map.getValue().startsWith(dependencyWithoutVersion)) {
+                map.setValue(dependencyCoordinate);
+            }
+        }
         for (Iterator<Edge> it = callGraph.iterator(); it.hasNext(); ) {
             Edge edge = it.next();
             SootMethod srcMethod = edge.src();

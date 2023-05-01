@@ -65,6 +65,8 @@ public class Main implements Runnable {
     @CommandLine.Option(names = {"-r"}, paramLabel = "REPOS", description = "Maven repositories", split = ",")
     List<String> repos;
 
+    @CommandLine.Option(names = {"-x"}, paramLabel = "VERSION", description = "Artifact, Maven coordinate version")
+    String dependencyVersion;
     @CommandLine.Option(names = {"-a",
             "--artifact"}, paramLabel = "ARTIFACT", description = "Artifact, Maven coordinate or file path")
     String artifact;
@@ -277,12 +279,14 @@ public class Main implements Runnable {
             return;
         }
         HashMap<Integer, GraphNode> nodes = GraphUtil.getNodes(result);
-        HashSet<Edge> allEdges = GraphUtil.getAllEdges(result, nodes, artifact);
+        HashSet<Edge> allEdges = GraphUtil.getAllEdges(result, nodes, artifact, dependencyVersion);
+        System.out.println("edge number = " + allEdges.size());
 //        Neo4jOp neo4jOp = new Neo4jOp("bolt://localhost:7687", "neo4j", "ljystuneo");
 //        neo4jOp.uploadMethodNodes(nodesList);
 //
 //        neo4jOp.uploadEdges(allEdges, "static", artifact);
-        MongodbUtil.uploadEdges(allEdges, artifact);
+        String dependency = artifact.substring(0, artifact.lastIndexOf(":")) + ":" + dependencyVersion;
+        MongodbUtil.uploadEdges(allEdges, dependency);
 
 //        neo4jOp.close();
 

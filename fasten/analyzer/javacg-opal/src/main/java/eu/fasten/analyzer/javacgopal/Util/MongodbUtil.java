@@ -57,16 +57,18 @@ public class MongodbUtil {
             return;
         }
 
-        artifact = artifact.substring(0, artifact.lastIndexOf(":"));
+//        artifact = artifact.substring(0, artifact.lastIndexOf(":"));
         MongoDatabase database = mongo.getDatabase("mydatabase");
 
         MongoCollection<Document> collection = database.getCollection(artifact);
 
         collection.createIndex(Indexes.compoundIndex(
                 Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className")
-                , Indexes.ascending("startNode.methodName"), Indexes.ascending("startNode.params"), Indexes.ascending("startNode.returnType")
+                , Indexes.ascending("startNode.methodName"), Indexes.ascending("startNode.params"), Indexes.ascending("startNode.returnType"),
+                Indexes.ascending("startNode.coordinate")
                 , Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className")
                 , Indexes.ascending("endNode.methodName"), Indexes.ascending("endNode.params"), Indexes.ascending("endNode.returnType")
+                , Indexes.ascending("endNode.coordinate")
         ), new IndexOptions().unique(true));
 
         Pattern excludedPattern = null;
@@ -155,11 +157,13 @@ public class MongodbUtil {
                 startNode.get("methodName") + "-" +
                 startNode.get("params") + "-" +
                 startNode.get("returnType") + "-" +
+                startNode.get("coordinate") + "-" +
                 endNode.get("packageName") + "-" +
                 endNode.get("className") + "-" +
                 endNode.get("methodName") + "-" +
                 endNode.get("params") + "-" +
-                endNode.get("returnType");
+                endNode.get("returnType")
+                + "-" + endNode.get("coordinate");
     }
 
     private static Map<String, Document> queryExistingDocuments(MongoCollection<Document> collection) {

@@ -157,13 +157,19 @@ public class GraphUtil {
         }
     }
 
-    public static HashSet<Edge> getAllEdges(PartialJavaCallGraph result, HashMap<Integer, GraphNode> nodes, String artifact) {
+    public static HashSet<Edge> getAllEdges(PartialJavaCallGraph result, HashMap<Integer, GraphNode> nodes, String artifact, String version) {
         HashSet<Edge> set = new HashSet<>();
         jedis.auth("ljystu");
         String dependencyWithoutVersion = artifact.substring(0, artifact.lastIndexOf(":"));
+        String dependencyWithVersion = dependencyWithoutVersion + ":" + version;
         Map<String, String> redisMap =
 //                readFromFile();
-                jedis.hgetAll(dependencyWithoutVersion);
+                jedis.hgetAll(dependencyWithVersion);
+        for (Map.Entry<String, String> map : redisMap.entrySet()) {
+            if (map.getValue().startsWith(dependencyWithoutVersion)) {
+                map.setValue(dependencyWithVersion);
+            }
+        }
         for (Map.Entry<IntIntPair, Map<Object, Object>> map : result.getGraph().getCallSites().entrySet()) {
             IntIntPair key = map.getKey();
 
