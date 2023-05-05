@@ -153,10 +153,16 @@ public class CallGraphUploader {
     private void uploadFromFile(String label, Map<String, String> packageToCoordMap, String dependencyCoordinate) {
 
         HashSet<Edge> edges = new HashSet<>();
-        Map<String, String> redisMap = jedisPool.getResource().hgetAll("keys");
-        packageToCoordMap.putAll(redisMap);
+        Map<String, String> redisMap = jedisPool.getResource().hgetAll(dependencyCoordinate);
+        for (Map.Entry<String, String> entry : redisMap.entrySet()) {
+            if (!packageToCoordMap.containsKey(entry.getKey())) {
+                packageToCoordMap.put(entry.getKey(), entry.getValue());
+            }
+        }
+//        packageToCoordMap.putAll(redisMap);
+        String filePath = dependencyCoordinate + ".log";
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(label + ".log"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
 
@@ -195,12 +201,13 @@ public class CallGraphUploader {
 
             }
             System.out.println("edges size: " + edges.size());
-            clearFile(label + ".log");
+            clearFile(filePath);
             MongodbUtil.uploadEdges(edges, dependencyCoordinate);
 
 
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            System.out.println("File not found: " + filePath);
+//            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

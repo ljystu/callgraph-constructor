@@ -115,7 +115,8 @@ public class PackageUtil {
         String artifactId = coord.split(":")[1];
         packageScan.
 //                append("info=").
-        append(packagePrefix).append("!").append(artifactId);
+        append(packagePrefix).append("!").append(coord);
+//                .append(artifactId);
 //                .append(";");
         return packageScan;
     }
@@ -285,13 +286,13 @@ public class PackageUtil {
     }
 
 
-    public static void uploadCoordToRedis() {
+    public static void uploadCoordToRedis(String dependencyCoordinate) {
         Jedis jedis = new Jedis(Constants.SERVER_IP_ADDRESS);
         jedis.auth(Constants.REDIS_PASSWORD);
 //        for (Map.Entry<String, String> entry : packageToCoordMap.entrySet()) {
 //            jedis.set(entry.getKey(), entry.getValue());
 //        }
-        jedis.hmset("keys", packageToCoordMap);
+        jedis.hmset(dependencyCoordinate, packageToCoordMap);
         jedis.close();
     }
 }

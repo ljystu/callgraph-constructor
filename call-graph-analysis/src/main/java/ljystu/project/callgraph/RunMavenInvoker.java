@@ -2,12 +2,8 @@ package ljystu.project.callgraph;
 
 import ljystu.project.callgraph.analyzer.ProjectAnalyzer;
 import ljystu.project.callgraph.config.Constants;
-import ljystu.project.callgraph.entity.Project;
-import ljystu.project.callgraph.utils.ProjectUtil;
 import picocli.CommandLine;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -21,7 +17,7 @@ public class RunMavenInvoker {
 
     public static void main(String[] args) {
 
-        String filename = args[0];
+        String projectName = args[0];
         Constants.MAVEN_HOME = args[1];
         Constants.JAVAAGENT_HOME = args[2];
         Constants.JAVA_HOME = args[3];
@@ -33,24 +29,20 @@ public class RunMavenInvoker {
         Constants.PACKAGE_PREFIX = args[9];
         Constants.VERSION = args[10];
 
-        List<Project> projects = ProjectUtil.readProjects(filename);
-
-        String version = filename.substring(filename.lastIndexOf(":") + 1, filename.lastIndexOf("."));
-
-        HashMap<String, Integer> projectCount = new HashMap<>();
         // do not pass version here only GroupId:ArtifactId
 
-        for (Project p : projects) {
-            String folderName = Constants.PROJECT_FOLDER + p.getName();
+//        for (Project p : projects) {
+        String folderName = Constants.PROJECT_FOLDER + projectName;
 //                    ProjectUtil.gitDownload(p);
-            if (Objects.equals(folderName, "")) {
-                continue;
-            }
-            ProjectAnalyzer projectAnalyzer = new ProjectAnalyzer(folderName);
-            System.out.println("Analyzing project " + p.getName());
-            projectAnalyzer.analyseProject(p.getName(), projectCount, dependencyCoordinateWithoutVersion, tagPrefix, tagSuffix, version);
-
+        if (Objects.equals(folderName, "")) {
+            System.out.println("Project " + projectName + " not found");
+            return;
         }
+        ProjectAnalyzer projectAnalyzer = new ProjectAnalyzer(folderName);
+        System.out.println("Analyzing project " + projectName);
+        projectAnalyzer.analyseProject(projectName, dependencyCoordinateWithoutVersion);
+
+//        }
 
     }
 }

@@ -93,20 +93,23 @@ public class MongodbUtil {
      *
      * @param allEdges the all edges
      */
-    public static void uploadEdges(HashSet<Edge> allEdges, String dependencyWithoutVersion) {
+    public static void uploadEdges(HashSet<Edge> allEdges, String dependencyCoordinate) {
+        System.out.println("uploading edges to " + dependencyCoordinate);
         if (allEdges.isEmpty()) {
             return;
         }
 
         MongoDatabase database = mongo.getDatabase("mydatabase");
 
-        MongoCollection<Document> collection = database.getCollection(dependencyWithoutVersion);
+        MongoCollection<Document> collection = database.getCollection(dependencyCoordinate);
 
         collection.createIndex(Indexes.compoundIndex(
                 Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className")
-                , Indexes.ascending("startNode.methodName"), Indexes.ascending("startNode.params"), Indexes.ascending("startNode.returnType")
+                , Indexes.ascending("startNode.methodName"), Indexes.ascending("startNode.params"), Indexes.ascending("startNode.returnType"),
+                Indexes.ascending("startNode.coordinate")
                 , Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className")
-                , Indexes.ascending("endNode.methodName"), Indexes.ascending("endNode.params"), Indexes.ascending("endNode.returnType")
+                , Indexes.ascending("endNode.methodName"), Indexes.ascending("endNode.params"), Indexes.ascending("endNode.returnType"),
+                Indexes.ascending("endNode.coordinate")
         ), new IndexOptions().unique(true));
 
         Pattern excludedPattern = Pattern.compile(readExcludedPackages());

@@ -16,7 +16,10 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static ljystu.project.callgraph.analyzer.OutputGenerator.mongoData;
@@ -46,10 +49,9 @@ public class ProjectAnalyzer {
     /**
      * Analyse project hash set.
      *
-     * @param projectCount the project count
      * @return hash set
      */
-    public List<String> analyseProject(String projectName, Map<String, Integer> projectCount, String dependencyCoordinateWithoutVersion, String tagPrefix, String tagSuffix, String version) {
+    public List<String> analyseProject(String projectName, String dependencyCoordinateWithoutVersion) {
 
         //switch tag(maybe need to use commits when there is no tag for smaller projects)
 //        String switchTagCommand = "git for-each-ref refs/tags --sort=-creatordate --format '%(refname:short)' | head ";
@@ -62,38 +64,16 @@ public class ProjectAnalyzer {
         HashMap<String, HashMap<String, Object>> analysisResult = new HashMap<>();
 
         String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
-//        traverse all tags
-//        for (String tag : tagNames) {
-        String tag = tagPrefix + Constants.VERSION;
 
-        //stash all changes in current branch/tag/commit
-//        getOutput(stashCommand, rootPath);
-//
-//        if (!switchTag(tag, rootPath)) {
-//            System.out.println("switch tag failed");
-//
-//        }
-//        }
+        String tag = Constants.VERSION;
+        String version = tag;
 
-//            System.out.println("analy ze tag: " + tag + " start");
-//
-////            //get specific tag name from git command output
-//            if (tag.charAt(tag.length() - 1) == '\'') {
-//                tag = tag.substring(0, tag.length() - 1);
-//            }
-//
-//            //version
-//            tag = tag.substring(tag.indexOf(tagPrefix) + tagPrefix.length(), tag.length() - tagSuffix.length() + 1);
-        tag = Constants.VERSION;
-        version = tag;
-
-//
         File jar = null;
-        String dependencyCoordinates = dependencyCoordinateWithoutVersion + ":" + tag;
+        String dependencyCoordinate = dependencyCoordinateWithoutVersion + ":" + tag;
 
         try {
             //download jar
-            jar = new MavenArtifactDownloader(MavenCoordinate.fromString(dependencyCoordinates, "jar")).downloadArtifact(MavenUtilities.MAVEN_CENTRAL_REPO);
+            jar = new MavenArtifactDownloader(MavenCoordinate.fromString(dependencyCoordinate, "jar")).downloadArtifact(MavenUtilities.MAVEN_CENTRAL_REPO);
             //copy jar to lib
             Path targetDirectory = Paths.get(rootPath);
             Files.copy(jar.toPath(), targetDirectory.resolve(artifactId + "-" + tag + ".jar"));
@@ -115,22 +95,22 @@ public class ProjectAnalyzer {
 
         //map packages to coordinates
         String packageScan = PackageUtil.getPackages(rootPath, artifactId + "-" + version + ".jar",
-                dependencyCoordinateWithoutVersion + ":" + version, Constants.PACKAGE_PREFIX);
+                dependencyCoordinate, Constants.PACKAGE_PREFIX);
 
         //upload package:coordinate to redis
-        PackageUtil.uploadCoordToRedis();
+        PackageUtil.uploadCoordToRedis(dependencyCoordinate);
 
         //javaagent maven test
         HashMap<String, Object> mavenTestWithJavaAgent = mavenTestInvoker.mavenTestWithJavaAgent(packageScan);
 
         //upload call graph to mongodb
         CallGraphUploader callGraphUploader = new CallGraphUploader();
-        callGraphUploader.uploadAll(dependencyCoordinateWithoutVersion, artifactId);
+        callGraphUploader.uploadAll(dependencyCoordinate, artifactId);
 
         // analysis of call graph in mongo
-        analysisResult.put(version, mongoData(dependencyCoordinateWithoutVersion));
+        analysisResult.put(version, mongoData(dependencyCoordinate));
         analysisResult.put("test", mavenTestWithJavaAgent);
-        System.out.println("analyse " + projectName + " finished");
+        System.out.println("analyze " + projectName + " finished");
 //        }
 
 
