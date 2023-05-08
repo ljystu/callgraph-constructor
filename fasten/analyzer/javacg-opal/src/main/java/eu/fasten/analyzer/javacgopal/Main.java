@@ -286,6 +286,7 @@ public class Main implements Runnable {
 //
 //        neo4jOp.uploadEdges(allEdges, "static", artifact);
         String dependency = artifact.substring(0, artifact.lastIndexOf(":")) + ":" + dependencyVersion;
+
         MongodbUtil.uploadEdges(allEdges, dependency);
 
 //        neo4jOp.close();

@@ -114,7 +114,7 @@ public class ProjectAnalyzer {
 //        }
 
 
-        File file = new File(Constants.PROJECT_FOLDER + artifactId + "-" + version + "/" + projectName + ".json");
+        File file = new File(Constants.PROJECT_FOLDER + "outputjson/" + projectName + "/" + artifactId + "-" + version + ".json");
         outputToJson(analysisResult, file);
 
         //delete all files in project folder

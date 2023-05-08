@@ -60,6 +60,7 @@ public class MongodbUtil {
 //        artifact = artifact.substring(0, artifact.lastIndexOf(":"));
         MongoDatabase database = mongo.getDatabase("mydatabase");
 
+        System.out.println("uploading edges to: " + artifact);
         MongoCollection<Document> collection = database.getCollection(artifact);
 
         collection.createIndex(Indexes.compoundIndex(
@@ -91,6 +92,8 @@ public class MongodbUtil {
 
     private static HashSet<WriteModel<Document>> getAllDocuments(HashSet<Edge> allEdges, Pattern excludedPattern, MongoCollection<Document> collection, Map<String, Document> existingDocumentsMap) {
         HashSet<WriteModel<Document>> bulkWrites = new HashSet<>();
+        int updateCount = 0;
+        int insertCount = 0;
         for (Edge edge : allEdges) {
             GraphNode fromNode = edge.getFrom();
             GraphNode toNode = edge.getTo();
@@ -137,6 +140,7 @@ public class MongodbUtil {
 
                 Bson update = new Document("$set", new Document("type", "both"));
                 bulkWrites.add(new UpdateOneModel<>(filter, update));
+                updateCount++;
 
             } else {
                 // 插入新文档
@@ -145,8 +149,11 @@ public class MongodbUtil {
                         .append("type", type);
 
                 bulkWrites.add(new InsertOneModel<>(newDocument));
+                insertCount++;
             }
         }
+        System.out.println("update edges: " + updateCount);
+        System.out.println("insert edges: " + insertCount);
 
         return bulkWrites;
     }
@@ -162,8 +169,8 @@ public class MongodbUtil {
                 endNode.get("className") + "-" +
                 endNode.get("methodName") + "-" +
                 endNode.get("params") + "-" +
-                endNode.get("returnType")
-                + "-" + endNode.get("coordinate");
+                endNode.get("returnType") + "-" +
+                endNode.get("coordinate");
     }
 
     private static Map<String, Document> queryExistingDocuments(MongoCollection<Document> collection) {

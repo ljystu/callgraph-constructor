@@ -170,7 +170,8 @@ public class PackageUtil {
         for (String importPackage : packagesInJar) {
 
             if (importPackage.startsWith(packagePrefix)) {
-                packageToCoordMap.put(importPackage, coord);
+                String coordWithoutVersion = coord.split(":")[0] + ":" + coord.split(":")[1];
+                packageToCoordMap.put(importPackage, coordWithoutVersion + ":" + Constants.VERSION);
                 continue;
             }
             packageToCoordMap.put(importPackage, coord);
