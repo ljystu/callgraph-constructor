@@ -160,7 +160,7 @@ public class CallGraphUploader {
             }
         }
 //        packageToCoordMap.putAll(redisMap);
-        String filePath = dependencyCoordinate + ".log";
+        String filePath = "/Users/ljystu/Desktop/neo4j/call-graph-analysis/logs/" + dependencyCoordinate + ".log";
 
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
@@ -181,6 +181,12 @@ public class CallGraphUploader {
 
                 nodeTypeTransform(nodeFrom);
                 nodeTypeTransform(nodeTo);
+                String nodeFromOrigin = nodeFrom.getOrigin();
+                if (nodeFromOrigin.indexOf(" ") >= 0)
+                    nodeFrom.setAccessModifier(nodeFromOrigin.substring(0, nodeFromOrigin.indexOf(" ")));
+                String nodeToOrigin = nodeTo.getOrigin();
+                if (nodeToOrigin.indexOf(" ") >= 0)
+                    nodeTo.setAccessModifier(nodeToOrigin.substring(0, nodeToOrigin.indexOf(" ")));
 
                 getFullCoordinates(nodeFrom, packageToCoordMap);
                 getFullCoordinates(nodeTo, packageToCoordMap);
@@ -201,8 +207,8 @@ public class CallGraphUploader {
 
             }
             System.out.println("edges size: " + edges.size());
-            clearFile(filePath);
-            MongodbUtil.uploadEdges(edges, dependencyCoordinate);
+//            clearFile(filePath);
+//            MongodbUtil.uploadEdges(edges, dependencyCoordinate);
 
 
         } catch (FileNotFoundException e) {

@@ -22,9 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static ljystu.project.callgraph.analyzer.OutputGenerator.mongoData;
-import static ljystu.project.callgraph.analyzer.OutputGenerator.outputToJson;
-
 /**
  * The type ProjectAnalyzer.
  *
@@ -108,14 +105,14 @@ public class ProjectAnalyzer {
         callGraphUploader.uploadAll(dependencyCoordinate, artifactId);
 
         // analysis of call graph in mongo
-        analysisResult.put(version, mongoData(dependencyCoordinate));
-        analysisResult.put("test", mavenTestWithJavaAgent);
-        System.out.println("analyze " + projectName + " finished");
+//        analysisResult.put(version, mongoData(dependencyCoordinate));
+//        analysisResult.put("test", mavenTestWithJavaAgent);
+//        System.out.println("analyze " + projectName + " finished");
 //        }
 
 
-        File file = new File(Constants.PROJECT_FOLDER + "outputjson/" + projectName + "/" + artifactId + "-" + version + ".json");
-        outputToJson(analysisResult, file);
+//        File file = new File(Constants.PROJECT_FOLDER + "outputjson/" + projectName + "/" + artifactId + "-" + version + ".json");
+//        outputToJson(analysisResult, file);
 
         //delete all files in project folder
 //        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
