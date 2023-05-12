@@ -133,6 +133,7 @@ public class GraphUtil {
             case "java.lang.ShortType":
                 return "short";
             case "java.lang.CharacterType":
+            case "java.lang.CharType":
                 return "char";
             case "java.lang.BooleanType[]":
                 return "boolean[]";
@@ -151,6 +152,7 @@ public class GraphUtil {
             case "java.lang.ShortType[]":
                 return "short[]";
             case "java.lang.CharacterType[]":
+            case "java.lang.CharType[]":
                 return "char[]";
             default:
                 return type;

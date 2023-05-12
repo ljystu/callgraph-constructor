@@ -182,12 +182,21 @@ public class CallGraphUploader {
                 nodeTypeTransform(nodeFrom);
                 nodeTypeTransform(nodeTo);
                 String nodeFromOrigin = nodeFrom.getOrigin();
-                if (nodeFromOrigin.indexOf(" ") >= 0)
-                    nodeFrom.setAccessModifier(nodeFromOrigin.substring(0, nodeFromOrigin.indexOf(" ")));
+                if (nodeFromOrigin.indexOf(" ") >= 0) {
+                    String nodeFromAccessModifier = nodeFromOrigin.substring(0, nodeFromOrigin.indexOf(" "));
+                    if (nodeFromAccessModifier.equals("public") && nodeFromAccessModifier.equals("private") && nodeFromAccessModifier.equals("protected")) {
+                        nodeFromAccessModifier = "private";
+                    }
+                    nodeFrom.setAccessModifier(nodeFromAccessModifier);
+                }
                 String nodeToOrigin = nodeTo.getOrigin();
-                if (nodeToOrigin.indexOf(" ") >= 0)
-                    nodeTo.setAccessModifier(nodeToOrigin.substring(0, nodeToOrigin.indexOf(" ")));
-
+                if (nodeToOrigin.indexOf(" ") >= 0) {
+                    String nodeToAccessModifier = nodeToOrigin.substring(0, nodeToOrigin.indexOf(" "));
+                    if (nodeToAccessModifier.equals("public") && nodeToAccessModifier.equals("private") && nodeToAccessModifier.equals("protected")) {
+                        nodeToAccessModifier = "private";
+                    }
+                    nodeTo.setAccessModifier(nodeToAccessModifier);
+                }
                 getFullCoordinates(nodeFrom, packageToCoordMap);
                 getFullCoordinates(nodeTo, packageToCoordMap);
 
@@ -204,11 +213,14 @@ public class CallGraphUploader {
                     log.info("Edge upload: " + newEdge);
                     edges.add(newEdge);
                 }
+                if (edge.getFrom().equals(edge.getTo())) {
+                    System.out.println("Self loop: " + edge);
+                }
 
             }
             System.out.println("edges size: " + edges.size());
-//            clearFile(filePath);
-//            MongodbUtil.uploadEdges(edges, dependencyCoordinate);
+            clearFile(filePath);
+            MongodbUtil.uploadEdges(edges, dependencyCoordinate);
 
 
         } catch (FileNotFoundException e) {
