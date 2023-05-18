@@ -149,6 +149,45 @@ public class Neo4jOp {
 
     }
 
+    public void addVulnerableLabel(Map<String, Object> map, String label) {
+
+        // Sessions are lightweight and disposable connection wrappers.
+        try (Session session = driver.session(SessionConfig.forDatabase(label))) {
+            // Wrapping a Cypher Query in a Managed Transaction provides atomicity
+            // and makes handling errors much easier.
+            // Use `session.writeTransaction` for writes and `session.readTransaction` for reading data.
+            // These methods are also able to handle connection problems and transient errors using an automatic retry mechanism.
+            session.writeTransaction(tx -> tx.run("match (a:Method {packageName: $packageName, className: $className," +
+                            " methodName: $methodName, params: $params, returnType: $returnType , coordinate : $coordinate }) <-[*]-(callingNode) " +
+                            " Set callingNode:VulnerableMethod",
+                    parameters("packageName", map.get("packageName"), "className", map.get("className"),
+                            "methodName", map.get("methodName"), "params", map.get("params"), "returnType", map.get("returnType"), "coordinate", map.get("coordinate"))));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void addBatchVulnerableLabel(List<Map<String, Object>> nodeList, String label) {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("batches", nodeList);
+
+        try (Session session = driver.session(SessionConfig.forDatabase(label))) {
+            session.writeTransaction(tx -> tx.run("UNWIND $batches as row " +
+                            "MATCH (n:Method {packageName: row.packageName, className: row.className," +
+                            " methodName: row.methodName, params: row.params, returnType: row.returnType, " +
+                            "coordinate: row.coordinate}) Set n:VulnerableMethod",
+                    parameters));
+//            session.writeTransaction(tx -> tx.run("UNWIND $batches as row " +
+//                            "MATCH (n:Method {packageName: row.packageName, className: row.className," +
+//                            " methodName: row.methodName, params: row.params, returnType: row.returnType, " +
+//                            "coordinate: row.coordinate})<-[*]-(callingNode) " +
+//                            "SET callingNode:VulnerableMethod",
+//                    parameters));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Add method.
      *

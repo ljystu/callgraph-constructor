@@ -1,6 +1,7 @@
 package ljystu.project.callgraph.entity;
 
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -132,5 +133,9 @@ public class Node {
 
     public Node() {
 
+    }
+
+    public Map<String, Object> toMap() {
+        return Map.of("packageName", packageName, "className", className, "methodName", methodName, "params", params, "returnType", returnType, "coordinate", coordinate);
     }
 }
