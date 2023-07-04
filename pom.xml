@@ -12,6 +12,7 @@
     <modules>
         <module>fasten</module>
         <module>call-graph-analysis</module>
+        <module>javaagent</module>
     </modules>
     <groupId>ljystu</groupId>
     <artifactId>callgraph-analyze</artifactId>

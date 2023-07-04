@@ -31,6 +31,12 @@ public class MavenTestInvoker {
     }
 
 
+    /**
+     * inject javaagent into surefire configuration of all POM files
+     *
+     * @param inclPackages
+     * @return
+     */
     protected HashMap<String, Object> mavenTestWithJavaAgent(String inclPackages) {
         //get path of all pom files
         List<String> pomFiles = PackageUtils.getPomFiles(rootPath);
