@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 /**
  * @author ljystu
  */
-public class MongodbUtil {
+public class MongodbUtils {
 
     private static MongoClient mongo = null;
     private static Properties properties = null;
@@ -31,25 +31,23 @@ public class MongodbUtil {
     private static int poolSize = 0;
     private static int blockSize = 0;
 
-    // 初始化连接池，设置参数
+    // initialize mongo client
     static {
         properties = new Properties();
         try {
-//            properties.load(MongodbUtil.class.getClassLoader().getResourceAsStream("mongo.properties"));
-            host =
-                    Constants.SERVER_IP_ADDRESS;
-//                    properties.getProperty("host");
+            host = Constants.SERVER_IP_ADDRESS;
+
             port = Constants.MONGO_PORT;
-//                    Integer.parseInt(properties.getProperty("port"));
+
             poolSize = 10;
-//                    Integer.parseInt(properties.getProperty("poolSize"));
+
             blockSize = 10;
-//                    Integer.parseInt(properties.getProperty("blockSize"));
+
         } catch (Exception e) {
             e.printStackTrace();
         }
         try {
-            // 设置连接参数
+            // set mongo client
             ServerAddress serverAddress = new ServerAddress(host, port);
             MongoCredential credential = MongoCredential.createScramSha1Credential(Constants.USERNAME, "admin", Constants.MONGO_PASSWORD.toCharArray());
             List<MongoCredential> credentials = new ArrayList<MongoCredential>();
@@ -61,7 +59,7 @@ public class MongodbUtil {
         }
     }
 
-    // 获取连接对象
+    //
     public static Mongo getMongo() {
         return mongo;
     }

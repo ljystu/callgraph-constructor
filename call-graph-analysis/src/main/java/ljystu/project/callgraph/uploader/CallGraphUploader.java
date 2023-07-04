@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSON;
 import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
-import ljystu.project.callgraph.utils.MongodbUtil;
+import ljystu.project.callgraph.utils.MongodbUtils;
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import static ljystu.project.callgraph.utils.PackageUtil.packageToCoordMap;
+import static ljystu.project.callgraph.utils.PackageUtils.packageToCoordMap;
 
 /**
  * The type Redis op.
@@ -42,7 +42,7 @@ public class CallGraphUploader {
     /**
      * The Neo 4 j utils.
      */
-    Neo4jOp neo4JOp;
+    Neo4jUploader neo4JUploader;
 
     /**
      * Instantiates a new Redis op.
@@ -62,7 +62,7 @@ public class CallGraphUploader {
         jedisPoolConfig.setJmxNamePrefix("jedis-pool");
         jedisPool = new JedisPool(jedisPoolConfig, Constants.SERVER_IP_ADDRESS, 6379, connectionTimeout, "ljystu");
 
-//        this.neo4JOp = new Neo4jOp(Constants.NEO4J_PORT, Constants.NEO4J_USERNAME, Constants.NEO4J_PASSWORD);
+//        this.neo4JUploader = new Neo4jUploader(Constants.NEO4J_PORT, Constants.NEO4J_USERNAME, Constants.NEO4J_PASSWORD);
 //        this.jedis = new Jedis(Constants.SERVER_IP_ADDRESS);
 //        this.jedis.auth(Constants.REDIS_PASSWORD);
     }
@@ -137,8 +137,8 @@ public class CallGraphUploader {
         }
 
 //        List<Node> nodesList = new ArrayList<>(nodes);
-//        neo4JOp.uploadAllToNeo4j(nodesList, edges, label);
-        MongodbUtil.uploadEdges(edges, dependencyCoordinate);
+//        neo4JUploader.uploadAllToNeo4j(nodesList, edges, label);
+        MongodbUtils.uploadEdges(edges, dependencyCoordinate);
 
 
     }
@@ -220,7 +220,7 @@ public class CallGraphUploader {
             }
             System.out.println("edges size: " + edges.size());
             clearFile(filePath);
-            MongodbUtil.uploadEdges(edges, dependencyCoordinate);
+            MongodbUtils.uploadEdges(edges, dependencyCoordinate);
 
 
         } catch (FileNotFoundException e) {

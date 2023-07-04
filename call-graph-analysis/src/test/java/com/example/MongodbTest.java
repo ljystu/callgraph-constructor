@@ -7,7 +7,7 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.*;
-import ljystu.project.callgraph.uploader.Neo4jOp;
+import ljystu.project.callgraph.uploader.Neo4jUploader;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.Before;
@@ -23,7 +23,7 @@ public class MongodbTest {
     private static MongoClient mongo = null;
     @Before
     public void init() {
-//        mongo = MongodbUtil.getMongoClient();
+//        mongo = MongodbUtils.getMongoClient();
     }
 
 
@@ -99,10 +99,10 @@ public class MongodbTest {
 
     @Test
     public void uploadTest() {
-        Neo4jOp neo4jOp = new Neo4jOp("bolt://localhost:7687", "neo4j", "ljystuneo");
-        HashSet<String> allCoords =findAllCoords();
+        Neo4jUploader neo4JUploader = new Neo4jUploader("bolt://localhost:7687", "neo4j", "ljystuneo");
+        HashSet<String> allCoords = findAllCoords();
         for (String coord : allCoords) {
-            neo4jOp.uploadFromMongo(coord);
+            neo4JUploader.uploadFromMongo(coord);
         }
     }
     public static HashSet<String> findAllCoords() {

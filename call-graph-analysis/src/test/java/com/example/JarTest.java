@@ -6,8 +6,8 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.NotFoundException;
 import javassist.bytecode.ClassFile;
-import ljystu.project.callgraph.utils.JarReadUtil;
-import ljystu.project.callgraph.utils.PackageUtil;
+import ljystu.project.callgraph.utils.JarReadUtils;
+import ljystu.project.callgraph.utils.PackageUtils;
 import org.junit.Test;
 import redis.clients.jedis.Jedis;
 
@@ -23,11 +23,11 @@ public class JarTest {
 //        ProjectAnalyzer analyzer = new ProjectAnalyzer();
         String rootPath = "junit4-main";
         HashSet<String> dependencies = new HashSet<>();
-//        PackageUtil.getJarToCoordMap(rootPath,jarName,  coord);
-        System.out.println(PackageUtil.jarToCoordMap.toString());
-//        assertThat(PackageUtil.jarToCoordMap.contains(jar),true);
-        if (PackageUtil.jarToCoordMap.containsKey(jar)) {
-            System.out.println(PackageUtil.jarToCoordMap.get(jar));
+//        PackageUtils.getJarToCoordMap(rootPath,jarName,  coord);
+        System.out.println(PackageUtils.jarToCoordMap.toString());
+//        assertThat(PackageUtils.jarToCoordMap.contains(jar),true);
+        if (PackageUtils.jarToCoordMap.containsKey(jar)) {
+            System.out.println(PackageUtils.jarToCoordMap.get(jar));
         }
 
     }
@@ -78,7 +78,7 @@ public class JarTest {
             }
         }
         StringBuilder stringBuilder = new StringBuilder();
-        Set<String> classes = JarReadUtil.getClasses(tempDir);
+        Set<String> classes = JarReadUtils.getClasses(tempDir);
         System.out.println(classes.size());
         Set<String> importedPackages = new HashSet<>();
         try {

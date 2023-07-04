@@ -14,9 +14,16 @@ import java.nio.file.Paths;
 
 /**
  * The type Pom utils.
+ *
+ * @author ljystu
  */
 @Slf4j
-public class POMUtil {
+public class POMUtils {
+
+    POMUtils() {
+        throw new IllegalStateException("Utility class");
+    }
+
     /**
      * edit surefire plugin, add javaagent to argline
      *

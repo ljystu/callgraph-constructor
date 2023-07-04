@@ -18,6 +18,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author ljystu
+ */
 public class OutputGenerator {
     public static HashMap<String, Object> mongoData(String dependencyCoordinate) {
         ServerAddress serverAddress = new ServerAddress(Constants.SERVER_IP_ADDRESS, Constants.MONGO_PORT);
@@ -50,7 +53,7 @@ public class OutputGenerator {
         HashMap<String, Integer> dynamicCoordinates = new HashMap<>();
         HashMap<String, Integer> staticCoordinates = new HashMap<>();
 
-//        HashSet<String> staticCoords = new HashSet<>();
+
         HashMap<String, Integer> bothCoordinates = new HashMap<>();
 
         for (Document document : collection.find()) {
@@ -65,7 +68,6 @@ public class OutputGenerator {
                 if (startCoordinate.startsWith(dependencyCoordinate)) {
                     staticCoordinates.put(startCoordinate, staticCoordinates.getOrDefault(startCoordinate, 0) + 1);
                 }
-//                staticCoords.add(startCoordinate);
 
             } else if ("dynamic".equals(edge.getType())) {
                 if (edge.getStartNode().getMethodName().toLowerCase().contains("test") || edge.getEndNode().getMethodName().toLowerCase().contains("test")
@@ -124,7 +126,7 @@ public class OutputGenerator {
         result.put("dynamicCoordinates", dynamicCoordinates);
         result.put("staticCoordinates", staticCoordinates);
         result.put("bothCoordinates", bothCoordinates);
-        // 关闭MongoClient
+        // close mongo client
         mongoClient.close();
         return result;
     }

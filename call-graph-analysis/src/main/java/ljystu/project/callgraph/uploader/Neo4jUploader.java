@@ -3,7 +3,7 @@ package ljystu.project.callgraph.uploader;
 import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
-import ljystu.project.callgraph.utils.MongodbUtil;
+import ljystu.project.callgraph.utils.MongodbUtils;
 import org.neo4j.driver.*;
 
 import java.util.*;
@@ -14,17 +14,17 @@ import static org.neo4j.driver.Values.parameters;
 /**
  * The type Neo 4 j utils.
  */
-public class Neo4jOp {
+public class Neo4jUploader {
 
     Driver driver;
 
 
-    public Neo4jOp() {
+    public Neo4jUploader() {
 
     }
 
 
-    public Neo4jOp(String uri, String user, String password) {
+    public Neo4jUploader(String uri, String user, String password) {
         driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password));
 
     }
@@ -142,7 +142,7 @@ public class Neo4jOp {
                     "THEN type \n" +
                     "ELSE 'both'\n" +
                     "END ", parameters));
-            MongodbUtil.deleteEdges(coord);
+            MongodbUtils.deleteEdges(coord);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -251,7 +251,7 @@ public class Neo4jOp {
     public void uploadAllToNeo4j(List<Node> nodesList, Set<Edge> edges, String label) {
 //        uploadMethodNodes(nodesList);
         uploadEdges(edges, label);
-//        HashSet<String> allCoords = MongodbUtil.findAllCoords();
+//        HashSet<String> allCoords = MongodbUtils.findAllCoords();
 //        for (String coord : allCoords) {
 //            uploadFromMongo(coord);
 //        }

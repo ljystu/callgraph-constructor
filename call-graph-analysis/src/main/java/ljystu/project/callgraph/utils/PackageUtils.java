@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
  * @author ljystu
  */
 @Slf4j
-public class PackageUtil {
+public class PackageUtils {
 
     static long tenMegabytes = 10485760L;
 
@@ -39,6 +39,10 @@ public class PackageUtil {
 
 //    public static Set<String> currentJars = new HashSet<>();
 
+    PackageUtils() {
+        throw new IllegalStateException("Utility class");
+    }
+
     /**
      * Gets pom files.
      *
@@ -47,7 +51,7 @@ public class PackageUtil {
      */
     public static List<String> getPomFiles(String rootPath) {
         List<File> files = new ArrayList<>();
-        JarReadUtil.findTypeFiles(new File(rootPath), files, "pom.xml");
+        JarReadUtils.findTypeFiles(new File(rootPath), files, "pom.xml");
         List<String> pomFiles = new ArrayList<>();
         for (File file : files) {
             pomFiles.add(file.getPath());
@@ -125,7 +129,7 @@ public class PackageUtil {
         // find jar files
         List<File> jarFiles = new ArrayList<>();
 //        currentJars.clear();
-        JarReadUtil.findTypeFiles(new File(rootPath), jarFiles, ".jar");
+        JarReadUtils.findTypeFiles(new File(rootPath), jarFiles, ".jar");
 
         Set<String> inclPackages = new HashSet<>();
         for (File jar : jarFiles) {
@@ -147,20 +151,20 @@ public class PackageUtil {
 
                 extractPackagesToMap(inclPackages, jar, coord, packagePrefix);
 
-//                ProjectUtil.deleteFile(jar);
+//                ProjectUtils.deleteFile(jar);
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
         for (File jarFile : jarFiles) {
-            ProjectUtil.deleteFile(jarFile);
+            ProjectUtils.deleteFile(jarFile);
         }
         return inclPackages;
     }
 
     private static void extractPackagesToMap(Set<String> inclPackages, File jar, String coord, String packagePrefix) throws IOException {
-        Set<String> packagesInJar = JarReadUtil.getPackages(new JarFile(jar));
+        Set<String> packagesInJar = JarReadUtils.getPackages(new JarFile(jar));
 
         // jar to package
         jarToPackageMap.put(jar.getName(), packagesInJar);

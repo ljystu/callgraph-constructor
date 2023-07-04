@@ -6,7 +6,7 @@ import eu.fasten.core.data.opal.exceptions.MissingArtifactException;
 import eu.fasten.core.maven.utils.MavenUtilities;
 import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.uploader.CallGraphUploader;
-import ljystu.project.callgraph.utils.PackageUtil;
+import ljystu.project.callgraph.utils.PackageUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
@@ -57,13 +57,9 @@ public class ProjectAnalyzer {
 
         System.out.println("project name: " + projectName);
 
-        String stashCommand = "git stash";
-        HashMap<String, HashMap<String, Object>> analysisResult = new HashMap<>();
-
         String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
 
         String tag = Constants.VERSION;
-        String version = tag;
 
         File jar = null;
         String dependencyCoordinate = dependencyCoordinateWithoutVersion + ":" + tag;
@@ -91,31 +87,31 @@ public class ProjectAnalyzer {
 
 
         //map packages to coordinates
-        String packageScan = PackageUtil.getPackages(rootPath, artifactId + "-" + version + ".jar",
+        String packageScan = PackageUtils.getPackages(rootPath, artifactId + "-" + tag + ".jar",
                 dependencyCoordinate, Constants.PACKAGE_PREFIX);
 
         //upload package:coordinate to redis
-        PackageUtil.uploadCoordToRedis(dependencyCoordinate);
+        PackageUtils.uploadCoordToRedis(dependencyCoordinate);
 
-        //javaagent maven test
+        //javaagent maven test with packages needed
         HashMap<String, Object> mavenTestWithJavaAgent = mavenTestInvoker.mavenTestWithJavaAgent(packageScan);
 
         //upload call graph to mongodb
         CallGraphUploader callGraphUploader = new CallGraphUploader();
         callGraphUploader.uploadAll(dependencyCoordinate, artifactId);
 
+
+//        }
+
         // analysis of call graph in mongo
 //        analysisResult.put(version, mongoData(dependencyCoordinate));
 //        analysisResult.put("test", mavenTestWithJavaAgent);
 //        System.out.println("analyze " + projectName + " finished");
-//        }
-
-
 //        File file = new File(Constants.PROJECT_FOLDER + "outputjson/" + projectName + "/" + artifactId + "-" + version + ".json");
 //        outputToJson(analysisResult, file);
 
         //delete all files in project folder
-//        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
+//        ProjectUtils.deleteFile(new File(rootPath).getAbsoluteFile());
         return projectList;
     }
 

@@ -9,7 +9,6 @@ public class Constants {
     public static final String DATABASE = "neo4j";
     public static String VERSION;
 
-
     public static String MAVEN_HOME;
     public static String JAVAAGENT_HOME;
 
