@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
  */
 public class SootAnalysis {
 
-    static Jedis jedis = new Jedis(Constants.MONGO_ADDRESS);
+    static Jedis jedis = new Jedis(Constants.MONGO_ADDRESS, 6379, 30000);
 
     public static void main(String[] args) {
         jedis.auth("ljystu");
@@ -154,6 +154,37 @@ public class SootAnalysis {
         if (tgtParams.length() > 0) {
             tgtParams.deleteCharAt(tgtParams.length() - 1);
         }
+        int modifiers = method.getModifiers();
+        String access = "private";
+        switch (modifiers) {
+            case 1:
+                access = "public";
+                break;
+            case 2:
+                access = "private";
+                break;
+            case 4:
+                access = "protected";
+                break;
+            default:
+                access = "private";
+                break;
+        }
+//        if(Modifier.isPublic(modifiers)) {
+//            System.out.println("Method is public");
+//        }
+//
+//        if(Modifier.isPrivate(modifiers)) {
+//            System.out.println("Method is private");
+//        }
+//
+//        if(Modifier.isProtected(modifiers)) {
+//            System.out.println("Method is protected");
+//        }
+        if (method.getName().equals("<clinit>") || method.getName().equals("<init>")) {
+            access = "public";
+        }
+
 
         String tgtTypeTransform = GraphUtil.typeTransform(method.getReturnType().toString());
 
@@ -168,7 +199,7 @@ public class SootAnalysis {
             tgtClassName = tgtClassName.substring(tgtClassName.lastIndexOf(".") + 1);
         }
         return new GraphNode(tgtPackage, tgtClassName, method.getName(),
-                tgtParams.toString(), tgtTypeTransform, redisMap.get(tgtPackage));
+                tgtParams.toString(), tgtTypeTransform, redisMap.get(tgtPackage), access);
     }
 
     public static Map<String, String> getRedisMap() {

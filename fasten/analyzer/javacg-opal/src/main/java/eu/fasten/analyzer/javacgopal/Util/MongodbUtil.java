@@ -110,10 +110,13 @@ public class MongodbUtil {
                     .append("methodName", toNode.getMethodName());
             endNode.append("params", toNode.getParams())
                     .append("returnType", toNode.getReturnType())
-                    .append("coordinate", toNode.getCoordinate());
+                    .append("coordinate", toNode.getCoordinate())
+                    .append("accessModifier", toNode.getAccess());
             startNode.append("params", fromNode.getParams())
                     .append("returnType", fromNode.getReturnType())
-                    .append("coordinate", fromNode.getCoordinate());
+                    .append("coordinate", fromNode.getCoordinate())
+                    .append("accessModifier", fromNode.getAccess());
+            ;
 
 
 //            Bson filter = Filters.and(

@@ -11,6 +11,15 @@ public class GraphNode implements Serializable {
     private String params;
     private String returnType;
 
+    public String getAccess() {
+        return access;
+    }
+
+    public void setAccess(String access) {
+        this.access = access;
+    }
+
+    private String access;
     private String coordinate;
 
     public String getCoordinate() {
@@ -79,13 +88,14 @@ public class GraphNode implements Serializable {
         this.returnType = returnType;
     }
 
-    public GraphNode(String packageName, String className, String methodName, String params, String returnType, String coordinate) {
+    public GraphNode(String packageName, String className, String methodName, String params, String returnType, String coordinate, String access) {
         this.packageName = packageName;
         this.className = className;
         this.methodName = methodName;
         this.params = params;
         this.returnType = returnType;
         this.coordinate = coordinate;
+        this.access = access;
     }
 
     @Override

@@ -288,7 +288,7 @@ public class PackageUtil {
 
 
     public static void uploadCoordToRedis(String dependencyCoordinate) {
-        Jedis jedis = new Jedis(Constants.SERVER_IP_ADDRESS);
+        Jedis jedis = new Jedis(Constants.SERVER_IP_ADDRESS, 6379, 30000);
         jedis.auth(Constants.REDIS_PASSWORD);
 //        for (Map.Entry<String, String> entry : packageToCoordMap.entrySet()) {
 //            jedis.set(entry.getKey(), entry.getValue());

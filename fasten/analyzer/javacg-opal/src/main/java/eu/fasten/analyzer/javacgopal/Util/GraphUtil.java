@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class GraphUtil {
-    static Jedis jedis = new Jedis(Constants.MONGO_ADDRESS);
+    static Jedis jedis = new Jedis(Constants.MONGO_ADDRESS, 6379, 30000);
 
     public static HashMap<Integer, GraphNode> getNodes(PartialJavaCallGraph result) {
         HashMap<Integer, GraphNode> nodeHashMap = new HashMap<>();
@@ -40,9 +40,21 @@ public class GraphUtil {
                     graphNode.setClassName(rawEntity.substring(0, rawEntity.indexOf(".")));
 
                     String signature = entry.getValue().getSignature();
-                    graphNode.setMethodName(signature.substring(0, signature.indexOf("(")));
+                    String methodName = signature.substring(0, signature.indexOf("("));
+                    graphNode.setMethodName(methodName);
                     signature = signature.replace("/", ".");
+                    String access = (String) entry.getValue().getMetadata().get("access");
+                    if (access == null) {
+                        access = "public";
+                    } else {
+                        if (!"public".equals(access) && !"private".equals(access) && !"protected".equals(access))
+                            access = "private";
+                    }
+                    if (methodName.equals("<clinit>") || methodName.equals("<init>")) {
+                        access = "public";
+                    }
 
+                    graphNode.setAccess(access);
                     String substring = signature.substring(signature.indexOf("(") + 1, signature.indexOf(")"));
                     String[] param = substring.split(",");
                     StringBuilder str = new StringBuilder();
@@ -159,9 +171,11 @@ public class GraphUtil {
         }
     }
 
-    public static HashSet<Edge> getAllEdges(PartialJavaCallGraph result, HashMap<Integer, GraphNode> nodes, String artifact, String version) {
+    public static HashSet<Edge> getAllEdges(PartialJavaCallGraph result, HashMap<Integer, GraphNode> nodes, String artifact, String
+            version) {
         HashSet<Edge> set = new HashSet<>();
         jedis.auth("ljystu");
+
         String dependencyWithoutVersion = artifact.substring(0, artifact.lastIndexOf(":"));
         String dependencyWithVersion = dependencyWithoutVersion + ":" + version;
         Map<String, String> redisMap =

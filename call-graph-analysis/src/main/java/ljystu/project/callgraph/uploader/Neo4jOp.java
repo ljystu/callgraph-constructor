@@ -175,7 +175,7 @@ public class Neo4jOp {
             session.writeTransaction(tx -> tx.run("UNWIND $batches as row " +
                             "MATCH (n:Method {packageName: row.packageName, className: row.className," +
                             " methodName: row.methodName, params: row.params, returnType: row.returnType, " +
-                            "coordinate: row.coordinate}) Set n:VulnerableMethod",
+                            "coordinate: row.coordinate}) Set n:OriginalVulnerableMethod",
                     parameters));
 //            session.writeTransaction(tx -> tx.run("UNWIND $batches as row " +
 //                            "MATCH (n:Method {packageName: row.packageName, className: row.className," +

@@ -12,7 +12,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.List;
 
-public class POMUtil {
+public class POMUtilTest {
 
     @Test
     public void POMTest() throws Exception {
