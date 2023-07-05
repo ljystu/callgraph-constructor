@@ -65,11 +65,6 @@ public class MongoEdge {
 
     @Override
     public String toString() {
-        return "MongoEdge{" +
-                "id='" + id + '\'' +
-                ", startNode=" + startNode +
-                ", endNode=" + endNode +
-                ", type='" + type + '\'' +
-                '}';
+        return "MongoEdge{" + "id='" + id + '\'' + ", startNode=" + startNode + ", endNode=" + endNode + ", type='" + type + '\'' + '}';
     }
 }

@@ -22,6 +22,9 @@ import java.util.regex.Pattern;
 @Slf4j
 public class PackageUtils {
 
+    /**
+     * exlude any jar file that is larger than 10MB
+     */
     static long tenMegabytes = 10485760L;
 
     /**
@@ -44,7 +47,7 @@ public class PackageUtils {
     }
 
     /**
-     * Gets pom files.
+     * Find all pom files.
      *
      * @param rootPath the root path
      * @return the pom files
@@ -61,7 +64,7 @@ public class PackageUtils {
     }
 
     /**
-     * Gets packages.
+     * Find all packages in the project
      *
      * @param rootPath the root path
      * @return packages packages
@@ -80,6 +83,14 @@ public class PackageUtils {
         return constructPackageScan(inclPackages, packagePrefix, coord).toString();
     }
 
+    /**
+     * Find packages need to be scanned
+     *
+     * @param definedPackages
+     * @param packagePrefix
+     * @param coord
+     * @return
+     */
     private static StringBuilder constructPackageScan(Set<String> definedPackages, String packagePrefix, String coord) {
         StringBuilder packageScan = new StringBuilder();
         String argLine = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME + "=";
@@ -108,23 +119,22 @@ public class PackageUtils {
             }
             packagePrefixSet.add(prefix);
 
-
             packageScan.append(prefix).append(",");
-//                    .append(".*,");
 
         }
 
-//        packageScan.setLength(packageScan.length() - 1);
-//        packageScan.append(";");
-        String artifactId = coord.split(":")[1];
-        packageScan.
-//                append("info=").
-        append(packagePrefix).append("!").append(coord);
-//                .append(artifactId);
-//                .append(";");
+        packageScan.append(packagePrefix).append("!").append(coord);
+
         return packageScan;
     }
 
+    /**
+     * Extract package from jar file
+     *
+     * @param rootPath
+     * @param packagePrefix
+     * @return
+     */
     private static Set<String> extractPackagesFromJar(String rootPath, String packagePrefix) {
         // find jar files
         List<File> jarFiles = new ArrayList<>();
@@ -163,6 +173,15 @@ public class PackageUtils {
         return inclPackages;
     }
 
+    /**
+     * Package to coordinate mapping
+     *
+     * @param inclPackages
+     * @param jar
+     * @param coord
+     * @param packagePrefix
+     * @throws IOException
+     */
     private static void extractPackagesToMap(Set<String> inclPackages, File jar, String coord, String packagePrefix) throws IOException {
         Set<String> packagesInJar = JarReadUtils.getPackages(new JarFile(jar));
 

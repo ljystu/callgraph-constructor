@@ -122,8 +122,7 @@ public class CallGraphUploader {
                 nodeTo.setCoordinate("not found");
             }
 
-            if (edge.getFrom().getPackageName().startsWith(Constants.PACKAGE_PREFIX) ||
-                    edge.getTo().getPackageName().startsWith(Constants.PACKAGE_PREFIX)) {
+            if (edge.getFrom().getPackageName().startsWith(Constants.PACKAGE_PREFIX) || edge.getTo().getPackageName().startsWith(Constants.PACKAGE_PREFIX)) {
                 Edge newEdge = new Edge(nodeFrom, nodeTo);
                 log.info("Edge upload: " + newEdge);
 //                System.out.println("Edge upload: " + newEdge);
@@ -207,8 +206,7 @@ public class CallGraphUploader {
                     nodeTo.setCoordinate("not found");
                 }
 
-                if (edge.getFrom().getPackageName().startsWith(Constants.PACKAGE_PREFIX) ||
-                        edge.getTo().getPackageName().startsWith(Constants.PACKAGE_PREFIX)) {
+                if (edge.getFrom().getPackageName().startsWith(Constants.PACKAGE_PREFIX) || edge.getTo().getPackageName().startsWith(Constants.PACKAGE_PREFIX)) {
                     Edge newEdge = new Edge(nodeFrom, nodeTo);
                     log.info("Edge upload: " + newEdge);
                     edges.add(newEdge);
@@ -266,8 +264,7 @@ public class CallGraphUploader {
                 paramType = typeTransform(paramType);
                 str.append(paramType).append(",");
             }
-            if (str.length() > 0)
-                str.setLength(str.length() - 1);
+            if (str.length() > 0) str.setLength(str.length() - 1);
         }
         node.setParams(str.toString());
         node.setReturnType(typeTransform(node.getReturnType()));

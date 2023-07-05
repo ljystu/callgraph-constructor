@@ -57,8 +57,6 @@ public class MavenTestInvoker {
     @Deprecated
     public void invokeMavenTask(String inclPackages, String path, List<String> pomFilePaths, String task) {
 
-        // 设置Maven的安装目录
-
         if (Objects.equals(task, "test")) {
             addJavaagent(inclPackages, pomFilePaths);
             invokeTask(path, "test");

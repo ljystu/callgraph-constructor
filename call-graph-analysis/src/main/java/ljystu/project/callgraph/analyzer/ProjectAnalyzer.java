@@ -45,10 +45,8 @@ public class ProjectAnalyzer {
 
     /**
      * Analyse project hash set.
-     *
-     * @return hash set
      */
-    public List<String> analyseProject(String projectName, String dependencyCoordinateWithoutVersion) {
+    public void analyseProject(String projectName, String dependencyCoordinateWithoutVersion) {
 
         //switch tag(maybe need to use commits when there is no tag for smaller projects)
 //        String switchTagCommand = "git for-each-ref refs/tags --sort=-creatordate --format '%(refname:short)' | head ";
@@ -112,7 +110,6 @@ public class ProjectAnalyzer {
 
         //delete all files in project folder
 //        ProjectUtils.deleteFile(new File(rootPath).getAbsoluteFile());
-        return projectList;
     }
 
     private String[] getParameters(String coordinate) {

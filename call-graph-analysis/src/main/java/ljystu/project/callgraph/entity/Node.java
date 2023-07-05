@@ -28,9 +28,7 @@ public class Node {
             return false;
         }
         Node node = (Node) o;
-        return Objects.equals(packageName, node.packageName) && Objects.equals(className, node.className)
-                && Objects.equals(methodName, node.methodName) && Objects.equals(params, node.params) &&
-                Objects.equals(returnType, node.returnType);
+        return Objects.equals(packageName, node.packageName) && Objects.equals(className, node.className) && Objects.equals(methodName, node.methodName) && Objects.equals(params, node.params) && Objects.equals(returnType, node.returnType);
     }
 
     @Override
@@ -40,14 +38,7 @@ public class Node {
 
     @Override
     public String toString() {
-        return "Node{" +
-                "packageName='" + packageName + '\'' +
-                ", className='" + className + '\'' +
-                ", methodName='" + methodName + '\'' +
-                ", params='" + params + '\'' +
-                ", returnType='" + returnType + '\'' +
-                ", coordinate='" + coordinate + '\'' +
-                '}';
+        return "Node{" + "packageName='" + packageName + '\'' + ", className='" + className + '\'' + ", methodName='" + methodName + '\'' + ", params='" + params + '\'' + ", returnType='" + returnType + '\'' + ", coordinate='" + coordinate + '\'' + '}';
     }
 
     public String getCoordinate() {

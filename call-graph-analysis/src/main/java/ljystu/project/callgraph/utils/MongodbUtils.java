@@ -25,23 +25,16 @@ import java.util.regex.Pattern;
 public class MongodbUtils {
 
     private static MongoClient mongo = null;
-    private static Properties properties = null;
     private static String host = null;
     private static int port = 0;
-    private static int poolSize = 0;
-    private static int blockSize = 0;
 
     // initialize mongo client
     static {
-        properties = new Properties();
+
         try {
             host = Constants.SERVER_IP_ADDRESS;
 
             port = Constants.MONGO_PORT;
-
-            poolSize = 10;
-
-            blockSize = 10;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -65,14 +58,10 @@ public class MongodbUtils {
     }
 
     public static void deleteEdges(String coord) {
-        // 创建MongoDB客户端连接
-
-        // 获取MongoDB数据库
-
+        // get mongo database
         MongoDatabase database = mongo.getDatabase("mydatabase");
 
-        // 获取MongoDB集合
-
+        // get mongo collection
         MongoCollection<Document> collection = database.getCollection("mycollection");
 
         try {
@@ -82,7 +71,6 @@ public class MongodbUtils {
             e.printStackTrace();
         }
 
-        // 关闭MongoDB客户端连接
 //        mongo.close();
     }
 
@@ -101,14 +89,13 @@ public class MongodbUtils {
 
         MongoCollection<Document> collection = database.getCollection(dependencyCoordinate);
 
-        collection.createIndex(Indexes.compoundIndex(
-                Indexes.ascending("startNode.packageName"), Indexes.ascending("startNode.className")
-                , Indexes.ascending("startNode.methodName"), Indexes.ascending("startNode.params"), Indexes.ascending("startNode.returnType"),
-                Indexes.ascending("startNode.coordinate")
-                , Indexes.ascending("endNode.packageName"), Indexes.ascending("endNode.className")
-                , Indexes.ascending("endNode.methodName"), Indexes.ascending("endNode.params"), Indexes.ascending("endNode.returnType"),
-                Indexes.ascending("endNode.coordinate")
-        ), new IndexOptions().unique(true));
+        collection.createIndex(Indexes.compoundIndex(Indexes.ascending("startNode.packageName"),
+                Indexes.ascending("startNode.className"), Indexes.ascending("startNode.methodName"),
+                Indexes.ascending("startNode.params"), Indexes.ascending("startNode.returnType"),
+                Indexes.ascending("startNode.coordinate"), Indexes.ascending("endNode.packageName"),
+                Indexes.ascending("endNode.className"), Indexes.ascending("endNode.methodName"),
+                Indexes.ascending("endNode.params"), Indexes.ascending("endNode.returnType"),
+                Indexes.ascending("endNode.coordinate")), new IndexOptions().unique(true));
 
         Pattern excludedPattern = Pattern.compile(readExcludedPackages());
 
@@ -135,21 +122,11 @@ public class MongodbUtils {
 //                continue;
 //            }
 
-            Document startNode = new Document("packageName", fromNode.getPackageName())
-                    .append("className", fromNode.getClassName())
-                    .append("methodName", fromNode.getMethodName());
+            Document startNode = new Document("packageName", fromNode.getPackageName()).append("className", fromNode.getClassName()).append("methodName", fromNode.getMethodName());
 
-            Document endNode = new Document("packageName", toNode.getPackageName())
-                    .append("className", toNode.getClassName())
-                    .append("methodName", toNode.getMethodName());
-            endNode.append("params", toNode.getParams())
-                    .append("returnType", toNode.getReturnType())
-                    .append("coordinate", toNode.getCoordinate())
-                    .append("accessModifier", toNode.getAccessModifier());
-            startNode.append("params", fromNode.getParams())
-                    .append("returnType", fromNode.getReturnType())
-                    .append("coordinate", fromNode.getCoordinate())
-                    .append("accessModifier", fromNode.getAccessModifier());
+            Document endNode = new Document("packageName", toNode.getPackageName()).append("className", toNode.getClassName()).append("methodName", toNode.getMethodName());
+            endNode.append("params", toNode.getParams()).append("returnType", toNode.getReturnType()).append("coordinate", toNode.getCoordinate()).append("accessModifier", toNode.getAccessModifier());
+            startNode.append("params", fromNode.getParams()).append("returnType", fromNode.getReturnType()).append("coordinate", fromNode.getCoordinate()).append("accessModifier", fromNode.getAccessModifier());
 
 
 //            Bson filter = Filters.and(
@@ -179,9 +156,7 @@ public class MongodbUtils {
 
             } else {
                 // 插入新文档
-                Document newDocument = new Document("startNode", startNode)
-                        .append("endNode", endNode)
-                        .append("type", type);
+                Document newDocument = new Document("startNode", startNode).append("endNode", endNode).append("type", type);
 
                 bulkWrites.add(new InsertOneModel<>(newDocument));
             }
@@ -191,18 +166,7 @@ public class MongodbUtils {
     }
 
     private static String generateKey(Document startNode, Document endNode) {
-        return startNode.get("packageName") + "-" +
-                startNode.get("className") + "-" +
-                startNode.get("methodName") + "-" +
-                startNode.get("params") + "-" +
-                startNode.get("returnType") + "-" +
-                startNode.get("coordinate") + "-" +
-                endNode.get("packageName") + "-" +
-                endNode.get("className") + "-" +
-                endNode.get("methodName") + "-" +
-                endNode.get("params") + "-" +
-                endNode.get("returnType") + "-" +
-                endNode.get("coordinate");
+        return startNode.get("packageName") + "-" + startNode.get("className") + "-" + startNode.get("methodName") + "-" + startNode.get("params") + "-" + startNode.get("returnType") + "-" + startNode.get("coordinate") + "-" + endNode.get("packageName") + "-" + endNode.get("className") + "-" + endNode.get("methodName") + "-" + endNode.get("params") + "-" + endNode.get("returnType") + "-" + endNode.get("coordinate");
     }
 
     private static Map<String, Document> queryExistingDocuments(MongoCollection<Document> collection) {
@@ -214,9 +178,7 @@ public class MongodbUtils {
         long totalCount = collection.countDocuments(filter);
 
         while (currentPage * pageSize < totalCount) {
-            FindIterable<Document> existingDocuments = collection.find(filter)
-                    .skip(currentPage * pageSize)
-                    .limit(pageSize);
+            FindIterable<Document> existingDocuments = collection.find(filter).skip(currentPage * pageSize).limit(pageSize);
 
             for (Document existingDocument : existingDocuments) {
                 Document startNode = existingDocument.get("startNode", Document.class);
@@ -253,6 +215,5 @@ public class MongodbUtils {
 
         return str.toString();
     }
-
 
 }
