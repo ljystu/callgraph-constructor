@@ -1,17 +1,26 @@
 package ljystu.project.callgraph.analyzer;
 
+import eu.fasten.core.data.opal.MavenArtifactDownloader;
+import eu.fasten.core.data.opal.MavenCoordinate;
+import eu.fasten.core.data.opal.exceptions.MissingArtifactException;
+import eu.fasten.core.maven.utils.MavenUtilities;
 import ljystu.project.callgraph.config.Constants;
-import ljystu.project.callgraph.utils.PackageUtil;
+import ljystu.project.callgraph.uploader.CallGraphUploader;
+import ljystu.project.callgraph.utils.PackageUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static ljystu.project.callgraph.analyzer.OutputGenerator.outputToJson;
 
 /**
  * The type ProjectAnalyzer.
@@ -36,69 +45,39 @@ public class ProjectAnalyzer {
 
     /**
      * Analyse project hash set.
-     *
-     * @param projectCount the project count
-     * @return hash set
      */
-    public List<String> analyseProject(String projectName, Map<String, Integer> projectCount, String dependencyCoordinateWithoutVersion, String tagPrefix, String tagSuffix, String version) {
+    public void analyseProject(String projectName, String dependencyCoordinateWithoutVersion) {
 
         //switch tag(maybe need to use commits when there is no tag for smaller projects)
-        String switchTagCommand = "git for-each-ref refs/tags --sort=-creatordate --format '%(refname:short)' | head ";
+//        String switchTagCommand = "git for-each-ref refs/tags --sort=-creatordate --format '%(refname:short)' | head ";
         List<String> projectList = new ArrayList<>();
-        List<String> tagNames = getOutput(switchTagCommand, rootPath);
+//        List<String> tagNames = getOutput(switchTagCommand, rootPath);
 
         System.out.println("project name: " + projectName);
 
-        String stashCommand = "git stash";
-        HashMap<String, HashMap<String, Object>> analysisResult = new HashMap<>();
-
         String artifactId = dependencyCoordinateWithoutVersion.split(":")[1];
-//        traverse all tags
-//        for (String tag : tagNames) {
-//
-//
-//            //stash all changes in current branch/tag/commit
-//            getOutput(stashCommand, rootPath);
-////
-//            if (!switchTag(tag, rootPath)) {
-//                System.out.println("switch tag failed");
+
+        String tag = Constants.VERSION;
+
+        File jar = null;
+        String dependencyCoordinate = dependencyCoordinateWithoutVersion + ":" + tag;
+
+        try {
+            //download jar
+            jar = new MavenArtifactDownloader(MavenCoordinate.fromString(dependencyCoordinate, "jar")).downloadArtifact(MavenUtilities.MAVEN_CENTRAL_REPO);
+            //copy jar to lib
+            Path targetDirectory = Paths.get(rootPath);
+            Files.copy(jar.toPath(), targetDirectory.resolve(artifactId + "-" + tag + ".jar"));
+
+            System.out.println("File copied successfully!");
+        } catch (MissingArtifactException | IOException e) {
+            log.info("Artifact not found: " + dependencyCoordinateWithoutVersion + ":" + tag);
 //                continue;
-//            }
-////        }
-//            System.out.println("analyze tag: " + tag + " start");
-//
-////            //get specific tag name from git command output
-//            if (tag.charAt(tag.length() - 1) == '\'') {
-//                tag = tag.substring(0, tag.length() - 1);
-//            }
-//
-//            //version
-//            tag = tag.substring(tag.indexOf(tagPrefix) + tagPrefix.length(), tag.length() - tagSuffix.length() + 1);
-//
-//            version = tag;
-//            if( !version.equals("2.10")){
-//                continue;
-//            }
-//
-//            File jar = null;
-//            String dependencyCoordinates = dependencyCoordinateWithoutVersion + ":" + tag;
-//
-//            try {
-//                //download jar
-//                jar = new MavenArtifactDownloader(MavenCoordinate.fromString(dependencyCoordinates, "jar")).downloadArtifact(MavenUtilities.MAVEN_CENTRAL_REPO);
-//                //copy jar to lib
-//                Path targetDirectory = Paths.get(rootPath);
-//                Files.copy(jar.toPath(), targetDirectory.resolve(artifactId + "-" + tag + ".jar"));
-//
-//                System.out.println("File copied successfully!");
-//            } catch (MissingArtifactException | IOException e) {
-//                log.info("Artifact not found: " + dependencyCoordinateWithoutVersion + ":" + tag);
-//                continue;
-//            } finally {
-//                if (jar != null) {
-//                    jar.delete();
-//                }
-//            }
+        } finally {
+            if (jar != null) {
+                jar.delete();
+            }
+        }
 
         //acquire dependencies
         mavenTestInvoker.invokeTask("dependency:copy-dependencies", "./lib");
@@ -106,33 +85,31 @@ public class ProjectAnalyzer {
 
 
         //map packages to coordinates
-        String packageScan = PackageUtil.getPackages(rootPath, artifactId + "-" + version + ".jar",
-                dependencyCoordinateWithoutVersion + ":" + version, Constants.PACKAGE_PREFIX);
+        String packageScan = PackageUtils.getPackages(rootPath, artifactId + "-" + tag + ".jar",
+                dependencyCoordinate, Constants.PACKAGE_PREFIX);
 
         //upload package:coordinate to redis
-        PackageUtil.uploadCoordToRedis();
+        PackageUtils.uploadCoordToRedis(dependencyCoordinate);
 
-//            packageScan = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME;
-//            packageScan += "=" + Constants.PACKAGE_PREFIX + "!" + artifactId;
-        //javaagent maven test
+        //javaagent maven test with packages needed
         HashMap<String, Object> mavenTestWithJavaAgent = mavenTestInvoker.mavenTestWithJavaAgent(packageScan);
 
         //upload call graph to mongodb
-//        CallGraphUploader callGraphUploader = new CallGraphUploader();
-//        callGraphUploader.uploadAll(dependencyCoordinateWithoutVersion, artifactId);
+        CallGraphUploader callGraphUploader = new CallGraphUploader();
+        callGraphUploader.uploadAll(dependencyCoordinate, artifactId);
 
-        // analysis of call graph in mongo
-//        analysisResult.put(version, mongoData(dependencyCoordinateWithoutVersion));
-        analysisResult.put("test", mavenTestWithJavaAgent);
-        System.out.println("analyse " + projectName + " finished");
+
 //        }
 
-        File file = new File(Constants.PROJECT_FOLDER + artifactId + "-" + version + "/" + projectName + ".json");
-        outputToJson(analysisResult, file);
+        // analysis of call graph in mongo
+//        analysisResult.put(version, mongoData(dependencyCoordinate));
+//        analysisResult.put("test", mavenTestWithJavaAgent);
+//        System.out.println("analyze " + projectName + " finished");
+//        File file = new File(Constants.PROJECT_FOLDER + "outputjson/" + projectName + "/" + artifactId + "-" + version + ".json");
+//        outputToJson(analysisResult, file);
 
         //delete all files in project folder
-//        ProjectUtil.deleteFile(new File(rootPath).getAbsoluteFile());
-        return projectList;
+//        ProjectUtils.deleteFile(new File(rootPath).getAbsoluteFile());
     }
 
     private String[] getParameters(String coordinate) {
@@ -149,7 +126,7 @@ public class ProjectAnalyzer {
 
             System.out.println("tag: " + tagName);
 
-            String switchCommand = "git checkout " + tagName.substring(1, tagName.length() - 1);
+            String switchCommand = "git checkout " + tagName;
             Process switchProcess = Runtime.getRuntime().exec(switchCommand, null, new File(path));
 
             boolean switched = switchProcess.waitFor(5, TimeUnit.MINUTES);
@@ -184,7 +161,7 @@ public class ProjectAnalyzer {
                     break;
                 }
                 describeOutput.add(line);
-                if (describeOutput.size() == 2) {
+                if (describeOutput.size() == 1) {
                     break;
                 }
             }

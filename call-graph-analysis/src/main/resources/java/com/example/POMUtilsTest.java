@@ -1,5 +1,6 @@
 package com.example;
 
+import ljystu.project.callgraph.utils.POMUtils;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
@@ -12,13 +13,13 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.List;
 
-public class POMUtil {
+public class POMUtilsTest {
 
     @Test
     public void POMTest() throws Exception {
         String pomFile = "src/main/resources/pom.xml";
         String packageInfo = "-noverify -javaagent:";
-        ljystu.project.callgraph.utils.POMUtil.editPOM(pomFile, packageInfo);
+        POMUtils.editPOM(pomFile, packageInfo);
     }
 
     public static void editPOM(String pomFile, String packageInfo) throws Exception {

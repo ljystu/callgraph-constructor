@@ -8,12 +8,16 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntIntPair;
 import redis.clients.jedis.Jedis;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class GraphUtil {
-    static Jedis jedis = new Jedis(Constants.MONGO_ADDRESS);
+    static Jedis jedis = new Jedis(Constants.MONGO_ADDRESS, 6379, 30000);
 
     public static HashMap<Integer, GraphNode> getNodes(PartialJavaCallGraph result) {
         HashMap<Integer, GraphNode> nodeHashMap = new HashMap<>();
@@ -36,21 +40,34 @@ public class GraphUtil {
                     graphNode.setClassName(rawEntity.substring(0, rawEntity.indexOf(".")));
 
                     String signature = entry.getValue().getSignature();
-                    graphNode.setMethodName(signature.substring(0, signature.indexOf("(")));
+                    String methodName = signature.substring(0, signature.indexOf("("));
+                    graphNode.setMethodName(methodName);
                     signature = signature.replace("/", ".");
+                    String access = (String) entry.getValue().getMetadata().get("access");
+                    if (access == null) {
+                        access = "public";
+                    } else {
+                        if (!"public".equals(access) && !"private".equals(access) && !"protected".equals(access))
+                            access = "private";
+                    }
+                    if (methodName.equals("<clinit>") || methodName.equals("<init>")) {
+                        access = "public";
+                    }
 
-                    String substring = signature.substring(signature.indexOf("("), signature.indexOf(")") + 1);
+                    graphNode.setAccess(access);
+                    String substring = signature.substring(signature.indexOf("(") + 1, signature.indexOf(")"));
                     String[] param = substring.split(",");
                     StringBuilder str = new StringBuilder();
-                    if (param.length != 1) {
-                        for (int i = 1; i < param.length - 1; i++) {
+                    if (param.length > 0) {
+                        for (int i = 0; i < param.length; i++) {
+                            if (param[i].length() == 0) break;
                             String paramType = param[i].substring(1);
                             paramType = typeTransform(paramType);
                             str.append(paramType).append(",");
                         }
-                        str.append(param[param.length - 1], 1, param[param.length - 1].length() - 1);
+                        if (str.length() > 0)
+                            str.setLength(str.length() - 1);
                     }
-
 
                     graphNode.setParams(str.toString());
                     String returnType = signature.substring(signature.indexOf(")") + 2);
@@ -67,75 +84,152 @@ public class GraphUtil {
     }
 
     public static String typeTransform(String type) {
-        if (type.equals("java.lang.BooleanType[]")) {
-            type = "boolean[]";
+        if (type.startsWith("[")) {
+            int arrayDimension = 0;
+            while (type.startsWith("[")) {
+                arrayDimension++;
+                type = type.substring(1);
+            }
+
+            String fullQualifiedType;
+            switch (type) {
+                case "B":
+                    fullQualifiedType = "byte";
+                    break;
+                case "C":
+                    fullQualifiedType = "char";
+                    break;
+                case "D":
+                    fullQualifiedType = "double";
+                    break;
+                case "F":
+                    fullQualifiedType = "float";
+                    break;
+                case "I":
+                    fullQualifiedType = "int";
+                    break;
+                case "J":
+                    fullQualifiedType = "long";
+                    break;
+                case "S":
+                    fullQualifiedType = "short";
+                    break;
+                case "Z":
+                    fullQualifiedType = "boolean";
+                    break;
+                default:
+                    fullQualifiedType = type.substring(1, type.length() - 1); // Remove 'L' and ';'
+            }
+
+            for (int i = 0; i < arrayDimension; i++) {
+                fullQualifiedType += "[]";
+            }
+            return fullQualifiedType;
         }
-        if (type.equals("java.lang.IntegerType[]")) {
-            type = "int[]";
+
+        switch (type) {
+            case "java.lang.BooleanType":
+                return "boolean";
+            case "java.lang.VoidType":
+                return "void";
+            case "java.lang.IntegerType":
+                return "int";
+            case "java.lang.LongType":
+                return "long";
+            case "java.lang.FloatType":
+                return "float";
+            case "java.lang.DoubleType":
+                return "double";
+            case "java.lang.ByteType":
+                return "byte";
+            case "java.lang.ShortType":
+                return "short";
+            case "java.lang.CharacterType":
+            case "java.lang.CharType":
+                return "char";
+            case "java.lang.BooleanType[]":
+                return "boolean[]";
+            case "java.lang.VoidType[]":
+                return "void[]";
+            case "java.lang.IntegerType[]":
+                return "int[]";
+            case "java.lang.LongType[]":
+                return "long[]";
+            case "java.lang.FloatType[]":
+                return "float[]";
+            case "java.lang.DoubleType[]":
+                return "double[]";
+            case "java.lang.ByteType[]":
+                return "byte[]";
+            case "java.lang.ShortType[]":
+                return "short[]";
+            case "java.lang.CharacterType[]":
+            case "java.lang.CharType[]":
+                return "char[]";
+            default:
+                return type;
         }
-        if (type.equals("java.lang.LongType[]")) {
-            type = "long[]";
-        }
-        if (type.equals("java.lang.FloatType[]")) {
-            type = "float[]";
-        }
-        if (type.equals("java.lang.DoubleType[]")) {
-            type = "double[]";
-        }
-        if (type.equals("java.lang.ByteType[]")) {
-            type = "byte[]";
-        }
-        if (type.equals("java.lang.ShortType[]")) {
-            type = "short[]";
-        }
-        if (type.equals("java.lang.CharacterType[]")) {
-            type = "char[]";
-        }
-        if (type.equals("java.lang.BooleanType")) {
-            type = "boolean";
-        }
-        if (type.equals("java.lang.VoidType")) {
-            type = "void";
-        }
-        if ("java.lang.IntegerType".equals(type)) {
-            type = "int";
-        }
-        if (type.equals("java.lang.LongType")) {
-            type = "long";
-        }
-        if (type.equals("java.lang.FloatType")) {
-            type = "float";
-        }
-        if (type.equals("java.lang.DoubleType")) {
-            type = "double";
-        }
-        if (type.equals("java.lang.ByteType")) {
-            type = "byte";
-        }
-        if (type.equals("java.lang.ShortType")) {
-            type = "short";
-        }
-        if (type.equals("java.lang.CharacterType")) {
-            type = "char";
-        }
-        return type;
     }
 
-    public static HashSet<Edge> getAllEdges(PartialJavaCallGraph result, HashMap<Integer, GraphNode> nodes, String artifact) {
+    public static HashSet<Edge> getAllEdges(PartialJavaCallGraph result, HashMap<Integer, GraphNode> nodes, String artifact, String
+            version) {
         HashSet<Edge> set = new HashSet<>();
         jedis.auth("ljystu");
+
+        String dependencyWithoutVersion = artifact.substring(0, artifact.lastIndexOf(":"));
+        String dependencyWithVersion = dependencyWithoutVersion + ":" + version;
+        Map<String, String> redisMap =
+//                readFromFile();
+                jedis.hgetAll(dependencyWithVersion);
+        for (Map.Entry<String, String> map : redisMap.entrySet()) {
+            if (map.getValue().startsWith(dependencyWithoutVersion)) {
+                map.setValue(dependencyWithVersion);
+            }
+        }
         for (Map.Entry<IntIntPair, Map<Object, Object>> map : result.getGraph().getCallSites().entrySet()) {
             IntIntPair key = map.getKey();
 
             GraphNode nodeFrom = nodes.get(key.leftInt());
-            nodeFrom.setCoordinate(jedis.get(nodeFrom.getPackageName()) == null ? "not found" : jedis.get(nodeFrom.getPackageName()));
 
             GraphNode nodeTo = nodes.get(key.rightInt());
-            nodeTo.setCoordinate(jedis.get(nodeTo.getPackageName()) == null ? "not found" : jedis.get(nodeTo.getPackageName()));
+
+            Pattern pattern = Pattern.compile("^(java|javax|jdk|sun|com\\.sun|org\\.w3c|org\\.xml|org\\.ietf|org\\.omg|org\\.jcp).*");
+            if (pattern.matcher(nodeFrom.getPackageName()).matches() || pattern.matcher(nodeTo.getPackageName()).matches()) {
+                continue;
+            }
+
+            if (!redisMap.containsKey(nodeFrom.getPackageName())) {
+                redisMap.put(nodeFrom.getPackageName(), "not found");
+            }
+            nodeFrom.setCoordinate(redisMap.get(nodeFrom.getPackageName()));
+
+
+            if (!redisMap.containsKey(nodeTo.getPackageName())) {
+                redisMap.put(nodeTo.getPackageName(), "not found");
+            }
+
+            nodeTo.setCoordinate(redisMap.get(nodeTo.getPackageName()));
 
             Edge edge = new Edge(nodeFrom, nodeTo);
             set.add(edge);
         }
+        jedis.close();
         return set;
+    }
+
+
+    public static Map<String, String> readFromFile() {
+        Map<String, String> map = new HashMap<>();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("/Users/ljystu/Desktop/projects/redisKeys.txt"));
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] split = line.split(" ");
+                map.put(split[0], split[1]);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return map;
     }
 }

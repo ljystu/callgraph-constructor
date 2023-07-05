@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Created-By: Apache Maven 3.8.1
+Built-By: ljystu
+Build-Jdk: 17.0.2
+Can-Redefine-Classes: true
+Main-Class: ljystu.javacg.stat.JCallGraph
+Premain-Class: ljystu.javacg.dyn.Instrumenter

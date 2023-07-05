@@ -17,10 +17,7 @@ public class Edge {
 
     @Override
     public String toString() {
-        return "Edge{" +
-                "from=" + from.toString() +
-                ", to=" + to.toString() +
-                '}';
+        return "Edge{" + "from=" + from.toString() + ", to=" + to.toString() + '}';
     }
 
     public Node getFrom() {

@@ -20,8 +20,11 @@ import java.util.regex.Pattern;
  * @author ljystu
  */
 @Slf4j
-public class PackageUtil {
+public class PackageUtils {
 
+    /**
+     * exlude any jar file that is larger than 10MB
+     */
     static long tenMegabytes = 10485760L;
 
     /**
@@ -39,15 +42,19 @@ public class PackageUtil {
 
 //    public static Set<String> currentJars = new HashSet<>();
 
+    PackageUtils() {
+        throw new IllegalStateException("Utility class");
+    }
+
     /**
-     * Gets pom files.
+     * Find all pom files.
      *
      * @param rootPath the root path
      * @return the pom files
      */
     public static List<String> getPomFiles(String rootPath) {
         List<File> files = new ArrayList<>();
-        JarReadUtil.findTypeFiles(new File(rootPath), files, "pom.xml");
+        JarReadUtils.findTypeFiles(new File(rootPath), files, "pom.xml");
         List<String> pomFiles = new ArrayList<>();
         for (File file : files) {
             pomFiles.add(file.getPath());
@@ -57,7 +64,7 @@ public class PackageUtil {
     }
 
     /**
-     * Gets packages.
+     * Find all packages in the project
      *
      * @param rootPath the root path
      * @return packages packages
@@ -76,14 +83,21 @@ public class PackageUtil {
         return constructPackageScan(inclPackages, packagePrefix, coord).toString();
     }
 
+    /**
+     * Find packages need to be scanned
+     *
+     * @param definedPackages
+     * @param packagePrefix
+     * @param coord
+     * @return
+     */
     private static StringBuilder constructPackageScan(Set<String> definedPackages, String packagePrefix, String coord) {
         StringBuilder packageScan = new StringBuilder();
         String argLine = Constants.ARG_LINE_LEFT + Constants.JAVAAGENT_HOME + "=";
 //                + Constants.ARG_LINE_RIGHT;
         packageScan.append(argLine);
-        Pattern excludedPattern = Pattern.compile("^((org\\.junit)|(org\\.junit\\.jupiter)|(org\\.testng)|(org\\.mockito)|(org\\.powermock)|(org\\.easymock)|(org\\.hamcrest)|(org\\.assertj\\.core\\.api)|(io\\.cucumber)|(org\\.spockframework)).*");
+        Pattern excludedPattern = Pattern.compile("^((org\\.junit)|(junit)|(org\\.testng)|(org\\.mockito)|(org\\.powermock)|(org\\.easymock)|(org\\.hamcrest)|(org\\.assertj\\.core\\.api)|(io\\.cucumber)|(org\\.spockframework)).*");
 //                readExcludedPackages());
-
         HashSet<String> packagePrefixSet = new HashSet<>();
         for (String definedPackage : definedPackages) {
 //            Matcher packageMatcher = selfPackagePattern.matcher(definedPackage);
@@ -105,27 +119,27 @@ public class PackageUtil {
             }
             packagePrefixSet.add(prefix);
 
-
             packageScan.append(prefix).append(",");
-//                    .append(".*,");
 
         }
 
-//        packageScan.setLength(packageScan.length() - 1);
-//        packageScan.append(";");
-        String artifactId = coord.split(":")[1];
-        packageScan.
-//                append("info=").
-        append(packagePrefix).append("!").append(artifactId);
-//                .append(";");
+        packageScan.append(packagePrefix).append("!").append(coord);
+
         return packageScan;
     }
 
+    /**
+     * Extract package from jar file
+     *
+     * @param rootPath
+     * @param packagePrefix
+     * @return
+     */
     private static Set<String> extractPackagesFromJar(String rootPath, String packagePrefix) {
         // find jar files
         List<File> jarFiles = new ArrayList<>();
 //        currentJars.clear();
-        JarReadUtil.findTypeFiles(new File(rootPath), jarFiles, ".jar");
+        JarReadUtils.findTypeFiles(new File(rootPath), jarFiles, ".jar");
 
         Set<String> inclPackages = new HashSet<>();
         for (File jar : jarFiles) {
@@ -147,20 +161,29 @@ public class PackageUtil {
 
                 extractPackagesToMap(inclPackages, jar, coord, packagePrefix);
 
-//                ProjectUtil.deleteFile(jar);
+//                ProjectUtils.deleteFile(jar);
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-//        for (File jarFile : jarFiles) {
-//            ProjectUtil.deleteFile(jarFile);
-//        }
+        for (File jarFile : jarFiles) {
+            ProjectUtils.deleteFile(jarFile);
+        }
         return inclPackages;
     }
 
+    /**
+     * Package to coordinate mapping
+     *
+     * @param inclPackages
+     * @param jar
+     * @param coord
+     * @param packagePrefix
+     * @throws IOException
+     */
     private static void extractPackagesToMap(Set<String> inclPackages, File jar, String coord, String packagePrefix) throws IOException {
-        Set<String> packagesInJar = JarReadUtil.getPackages(new JarFile(jar));
+        Set<String> packagesInJar = JarReadUtils.getPackages(new JarFile(jar));
 
         // jar to package
         jarToPackageMap.put(jar.getName(), packagesInJar);
@@ -170,7 +193,8 @@ public class PackageUtil {
         for (String importPackage : packagesInJar) {
 
             if (importPackage.startsWith(packagePrefix)) {
-                packageToCoordMap.put(importPackage, coord);
+                String coordWithoutVersion = coord.split(":")[0] + ":" + coord.split(":")[1];
+                packageToCoordMap.put(importPackage, coordWithoutVersion + ":" + Constants.VERSION);
                 continue;
             }
             packageToCoordMap.put(importPackage, coord);
@@ -286,12 +310,13 @@ public class PackageUtil {
     }
 
 
-    public static void uploadCoordToRedis() {
-        Jedis jedis = new Jedis(Constants.SERVER_IP_ADDRESS);
+    public static void uploadCoordToRedis(String dependencyCoordinate) {
+        Jedis jedis = new Jedis(Constants.SERVER_IP_ADDRESS, 6379, 30000);
         jedis.auth(Constants.REDIS_PASSWORD);
-        for (Map.Entry<String, String> entry : packageToCoordMap.entrySet()) {
-            jedis.set(entry.getKey(), entry.getValue());
-        }
+//        for (Map.Entry<String, String> entry : packageToCoordMap.entrySet()) {
+//            jedis.set(entry.getKey(), entry.getValue());
+//        }
+        jedis.hmset(dependencyCoordinate, packageToCoordMap);
         jedis.close();
     }
 }

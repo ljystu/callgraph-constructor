@@ -3,7 +3,7 @@ package ljystu.project.callgraph.uploader;
 import ljystu.project.callgraph.config.Constants;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
-import ljystu.project.callgraph.utils.MongodbUtil;
+import ljystu.project.callgraph.utils.MongodbUtils;
 import org.neo4j.driver.*;
 
 import java.util.*;
@@ -14,17 +14,15 @@ import static org.neo4j.driver.Values.parameters;
 /**
  * The type Neo 4 j utils.
  */
-public class Neo4jOp {
+public class Neo4jUploader {
 
     Driver driver;
 
-
-    public Neo4jOp() {
+    public Neo4jUploader() {
 
     }
 
-
-    public Neo4jOp(String uri, String user, String password) {
+    public Neo4jUploader(String uri, String user, String password) {
         driver = GraphDatabase.driver(uri, AuthTokens.basic(user, password));
 
     }
@@ -39,16 +37,7 @@ public class Neo4jOp {
         try (Session session = driver.session(SessionConfig.forDatabase(Constants.DATABASE))) {
             Node from = edge.getFrom();
             Node to = edge.getTo();
-            session.writeTransaction(tx -> tx.run("MATCH (method_from:Method {packageName: $packagename, className: $classname, " +
-                            "methodName: $methodname, params: $params, returnType: $returntype }), " +
-                            "(method_to:Method {packageName: $packagename2, className: $classname2, " +
-                            "methodName: $methodname2, params: $params2, returnType: $returntype2}) " +
-                            "MERGE (method_from)-[r:CALLS]->(method_to)",
-                    parameters("packagename", from.getPackageName(),
-                            "classname", from.getClassName(), "methodname", from.getMethodName(),
-                            "params", from.getParams(), "returntype", from.getReturnType(), "packagename2", to.getPackageName(),
-                            "classname2", to.getClassName(), "methodname2", to.getMethodName(),
-                            "params2", to.getParams(), "returntype2", to.getReturnType())));
+            session.writeTransaction(tx -> tx.run("MATCH (method_from:Method {packageName: $packagename, className: $classname, " + "methodName: $methodname, params: $params, returnType: $returntype }), " + "(method_to:Method {packageName: $packagename2, className: $classname2, " + "methodName: $methodname2, params: $params2, returnType: $returntype2}) " + "MERGE (method_from)-[r:CALLS]->(method_to)", parameters("packagename", from.getPackageName(), "classname", from.getClassName(), "methodname", from.getMethodName(), "params", from.getParams(), "returntype", from.getReturnType(), "packagename2", to.getPackageName(), "classname2", to.getClassName(), "methodname2", to.getMethodName(), "params2", to.getParams(), "returntype2", to.getReturnType())));
 //            System.out.println(result.next().toString());
         }
     }
@@ -65,22 +54,11 @@ public class Neo4jOp {
         parameters.put("type", type);
 
         try (Session session = driver.session(SessionConfig.forDatabase(Constants.DATABASE))) {
-            session.writeTransaction(tx -> tx.run("UNWIND $edgeNodePairs as row " +
-                            "MERGE (method_from:Class {packageName: row.packageName, className: row.className, " +
+            session.writeTransaction(tx -> tx.run("UNWIND $edgeNodePairs as row " + "MERGE (method_from:Class {packageName: row.packageName, className: row.className, " +
 //                            "methodName: row.methodName, params: row.params, returnType: row.returnType, " +
-                            "coordinate: row.dependency }) " +
-                            "MERGE(method_to:Class {packageName: row.packageName2, className: row.className2, " +
+                    "coordinate: row.dependency }) " + "MERGE(method_to:Class {packageName: row.packageName2, className: row.className2, " +
 //                            "methodName: row.methodName2, params: row.params2, returnType: row.returnType2, " +
-                            "coordinate: row.dependency2 }) " +
-                            "MERGE (method_from)-[r:Call]->(method_to)" +
-                            "ON CREATE SET r.type = $type \n" +
-                            "ON MATCH SET r.type = \n" +
-                            "CASE r.type\n" +
-                            "   WHEN $type \n" +
-                            "   THEN $type \n" +
-                            "   ELSE 'both' \n" +
-                            "END",
-                    parameters));
+                    "coordinate: row.dependency2 }) " + "MERGE (method_from)-[r:Call]->(method_to)" + "ON CREATE SET r.type = $type \n" + "ON MATCH SET r.type = \n" + "CASE r.type\n" + "   WHEN $type \n" + "   THEN $type \n" + "   ELSE 'both' \n" + "END", parameters));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -129,24 +107,43 @@ public class Neo4jOp {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("coord", coord);
         try (Session session = driver.session(SessionConfig.forDatabase(Constants.DATABASE))) {
-            session.writeTransaction(tx -> tx.run("CALL apoc.mongodb.find('mongodb://admin:123456@localhost:27017', 'mydatabase', 'mycollection', { `startNode.coordinate`: $coord },{},{}) YIELD value\n" +
-                    "UNWIND value AS edgeData\n" +
-                    "WITH edgeData.startNode AS startNode, edgeData.endNode AS endNode, edgeData.type AS type\n" +
-                    "MERGE (start:Class {packageName: startNode.packageName, className: startNode.className, coordinate: startNode.coordinate})\n" +
-                    "MERGE (end:Class {packageName: endNode.packageName, className: endNode.className, coordinate: endNode.coordinate})\n" +
-                    "MERGE (start)-[r:Call]->(end)\n" +
-                    "ON CREATE SET r.type = type\n" +
-                    "ON MATCH SET r.type = \n" +
-                    "CASE r.type\n" +
-                    "WHEN type \n" +
-                    "THEN type \n" +
-                    "ELSE 'both'\n" +
-                    "END ", parameters));
-            MongodbUtil.deleteEdges(coord);
+            session.writeTransaction(tx -> tx.run("CALL apoc.mongodb.find('mongodb://admin:123456@localhost:27017', 'mydatabase', 'mycollection', { `startNode.coordinate`: $coord },{},{}) YIELD value\n" + "UNWIND value AS edgeData\n" + "WITH edgeData.startNode AS startNode, edgeData.endNode AS endNode, edgeData.type AS type\n" + "MERGE (start:Class {packageName: startNode.packageName, className: startNode.className, coordinate: startNode.coordinate})\n" + "MERGE (end:Class {packageName: endNode.packageName, className: endNode.className, coordinate: endNode.coordinate})\n" + "MERGE (start)-[r:Call]->(end)\n" + "ON CREATE SET r.type = type\n" + "ON MATCH SET r.type = \n" + "CASE r.type\n" + "WHEN type \n" + "THEN type \n" + "ELSE 'both'\n" + "END ", parameters));
+            MongodbUtils.deleteEdges(coord);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+    }
+
+    public void addVulnerableLabel(Map<String, Object> map, String label) {
+
+        // Sessions are lightweight and disposable connection wrappers.
+        try (Session session = driver.session(SessionConfig.forDatabase(label))) {
+            // Wrapping a Cypher Query in a Managed Transaction provides atomicity
+            // and makes handling errors much easier.
+            // Use `session.writeTransaction` for writes and `session.readTransaction` for reading data.
+            // These methods are also able to handle connection problems and transient errors using an automatic retry mechanism.
+            session.writeTransaction(tx -> tx.run("match (a:Method {packageName: $packageName, className: $className," + " methodName: $methodName, params: $params, returnType: $returnType , coordinate : $coordinate }) <-[*]-(callingNode) " + " Set callingNode:VulnerableMethod", parameters("packageName", map.get("packageName"), "className", map.get("className"), "methodName", map.get("methodName"), "params", map.get("params"), "returnType", map.get("returnType"), "coordinate", map.get("coordinate"))));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void addBatchVulnerableLabel(List<Map<String, Object>> nodeList, String label) {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("batches", nodeList);
+
+        try (Session session = driver.session(SessionConfig.forDatabase(label))) {
+            session.writeTransaction(tx -> tx.run("UNWIND $batches as row " + "MATCH (n:Method {packageName: row.packageName, className: row.className," + " methodName: row.methodName, params: row.params, returnType: row.returnType, " + "coordinate: row.coordinate}) Set n:OriginalVulnerableMethod", parameters));
+//            session.writeTransaction(tx -> tx.run("UNWIND $batches as row " +
+//                            "MATCH (n:Method {packageName: row.packageName, className: row.className," +
+//                            " methodName: row.methodName, params: row.params, returnType: row.returnType, " +
+//                            "coordinate: row.coordinate})<-[*]-(callingNode) " +
+//                            "SET callingNode:VulnerableMethod",
+//                    parameters));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -167,10 +164,7 @@ public class Neo4jOp {
             // and makes handling errors much easier.
             // Use `session.writeTransaction` for writes and `session.readTransaction` for reading data.
             // These methods are also able to handle connection problems and transient errors using an automatic retry mechanism.
-            session.writeTransaction(tx -> tx.run("MERGE (a:Method {packageName: $packagename, className: $classname," +
-                            " methodName: $methodname, params: $params, returnType: $returntype })",
-                    parameters("packagename", packageName, "classname", className,
-                            "methodname", methodName, "params", params, "returntype", returnType)));
+            session.writeTransaction(tx -> tx.run("MERGE (a:Method {packageName: $packagename, className: $classname," + " methodName: $methodname, params: $params, returnType: $returntype })", parameters("packagename", packageName, "classname", className, "methodname", methodName, "params", params, "returntype", returnType)));
         }
     }
 
@@ -184,8 +178,7 @@ public class Neo4jOp {
         parameters.put("batches", nodeList);
 
         try (Session session = driver.session(SessionConfig.forDatabase(Constants.DATABASE))) {
-            session.writeTransaction(tx -> tx.run("UNWIND $batches as row " +
-                            "MERGE (a:Class {packageName: row.packageName, className: row.className," +
+            session.writeTransaction(tx -> tx.run("UNWIND $batches as row " + "MERGE (a:Class {packageName: row.packageName, className: row.className," +
 //                            " methodName: row.methodName, params: row.params, returnType: row.returnType, " +
                             "coordinate: row.dependency })",
 
@@ -212,7 +205,7 @@ public class Neo4jOp {
     public void uploadAllToNeo4j(List<Node> nodesList, Set<Edge> edges, String label) {
 //        uploadMethodNodes(nodesList);
         uploadEdges(edges, label);
-//        HashSet<String> allCoords = MongodbUtil.findAllCoords();
+//        HashSet<String> allCoords = MongodbUtils.findAllCoords();
 //        for (String coord : allCoords) {
 //            uploadFromMongo(coord);
 //        }

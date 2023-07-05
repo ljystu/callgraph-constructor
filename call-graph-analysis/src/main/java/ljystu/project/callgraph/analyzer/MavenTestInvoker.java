@@ -1,8 +1,8 @@
 package ljystu.project.callgraph.analyzer;
 
 import ljystu.project.callgraph.config.Constants;
-import ljystu.project.callgraph.utils.POMUtil;
-import ljystu.project.callgraph.utils.PackageUtil;
+import ljystu.project.callgraph.utils.POMUtils;
+import ljystu.project.callgraph.utils.PackageUtils;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
@@ -12,8 +12,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static ljystu.project.callgraph.utils.ProjectUtil.deleteFile;
+import static ljystu.project.callgraph.utils.ProjectUtils.deleteFile;
 
+/**
+ * @author ljystu
+ */
 public class MavenTestInvoker {
 
     String rootPath;
@@ -28,9 +31,15 @@ public class MavenTestInvoker {
     }
 
 
+    /**
+     * inject javaagent into surefire configuration of all POM files
+     *
+     * @param inclPackages
+     * @return
+     */
     protected HashMap<String, Object> mavenTestWithJavaAgent(String inclPackages) {
         //get path of all pom files
-        List<String> pomFiles = PackageUtil.getPomFiles(rootPath);
+        List<String> pomFiles = PackageUtils.getPomFiles(rootPath);
         //maven test with javaagent
         addJavaagent(inclPackages, pomFiles);
 
@@ -48,8 +57,6 @@ public class MavenTestInvoker {
     @Deprecated
     public void invokeMavenTask(String inclPackages, String path, List<String> pomFilePaths, String task) {
 
-        // 设置Maven的安装目录
-
         if (Objects.equals(task, "test")) {
             addJavaagent(inclPackages, pomFilePaths);
             invokeTask(path, "test");
@@ -61,7 +68,7 @@ public class MavenTestInvoker {
 
         //add javaagent into surefire configuration of all POM files
         for (String pomFilePath : pomFilePaths) {
-            POMUtil.editPOM(pomFilePath, inclPackages);
+            POMUtils.editPOM(pomFilePath, inclPackages);
         }
 
     }
@@ -82,8 +89,9 @@ public class MavenTestInvoker {
         if (outputDir.length() != 0) {
             properties.setProperty("outputDirectory", outputDir);
         }
-        request.setMavenOpts("-Drat.numUnapprovedLicenses=1000");
+        request.setMavenOpts("-Drat.numUnapprovedLicenses=1000 -Dmaven.test.failure.ignore=true");
         request.setProperties(properties);
+
         try {
             mavenInvoker.execute(request);
         } catch (Exception e) {

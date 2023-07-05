@@ -16,11 +16,13 @@ import java.util.zip.ZipFile;
 
 /**
  * The type Java read utils.
+ *
+ * @author ljystu
  */
 @Slf4j
-public class JarReadUtil {
+public class JarReadUtils {
 
-    private JarReadUtil() {
+    private JarReadUtils() {
 
     }
 
@@ -107,7 +109,7 @@ public class JarReadUtil {
     @Deprecated
     public static Set<String> getAllPackages(String jarFilePath, String tempDir) {
 
-        Set<String> classes = JarReadUtil.getClasses(tempDir);
+        Set<String> classes = JarReadUtils.getClasses(tempDir);
 
         log.info(String.valueOf(classes.size()));
 

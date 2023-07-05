@@ -14,38 +14,45 @@ import java.nio.file.Paths;
 
 /**
  * The type Pom utils.
+ *
+ * @author ljystu
  */
 @Slf4j
-public class POMUtil {
+public class POMUtils {
+
+    POMUtils() {
+        throw new IllegalStateException("Utility class");
+    }
+
     /**
      * edit surefire plugin, add javaagent to argline
      *
-     * @param pomFile     the pom file
+     * @param pomFilePath the pom file
      * @param packageInfo the package info
      */
-    public static void editPOM(String pomFile, String packageInfo) {
+    public static void editPOM(String pomFilePath, String packageInfo) {
         // Read the POM file with JSoup
         Document document;
         try {
-            document = Jsoup.parse(new File(pomFile), StandardCharsets.UTF_8.name(), "", Parser.xmlParser());
+            document = Jsoup.parse(new File(pomFilePath), StandardCharsets.UTF_8.name(), "", Parser.xmlParser());
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("pomFile not found");
+            System.err.println("pomFilePath not found");
             return;
         }
 
         // Update the surefire-plugin and maven-compiler-plugin configurations
         updatePluginConfiguration(document, "maven-surefire-plugin", packageInfo);
-        updatePluginConfiguration(document, "maven-failsafe-plugin", packageInfo);
+//        updatePluginConfiguration(document, "maven-failsafe-plugin", packageInfo);
 
 
         // Write the modified POM file back to disk, preserving comments
         try {
-            Files.write(Paths.get(pomFile), document.outerHtml().getBytes(StandardCharsets.UTF_8));
+            Files.write(Paths.get(pomFilePath), document.outerHtml().getBytes(StandardCharsets.UTF_8));
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println(pomFile + " update failed");
+            System.err.println(pomFilePath + " update failed");
         }
     }
 
@@ -121,12 +128,12 @@ public class POMUtil {
 
 
             //timeout in seconds
-            Element timeoutInSeconds = configuration.selectFirst("parallelTestsTimeoutInSeconds");
-            if (timeoutInSeconds == null) {
-                timeoutInSeconds = new Element("parallelTestsTimeoutInSeconds");
-                configuration.appendChild(timeoutInSeconds);
-            }
-            timeoutInSeconds.text("600");
+//            Element timeoutInSeconds = configuration.selectFirst("parallelTestsTimeoutInSeconds");
+//            if (timeoutInSeconds == null) {
+//                timeoutInSeconds = new Element("parallelTestsTimeoutInSeconds");
+//                configuration.appendChild(timeoutInSeconds);
+//            }
+//            timeoutInSeconds.text("600");
 
 //            Element timeoutForcedInSeconds = configuration.selectFirst("parallelTestsTimeoutForcedInSeconds");
 //            if (timeoutForcedInSeconds == null) {
@@ -135,12 +142,12 @@ public class POMUtil {
 //            }
 //            timeoutForcedInSeconds.text("1800");
 
-            Element timeoutForcedInSeconds = configuration.selectFirst("forkedProcessTimeoutInSeconds");
-            if (timeoutForcedInSeconds == null) {
-                timeoutForcedInSeconds = new Element("forkedProcessTimeoutInSeconds");
-                configuration.appendChild(timeoutForcedInSeconds);
-            }
-            timeoutForcedInSeconds.text("600");
+//            Element timeoutForcedInSeconds = configuration.selectFirst("forkedProcessTimeoutInSeconds");
+//            if (timeoutForcedInSeconds == null) {
+//                timeoutForcedInSeconds = new Element("forkedProcessTimeoutInSeconds");
+//                configuration.appendChild(timeoutForcedInSeconds);
+//            }
+//            timeoutForcedInSeconds.text("600");
 
             Element reuseForks = configuration.selectFirst("reuseForks");
             if (reuseForks == null) {
@@ -148,6 +155,7 @@ public class POMUtil {
                 configuration.appendChild(reuseForks);
             }
             reuseForks.text("true");
+            //forkCount
 //            Element forkCounts = configuration.selectFirst("forkCount");
 //            if (forkCounts == null) {
 //                forkCounts = new Element("forkCount");

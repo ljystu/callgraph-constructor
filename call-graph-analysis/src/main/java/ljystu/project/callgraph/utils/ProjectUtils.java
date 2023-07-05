@@ -21,15 +21,14 @@ import java.util.zip.ZipInputStream;
  * @author ljystu
  */
 @Slf4j
-public class ProjectUtil {
+public class ProjectUtils {
 
     /**
-     * Read projects list.
+     * read projects and parse to list
      *
      * @param filepath the filepath
      * @return the list
      */
-// 读取文件并解析项目列表
     public static List<Project> readProjects(String filepath) {
         // 读取文件
         String json = readFile(filepath);
@@ -48,12 +47,12 @@ public class ProjectUtil {
     }
 
     /**
-     * Download and unzip string.
+     * download and unzip.
      *
      * @param project the project
      * @return the string
      */
-// 下载项目并解压
+
     @Deprecated
     public static String downloadAndUnzip(Project project) {
         // 下载项目的zip文件
@@ -78,6 +77,9 @@ public class ProjectUtil {
 
         String path = Constants.PROJECT_FOLDER + project.getName();
         try {
+            if (Files.exists(Paths.get(path))) {
+                return path;
+            }
             String cloneCommand = "git clone " + project.getRepoUrl() + " " + project.getName();
             Process cloneProcess = Runtime.getRuntime().exec(cloneCommand, null, new File(Constants.PROJECT_FOLDER));
             cloneProcess.waitFor();
@@ -118,7 +120,12 @@ public class ProjectUtil {
         return path;
     }
 
-    // 读取文件内容
+    /**
+     * read file
+     *
+     * @param filepath
+     * @return file content
+     */
     private static String readFile(String filepath) {
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filepath)))) {
@@ -133,7 +140,13 @@ public class ProjectUtil {
         return sb.toString();
     }
 
-    // 解压zip文件
+    /**
+     * unzip file
+     *
+     * @param zipFile
+     * @return folder name
+     * @throws IOException
+     */
     private static String unzip(File zipFile) throws IOException {
         String name = "";
         boolean flag = false;
@@ -160,6 +173,11 @@ public class ProjectUtil {
         return name;
     }
 
+    /**
+     * delete file
+     *
+     * @param dirFile
+     */
     public static void deleteFile(File dirFile) {
 
         if (!dirFile.exists()) {

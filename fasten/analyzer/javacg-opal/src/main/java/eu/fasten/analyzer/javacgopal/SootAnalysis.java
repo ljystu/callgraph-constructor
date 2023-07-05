@@ -6,6 +6,8 @@ import eu.fasten.analyzer.javacgopal.Util.GraphUtil;
 import eu.fasten.analyzer.javacgopal.Util.MongodbUtil;
 import eu.fasten.analyzer.javacgopal.entity.GraphNode;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.ScanParams;
+import redis.clients.jedis.ScanResult;
 import soot.PackManager;
 import soot.Scene;
 import soot.SootMethod;
@@ -14,25 +16,28 @@ import soot.jimple.toolkits.callgraph.CallGraph;
 import soot.jimple.toolkits.callgraph.Edge;
 import soot.options.Options;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author ljystu
  */
 public class SootAnalysis {
 
-    static Jedis jedis = new Jedis(Constants.MONGO_ADDRESS);
+    static Jedis jedis = new Jedis(Constants.MONGO_ADDRESS, 6379, 30000);
 
     public static void main(String[] args) {
         jedis.auth("ljystu");
-        String prefix = "com.google.gson";
-        String dependencyCoordinate = "com.google.code.gson:gson:2.10.1";
 
-        String jarPath = "/Users/ljystu/Downloads/gson-2.10.1.jar";
+        String prefix = args[0];
+        String dependencyCoordinate = args[1];
+        String jarPath = args[2];
 
+        System.out.println("analyzing " + dependencyCoordinate + " ..." + args[2]);
         String outputPath = "/Users/ljystu/Desktop/projects/soot-" + dependencyCoordinate + ".json";
         setupSoot(jarPath);
 
@@ -42,17 +47,19 @@ public class SootAnalysis {
         // Get the Call Graph
         CallGraph callGraph = Scene.v().getCallGraph();
 
+        // Convert the Call Graph to JSON
+//        String json = callGraphToJson(callGraph, prefix);
+//
+//        try (FileWriter file = new FileWriter(outputPath)) {
+//            file.write(json);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         callGraphToMongo(callGraph, prefix, dependencyCoordinate);
-        // Convert the Call Graph to JSON
-        String json = callGraphToJson(callGraph, prefix);
 
         // Write the JSON to a file
-        try (FileWriter file = new FileWriter(outputPath)) {
-            file.write(json);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
         jedis.close();
     }
 
@@ -107,47 +114,121 @@ public class SootAnalysis {
     private static void callGraphToMongo(CallGraph callGraph, String prefix, String dependencyCoordinate) {
         HashSet<eu.fasten.analyzer.javacgopal.entity.Edge> edges = new HashSet<>();
 
+        String dependencyWithoutVersion = dependencyCoordinate.substring(0, dependencyCoordinate.lastIndexOf(":"));
+
+        Map<String, String> packageToCoordinateMap =
+//                readFromFile();
+//                new HashMap<>();
+////                getRedisMap();
+                jedis.hgetAll(dependencyCoordinate);
+        for (Map.Entry<String, String> map : packageToCoordinateMap.entrySet()) {
+            if (map.getValue().startsWith(dependencyWithoutVersion)) {
+                map.setValue(dependencyCoordinate);
+            }
+        }
         for (Iterator<Edge> it = callGraph.iterator(); it.hasNext(); ) {
             Edge edge = it.next();
-            SootMethod src = edge.src();
-            SootMethod tgt = edge.tgt();
+            SootMethod srcMethod = edge.src();
+            SootMethod tgtMethod = edge.tgt();
 
-            if (src.getDeclaringClass().getPackageName().startsWith(prefix) || tgt.getDeclaringClass().getPackageName().startsWith(prefix)) {
-                StringBuilder srcParams = new StringBuilder();
-                for (Type type : src.getParameterTypes()) {
-                    String typeTransform = GraphUtil.typeTransform(type.toString());
-                    srcParams.append(typeTransform).append(",");
-                }
-
-                if (srcParams.length() > 0) {
-                    srcParams.deleteCharAt(srcParams.length() - 1);
-                }
-
-                StringBuilder tgtParams = new StringBuilder();
-                for (Type type : src.getParameterTypes()) {
-                    String typeTransform = GraphUtil.typeTransform(type.toString());
-                    tgtParams.append(typeTransform).append(",");
-                }
-                if (tgtParams.length() > 0) {
-                    tgtParams.deleteCharAt(tgtParams.length() - 1);
-                }
-
-                String srcTypeTransform = GraphUtil.typeTransform(tgt.getReturnType().toString());
-                String tgtTypeTransform = GraphUtil.typeTransform(tgt.getReturnType().toString());
-
-                String srcCoordinate = jedis.get(src.getDeclaringClass().getPackageName());
-                GraphNode fromNode = new GraphNode(src.getDeclaringClass().getPackageName(), src.getDeclaringClass().getName(), src.getName(), tgtParams.toString(), srcTypeTransform,
-                        srcCoordinate == null ? "not found" : srcCoordinate);
-
-                String tgtCoordinate = jedis.get(tgt.getDeclaringClass().getPackageName());
-                GraphNode toNode = new GraphNode(tgt.getDeclaringClass().getPackageName(), tgt.getDeclaringClass().getName(), tgt.getName(), tgtParams.toString(), tgtTypeTransform,
-                        tgtCoordinate == null ? "not found" : tgtCoordinate);
-
-                edges.add(new eu.fasten.analyzer.javacgopal.entity.Edge(fromNode, toNode));
+            Pattern pattern = Pattern.compile("^(java|javax|jdk|sun|com\\.sun|org\\.w3c|org\\.xml|org\\.ietf|org\\.omg|org\\.jcp).*");
+            if (pattern.matcher(srcMethod.getDeclaringClass().getPackageName()).matches() || pattern.matcher(tgtMethod.getDeclaringClass().getPackageName()).matches()) {
+                continue;
+            }
+            if (srcMethod.getDeclaringClass().getPackageName().startsWith(prefix) || tgtMethod.getDeclaringClass().getPackageName().startsWith(prefix)) {
+                edges.add(new eu.fasten.analyzer.javacgopal.entity.Edge(buildNode(packageToCoordinateMap, srcMethod), buildNode(packageToCoordinateMap, tgtMethod)));
             }
         }
 
         MongodbUtil.uploadEdges(edges, dependencyCoordinate);
 
+    }
+
+    private static GraphNode buildNode(Map<String, String> redisMap, SootMethod method) {
+        //params
+        StringBuilder tgtParams = new StringBuilder();
+        for (Type type : method.getParameterTypes()) {
+            String typeTransform = GraphUtil.typeTransform(type.toString());
+            tgtParams.append(typeTransform).append(",");
+        }
+        if (tgtParams.length() > 0) {
+            tgtParams.deleteCharAt(tgtParams.length() - 1);
+        }
+        int modifiers = method.getModifiers();
+        String access = "private";
+        switch (modifiers) {
+            case 1:
+                access = "public";
+                break;
+            case 2:
+                access = "private";
+                break;
+            case 4:
+                access = "protected";
+                break;
+            default:
+                access = "private";
+                break;
+        }
+//        if(Modifier.isPublic(modifiers)) {
+//            System.out.println("Method is public");
+//        }
+//
+//        if(Modifier.isPrivate(modifiers)) {
+//            System.out.println("Method is private");
+//        }
+//
+//        if(Modifier.isProtected(modifiers)) {
+//            System.out.println("Method is protected");
+//        }
+        if (method.getName().equals("<clinit>") || method.getName().equals("<init>")) {
+            access = "public";
+        }
+
+
+        String tgtTypeTransform = GraphUtil.typeTransform(method.getReturnType().toString());
+
+        String tgtPackage = method.getDeclaringClass().getPackageName();
+
+        //coordinate
+        if (!redisMap.containsKey(tgtPackage)) {
+            redisMap.put(tgtPackage, "not found");
+        }
+        String tgtClassName = method.getDeclaringClass().getName();
+        if (tgtClassName.contains(".")) {
+            tgtClassName = tgtClassName.substring(tgtClassName.lastIndexOf(".") + 1);
+        }
+        return new GraphNode(tgtPackage, tgtClassName, method.getName(),
+                tgtParams.toString(), tgtTypeTransform, redisMap.get(tgtPackage), access);
+    }
+
+    public static Map<String, String> getRedisMap() {
+        Map<String, String> map = new HashMap<>();
+        ScanParams params = new ScanParams().match("*");
+        String cursor = "0";
+        do {
+            ScanResult<Map.Entry<String, String>> scanResult = jedis.hscan("keys", cursor, params);
+            List<Map.Entry<String, String>> entries = scanResult.getResult();
+            for (Map.Entry<String, String> entry : entries) {
+                map.put(entry.getKey(), entry.getValue());
+            }
+            cursor = scanResult.getStringCursor();
+        } while (!"0".equals(cursor));
+        return map;
+    }
+
+    public static Map<String, String> readFromFile() {
+        Map<String, String> map = new HashMap<>();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("/Users/ljystu/Desktop/projects/redisKeys.txt"));
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] split = line.split(" ");
+                map.put(split[0], split[1]);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return map;
     }
 }

@@ -3,7 +3,7 @@ package com.example;
 import com.alibaba.fastjson.JSON;
 import ljystu.project.callgraph.entity.Edge;
 import ljystu.project.callgraph.entity.Node;
-import ljystu.project.callgraph.uploader.Neo4jOp;
+import ljystu.project.callgraph.uploader.Neo4jUploader;
 import org.junit.Test;
 import redis.clients.jedis.Jedis;
 
@@ -15,14 +15,14 @@ import java.util.Set;
 public class CallGraphUploaderTest {
     Jedis jedis;
 
-    Neo4jOp neo4JOp;
+    Neo4jUploader neo4JUploader;
 
     public CallGraphUploaderTest() {
 
     }
 
     public void init() {
-        this.neo4JOp = new Neo4jOp("bolt://localhost:7687", "neo4j", "ljystuneo");
+        this.neo4JUploader = new Neo4jUploader("bolt://localhost:7687", "neo4j", "ljystuneo");
     }
 
 
@@ -43,7 +43,7 @@ public class CallGraphUploaderTest {
 //            String value = jedis.get(key);
             Edge edge = JSON.parseObject(value, Edge.class);
             System.out.println(edge.toString());
-//            neo4JOp.upload(edge);
+//            neo4JUploader.upload(edge);
             edges.add(edge);
             nodes.add(edge.getFrom());
             nodes.add(edge.getTo());
@@ -53,9 +53,9 @@ public class CallGraphUploaderTest {
         }
         List<Node> nodesList = new ArrayList<>();
         nodesList.addAll(nodes);
-        neo4JOp.uploadAllToNeo4j(nodesList, edges, label);
+        neo4JUploader.uploadAllToNeo4j(nodesList, edges, label);
         jedis.del(label);
-        neo4JOp.close();
+        neo4JUploader.close();
         // 关闭Jedis对象
         jedis.close();
     }
@@ -73,7 +73,7 @@ public class CallGraphUploaderTest {
             if (edge.getTo().getPackageName().startsWith("org.apache.commons.lang") || edge.getFrom().getPackageName().startsWith("org.apache.commons.lang")) {
                 if (!edge.getTo().getPackageName().equals(edge.getFrom().getPackageName()))
                     System.out.println(edge.toString());
-//            neo4JOp.upload(edge);
+//            neo4JUploader.upload(edge);
                 edges.add(edge);
                 nodes.add(edge.getFrom());
                 nodes.add(edge.getTo());
